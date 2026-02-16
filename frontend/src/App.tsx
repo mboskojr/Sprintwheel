@@ -1,16 +1,30 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
-
+import "./App.css";
+import Banner from "./Banner";
+import logo from './assets/logo.png';
 function App() {
   return (
-    <main>
+      <main>
+        <img src={logo}
+        style ={{width:'500px', height:'300px'}}
+        />
+        <p>
+          Welcome to SprintWheel, your agile project management tool designed
+          to streamline your workflow and enhance team collaboration. With
+          SprintWheel, you can easily plan, track, and manage your sprints,
+          ensuring that your projects stay on track and your team stays productive.
+        <h2>Login</h2>
+        <h3>Username:</h3>
+        <Banner>
+        </Banner>
+        <h4>Password:</h4>
+        <Banner>
+        </Banner>
+
       <h1>SprintWheel</h1>
-      <p>Welcome to SprintWheel, your agile project management tool designed to streamline your workflow and enhance team collaboration. With SprintWheel, you can easily plan, track, and manage your sprints, ensuring that your projects stay on track and your team stays productive.</p>
-    </main>
-  
-  )
+      <h4>Presented By: Stack Overthrow </h4>
+        </p>
+      </main>
+  );
 }
 
-export default App
+export default App;
