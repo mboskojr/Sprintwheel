@@ -8,3 +8,27 @@ main{
   padding: 24px;               /* optional padding */
   box-sizing: border-box;
 }
+.app-background {
+ position: relative;
+ min-height: 100vh;
+ width: 100vw;
+ overflow: hidden;
+}
+
+.app-background::before{
+  content:"";
+  position:absolute;
+  inset: 0;
+  background-image: url('/src/assets/websitebackground.jpg'); /* Path is relative to the public folder */
+  background-size: cover; /* Stretches the image to cover the entire container */
+  background-position: center; /* Centers the image */
+  background-repeat: no-repeat; /* Prevents the image from repeating */
+  height: 100vh; /* Ensures the container covers the full viewport height */
+  width: 100vw; /* Ensures the container covers the full viewport width */
+  overflow: hidden;
+  opacity: 0.35;
+  z-index: -1;
+  
+}
+
+

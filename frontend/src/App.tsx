@@ -3,7 +3,7 @@ import Banner from "./Banner";
 import logo from './assets/logo.png';
 function App() {
   return (
-      <main>
+      <main className="app-background">
         <img src={logo}
         style ={{width:'500px', height:'300px'}}
         />
@@ -22,7 +22,7 @@ function App() {
 
       <h1>SprintWheel</h1>
       <h4>Presented By: Stack Overthrow </h4>
-        </p>
+        </p> 
       </main>
   );
 }
