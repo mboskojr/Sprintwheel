@@ -1,18 +1,29 @@
-.banner {
-  width: 40%;
-  height: 40px;
-  background-color: #d4bfff;
-  color: white;
+.input-field {
+  width: 100%;
+  height: 52px;      
+  padding: 0 16px;
 
-  display: inline-flex;
-  align-items: center;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.25);
 
-  padding-center: 500px;
-  box-sizing: content-box;
+  background: rgba(255,255,255,0.94);
+  color: #141427;
+
+  font-size: 18px;          
+  font-weight: 650;
+
+  outline: none;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
 }
 
-.banner h2 {
-  margin: 0;
-  font-size: 22px;
-  font-weight: 600;
+.input-field:focus {
+  border-color: rgba(124,108,255,0.95);
+  box-shadow: 0 0 0 5px rgba(124,108,255,0.18);
+  background: white;
+}
+
+.input-field::placeholder {
+  color: rgba(20,20,39,0.45);
+  font-weight: 500;
 }

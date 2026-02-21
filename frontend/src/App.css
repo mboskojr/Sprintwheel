@@ -1,34 +1,205 @@
-main{
-  display: flex;               /* enables flex layout */
-  flex-direction: column;      /* stack items vertically */
-  justify-content: center;     /* vertical centering */
-  align-items: center;         /* horizontal centering */
-  min-height: 100vh;           /* make it fill the full viewport */
-  text-align: center;          /* center text inside each element */
-  padding: 24px;               /* optional padding */
-  box-sizing: border-box;
+/* App.css */
+
+:root {
+  --text: rgba(255, 255, 255, 0.94);
+  --muted: rgba(255, 255, 255, 0.78);
+  --card: rgba(255, 255, 255, 0.11);
+  --cardBorder: rgba(255, 255, 255, 0.22);
+  --shadow: 0 22px 80px rgba(0, 0, 0, 0.42);
+  --accent: #7c6cff;
+
+  /* fonts */
+  --font-display: ui-rounded, "SF Pro Rounded", "Avenir Next", "Trebuchet MS", system-ui, sans-serif;
+  --font-body: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+}
+
+body {
+  overflow-x: hidden;
+  font-family: var(--font-body);
+  color: var(--text);
+}
+
 .app-background {
- position: relative;
- min-height: 100vh;
- width: 100vw;
- overflow: hidden;
+  position: relative;
+  min-height: 100vh;
+  width: 100%;
 }
 
-.app-background::before{
-  content:"";
-  position:absolute;
+/* blurred image */
+.app-background::before {
+  content: "";
+  position: absolute;
   inset: 0;
-  background-image: url('/src/assets/websitebackground.jpg'); /* Path is relative to the public folder */
-  background-size: cover; /* Stretches the image to cover the entire container */
-  background-position: center; /* Centers the image */
-  background-repeat: no-repeat; /* Prevents the image from repeating */
-  height: 100vh; /* Ensures the container covers the full viewport height */
-  width: 100vw; /* Ensures the container covers the full viewport width */
-  overflow: hidden;
-  opacity: 0.35;
-  z-index: -1;
-  
+  background-image: url("/src/assets/websitebackground.jpg");
+  background-size: cover;
+  background-position: center;
+  filter: blur(16px) brightness(0.65) saturate(0.6);
+  transform: scale(1.08);
+  z-index: 0;
 }
 
+/* dark gradient overlay */
+.app-background::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 30%, rgba(0,0,0,0.1), rgba(0,0,0,0.55));
+  z-index: 0;
+}
 
+.hero {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+
+  display: grid;
+  grid-template-rows: 1fr auto 1fr;
+  justify-items: center;
+  align-items: center;
+  padding: 40px 20px;
+}
+
+/* top part */
+
+.hero-top {
+  align-self: end;
+  text-align: center;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  gap: 8px;   
+  padding-top: 20px;
+}
+
+.logo {
+  width: 570px;
+  height: auto;
+
+  transform: scale(2.5);
+  transform-origin: center;
+
+  margin-bottom: 20px;
+
+  filter:
+    drop-shadow(0 40px 120px rgba(0,0,0,0.95))
+    drop-shadow(0 0 140px rgba(124,108,255,0.9));
+}
+
+.tagline {
+  max-width: 760px;
+  font-size: 22px;
+  line-height: 1.6;
+  color: rgba(255,255,255,0.9);
+}
+
+/* center login */
+
+.hero-center {
+  align-self: center;
+}
+
+.login-card {
+  width: min(520px, 92vw);
+  padding: 36px 30px;
+  border-radius: 22px;
+
+  background: var(--card);
+  border: 1px solid var(--cardBorder);
+  box-shadow: var(--shadow);
+
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+
+  text-align: left;
+
+  margin-bottom: 30px;
+}
+
+/* form */
+
+.card-title {
+  margin: 0;
+  font-size: 34px;
+  font-family: var(--font-display);
+}
+
+.card-subtitle {
+  margin: 10px 0 22px;
+  color: var(--muted);
+  font-size: 18px;
+}
+
+.label {
+  font-size: 15px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.9);
+}
+
+.primary-btn {
+  margin-top: 12px;
+  width: 100%;
+  height: 52px;
+  border: none;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--accent), #a18bff);
+  color: white;
+  font-size: 18px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 14px 40px rgba(124,108,255,0.35);
+}
+
+.primary-btn:hover { filter: brightness(1.05); }
+.primary-btn:active { transform: translateY(1px); }
+
+/* status */
+
+.status {
+  margin-top: 14px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(0,0,0,0.25);
+  border: 1px solid rgba(255,255,255,0.12);
+  font-size: 14px;
+}
+
+.debug {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(0,0,0,0.25);
+  border: 1px solid rgba(255,255,255,0.12);
+  max-height: 220px;
+  overflow: auto;
+  font-size: 12px;
+}
+
+/* footer */
+
+.footer {
+  align-self: start;
+  text-align: center;
+  padding-top: 30px;
+}
+
+.brand {
+  margin: 0;
+  font-size: 56px;
+  font-weight: 800;
+  font-family: var(--font-display);
+}
+
+.byline {
+  margin-top: 10px;
+  font-size: 18px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.85);
+}

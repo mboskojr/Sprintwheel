@@ -6,8 +6,20 @@ from app.routers.project import router as projects_router
 from app.routers.sprint import router as sprints_router
 from app.routers.story import router as stories_router
 from app.routers.task import router as tasks_router
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title="SprintWheel API")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.on_event("startup")
 def on_startup():
