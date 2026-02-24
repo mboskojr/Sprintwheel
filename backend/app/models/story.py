@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, ForeignKey
+from sqlalchemy import Column, String, Integer, ForeignKey, Boolean
 from sqlalchemy.dialects.postgresql import UUID
 import uuid
 
@@ -16,5 +16,5 @@ class Story(Base):
     description = Column(String, nullable=True)
     points = Column(Integer, nullable=True)
 
-    status = Column(String, default="todo")
-    priority = Column(Integer, default=0)
+    isDone = Column(Boolean, default=False)
+    priority = Column(Integer, default=10)

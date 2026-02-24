@@ -1,30 +1,32 @@
 from pydantic import BaseModel, Field
+from uuid import UUID
 
 
 class TaskCreate(BaseModel):
-    story_id: str
-
+    story_id: UUID
+    assignee_id: UUID | None = None  # must match users.id type (string)
     title: str = Field(min_length=1, max_length=200)
-    status: str = Field(default="todo", max_length=50)
+    description: str | None = None
 
-    assignee_id: str | None = None  # must match users.id type (string)
-    order_index: int = 0
+
 
 
 class TaskUpdate(BaseModel):
+    story_id: UUID
+    assignee_id: UUID | None = None
     title: str | None = Field(default=None, min_length=1, max_length=200)
-    status: str | None = Field(default=None, max_length=50)
-    assignee_id: str | None = None
-    order_index: int | None = None
+    description: str | None = None
+    isDone: bool | None = Field(default=False)
 
 
 class TaskOut(BaseModel):
-    id: str
-    story_id: str
+    id: UUID
+    story_id: UUID
+    assignee_id: UUID | None
     title: str
-    status: str
-    assignee_id: str | None
-    order_index: int
+    description: str | None = None
+    isDone: bool
+
 
     class Config:
         from_attributes = True
