@@ -1,48 +1,18 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
-
+from uuid import UUID
 from app.db.session import get_db
 from app.core.deps import get_current_user
 from app.models.user import User
 from app.models.story import Story
 from app.models.project import Project
 from app.models.sprint import Sprint
+from app.schemas import StoryCreate, StoryUpdate, StoryOut
 
 router = APIRouter(prefix="/stories", tags=["stories"])
 
 
-class StoryCreate(BaseModel):
-    project_id: str
-    sprint_id: str | None = None
-    title: str = Field(min_length=1, max_length=200)
-    description: str | None = None
-    points: int | None = Field(default=None, ge=0)
-    status: str = Field(default="todo", max_length=50)
-    priority: int = Field(default=0)
-
-
-class StoryUpdate(BaseModel):
-    sprint_id: str | None = None
-    title: str | None = Field(default=None, min_length=1, max_length=200)
-    description: str | None = None
-    points: int | None = Field(default=None, ge=0)
-    status: str | None = Field(default=None, max_length=50)
-    priority: int | None = None
-
-
-class StoryOut(BaseModel):
-    id: str
-    project_id: str
-    sprint_id: str | None
-    title: str
-    description: str | None
-    points: int | None
-    status: str
-    priority: int
-
-    class Config:
-        from_attributes = True
 
 
 @router.post("", response_model=StoryOut)
@@ -68,7 +38,7 @@ def create_story(
         title=data.title,
         description=data.description,
         points=data.points,
-        status=data.status,
+        isDone=False,
         priority=data.priority,
     )
     db.add(story)
@@ -79,8 +49,8 @@ def create_story(
 
 @router.get("", response_model=list[StoryOut])
 def list_stories(
-    project_id: str | None = None,
-    sprint_id: str | None = None,
+    project_id: UUID | None = None,
+    sprint_id: UUID | None = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -94,7 +64,7 @@ def list_stories(
 
 @router.get("/{story_id}", response_model=StoryOut)
 def get_story(
-    story_id: str,
+    story_id: UUID,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -106,7 +76,7 @@ def get_story(
 
 @router.patch("/{story_id}", response_model=StoryOut)
 def update_story(
-    story_id: str,
+    story_id: UUID,
     data: StoryUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -132,8 +102,8 @@ def update_story(
 
 @router.post("/{story_id}/assign-sprint/{sprint_id}", response_model=StoryOut)
 def assign_story_to_sprint(
-    story_id: str,
-    sprint_id: str,
+    story_id: UUID,
+    sprint_id: UUID,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -156,7 +126,7 @@ def assign_story_to_sprint(
 
 @router.post("/{story_id}/unassign-sprint", response_model=StoryOut)
 def unassign_story_from_sprint(
-    story_id: str,
+    story_id: UUID,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -170,9 +140,28 @@ def unassign_story_from_sprint(
     return story
 
 
+@router.post("/{story_id}/toggle-done", response_model=StoryOut)
+def toggle_story_done(
+    story_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    story = db.query(Story).filter(Story.id == story_id).first()
+    if not story:
+        raise HTTPException(status_code=404, detail="Story not found")
+
+    # Flip the boolean
+    story.isDone = not story.isDone
+
+    db.commit()
+    db.refresh(story)
+    return story
+
+
+
 @router.delete("/{story_id}")
 def delete_story(
-    story_id: str,
+    story_id: UUID,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -183,3 +172,5 @@ def delete_story(
     db.delete(story)
     db.commit()
     return {"status": "ok"}
+
+

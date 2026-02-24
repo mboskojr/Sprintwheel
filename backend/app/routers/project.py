@@ -1,30 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
-
+from uuid import UUID
 from app.db.session import get_db
 from app.core.deps import get_current_user
 from app.models.user import User
 from app.models.project import Project
+from app.schemas.project import ProjectCreate, ProjectUpdate, ProjectOut
 
 router = APIRouter(prefix="/projects", tags=["projects"])
-
-
-class ProjectCreate(BaseModel):
-    name: str = Field(min_length=1, max_length=200)
-
-
-class ProjectUpdate(BaseModel):
-    name: str = Field(min_length=1, max_length=200)
-
-
-class ProjectOut(BaseModel):
-    id: str
-    name: str
-
-    class Config:
-        from_attributes = True
-
 
 @router.post("", response_model=ProjectOut)
 def create_project(
@@ -32,7 +16,10 @@ def create_project(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    project = Project(name=data.name)
+    project = Project(
+        name=data.name,
+        sprint_duration=data.sprint_duration
+    )
     db.add(project)
     db.commit()
     db.refresh(project)
@@ -49,7 +36,7 @@ def list_projects(
 
 @router.get("/{project_id}", response_model=ProjectOut)
 def get_project(
-    project_id: str,
+    project_id: UUID,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -61,7 +48,7 @@ def get_project(
 
 @router.patch("/{project_id}", response_model=ProjectOut)
 def update_project(
-    project_id: str,
+    project_id: UUID,
     data: ProjectUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -71,6 +58,7 @@ def update_project(
         raise HTTPException(status_code=404, detail="Project not found")
 
     project.name = data.name
+    project.sprint_duration = data.sprint_duration
     db.commit()
     db.refresh(project)
     return project
@@ -78,7 +66,7 @@ def update_project(
 
 @router.delete("/{project_id}")
 def delete_project(
-    project_id: str,
+    project_id: UUID,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
