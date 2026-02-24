@@ -1,3 +1,4 @@
+import { motion } from "framer-motion";
 import { useState } from "react";
 import type { CSSProperties, JSX } from "react";
 
@@ -161,8 +162,13 @@ export default function DashboardPage(): JSX.Element {
       <main className="app-background" style={styles.main}>
         <div className="hero">
           {/* intro copy – i’ll personalize this later */}
-          <h1 style={{ margin: "0 0 8px 0" }}>Hi Savannah ,welcome to the Dashboard.</h1>
-
+<motion.h1
+  initial={{ opacity: 0, y: 12 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ duration: 1, ease: "easeOut" }}
+>
+  Hi Savannah, welcome to the Dashboard.
+</motion.h1>
           {/* task board placeholder lives right under the intro */}
           <section style={styles.taskBoard}>
             <h2 style={styles.taskBoardTitle}>Task Board</h2>
