@@ -1,10 +1,16 @@
 import {Routes, Route, Navigate} from "react-router-dom";
 import LoginPage from "./pages/LoginPage";
-import DashboardPage from "./pages/DashboardPage";
-import ProductOwnerPage from "./pages/ProductOwnerPage";
+import DashboardPage from "./pages/layouts/DashboardPage";
+import ProductOwnerPage from "./pages/layouts/ProductOwnerPage";
 import RoleOptionsPage from "./pages/RoleOptionsPage";
-import ScrumFacilPage from "./pages/ScrumFacilPage";
+import ScrumFacilPage from "./pages/layouts/ScrumFacilPage";
 import type { JSX } from "react/jsx-dev-runtime"; //added quick fix
+import CommunicationPage from "./pages/CommunicationPage";
+import ToDoPage from "./pages/ToDoPage";
+import ProgressPage from "./pages/ProgressPage";
+import ProjectDetails from "./pages/ProjectDetails";
+import EducationPage from "./pages/EducationPage";
+import SettingsPage from "./pages/SettingsPage";
 
 function App(): JSX.Element {
   return (
@@ -17,7 +23,13 @@ function App(): JSX.Element {
       <Route path="/product-owner" element={<ProductOwnerPage />} />
       <Route path="/role-options" element={<RoleOptionsPage />} />
       <Route path="/scrum-facilitator" element={<ScrumFacilPage />} />
-      
+      <Route path="/to-do/planning" element={<ToDoPage />} />
+      <Route path="/communication" element={<CommunicationPage />} />
+      <Route path="/progress" element={<ProgressPage />} />
+      <Route path="/project-details" element={<ProjectDetails />} />
+      <Route path="/education" element={<EducationPage />} />
+      <Route path="/settings" element={<SettingsPage />} />
+    
     </Routes>
   );
 }
