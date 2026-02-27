@@ -8,8 +8,21 @@ from app.models.user import User
 from app.models.task import Task
 from app.models.story import Story
 from app.schemas import TaskOut, TaskCreate, TaskUpdate
+from app.models.project_members import ProjectMember
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
+
+def require_project_member(db: Session, project_id: UUID, user_id: str) -> None:
+    pm = (
+        db.query(ProjectMember)
+        .filter(
+            ProjectMember.project_id == project_id,
+            ProjectMember.user_id == user_id,
+        )
+        .first()
+    )
+    if not pm:
+        raise HTTPException(status_code=404, detail="Project not found")
 
 @router.post("", response_model=TaskOut)
 def create_task(
@@ -20,6 +33,7 @@ def create_task(
     story = db.query(Story).filter(Story.id == data.story_id).first()
     if not story:
         raise HTTPException(status_code=404, detail="Story not found")
+    require_project_member(db, story.project_id, current_user.id)
 
     task = Task(
         story_id=data.story_id,
@@ -40,10 +54,16 @@ def list_tasks(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    q = db.query(Task)
-    if story_id:
-        q = q.filter(Task.story_id == story_id)
-    return q
+    if not story_id:
+        raise HTTPException(status_code=400, detail="story_id is required")
+
+    story = db.query(Story).filter(Story.id == story_id).first()
+    if not story:
+        raise HTTPException(status_code=404, detail="Story not found")
+
+    require_project_member(db, story.project_id, current_user.id)
+
+    return db.query(Task).filter(Task.story_id == story_id).all()
 
 
 @router.get("/{task_id}", response_model=TaskOut)
@@ -55,6 +75,12 @@ def get_task(
     task = db.query(Task).filter(Task.id == task_id).first()
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
+    
+    story = db.query(Story).filter(Story.id == task.story_id).first()
+    if not story:
+        raise HTTPException(status_code=404, detail="Story not found")
+
+    require_project_member(db, story.project_id, current_user.id)
     return task
 
 
@@ -68,6 +94,12 @@ def update_task(
     task = db.query(Task).filter(Task.id == task_id).first()
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
+    
+    story = db.query(Story).filter(Story.id == task.story_id).first()
+    if not story:
+        raise HTTPException(status_code=404, detail="Story not found")
+
+    require_project_member(db, story.project_id, current_user.id)
 
     for k, v in data.model_dump(exclude_unset=True).items():
         setattr(task, k, v)
@@ -86,6 +118,12 @@ def toggle_story_done(
     task = db.query(Task).filter(Task.id == task_id).first()
     if not task:
         raise HTTPException(status_code=404, detail="Story not found")
+    
+    story = db.query(Story).filter(Story.id == task.story_id).first()
+    if not story:
+        raise HTTPException(status_code=404, detail="Story not found")
+
+    require_project_member(db, story.project_id, current_user.id)
 
     # Flip the boolean
     task.isDone = not task.isDone
@@ -106,6 +144,12 @@ def delete_task(
     task = db.query(Task).filter(Task.id == task_id).first()
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
+    
+    story = db.query(Story).filter(Story.id == task.story_id).first()
+    if not story:
+        raise HTTPException(status_code=404, detail="Story not found")
+
+    require_project_member(db, story.project_id, current_user.id)
 
     db.delete(task)
     db.commit()

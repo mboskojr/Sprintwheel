@@ -10,8 +10,20 @@ from app.models.user import User
 from app.models.sprint import Sprint
 from app.models.project import Project
 from app.schemas.sprint import SprintCreate, SprintUpdate, SprintOut
+from app.models.project_members import ProjectMember
 
 router = APIRouter(prefix="/sprints", tags=["sprints"])
+
+def require_project_member(db: Session, project_id: UUID, user_id: str) -> None:
+    pm = (
+        db.query(ProjectMember)
+        .filter(ProjectMember.project_id == project_id,
+                ProjectMember.user_id == user_id)
+        .first()
+    )
+    if not pm:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
 
 def dateHelper(start_date : date, sprint_duration):
     return start_date + timedelta(days=sprint_duration)
@@ -23,10 +35,13 @@ def create_sprint(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    # must be a member of the project
+    require_project_member(db, data.project_id, current_user.id)
+
     project = db.query(Project).filter(Project.id == data.project_id).first()
-    end_date = dateHelper(data.start_date, project.sprint_duration)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
+    end_date = dateHelper(data.start_date, project.sprint_duration)
 
     if end_date < data.start_date:
         raise HTTPException(status_code=400, detail="end_date must be >= start_date")
@@ -66,6 +81,7 @@ def list_sprints(
 ):
     q = db.query(Sprint)
     if project_id:
+        require_project_member(db, project_id, current_user.id)
         q = q.filter(Sprint.project_id == project_id)
     return q.all()
 
@@ -79,6 +95,7 @@ def get_sprint(
     sprint = db.query(Sprint).filter(Sprint.id == sprint_id).first()
     if not sprint:
         raise HTTPException(status_code=404, detail="Sprint not found")
+    require_project_member(db, sprint.project_id, current_user.id)
     return sprint
 
 
@@ -92,6 +109,7 @@ def update_sprint(
     sprint = db.query(Sprint).filter(Sprint.id == sprint_id).first()
     if not sprint:
         raise HTTPException(status_code=404, detail="Sprint not found")
+    require_project_member(db, sprint.project_id, current_user.id)
 
     if data.sprint_number is not None:
         sprint.sprint_number = data.sprint_number
@@ -135,6 +153,7 @@ def delete_sprint(
     sprint = db.query(Sprint).filter(Sprint.id == sprint_id).first()
     if not sprint:
         raise HTTPException(status_code=404, detail="Sprint not found")
+    require_project_member(db, sprint.project_id, current_user.id)
 
     db.delete(sprint)
     db.commit()
