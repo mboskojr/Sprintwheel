@@ -14,3 +14,10 @@ class ProjectOut(BaseModel):
     id: UUID
     name: str
     sprint_duration: int
+    
+class JoinProjectIn(BaseModel):
+    role: str
+
+class ProjectMembershipOut(BaseModel):
+    project_id: str
+    role: str

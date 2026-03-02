@@ -11,6 +11,7 @@ import ProgressPage from "./pages/ProgressPage";
 import ProjectDetails from "./pages/ProjectDetails";
 import EducationPage from "./pages/EducationPage";
 import SettingsPage from "./pages/SettingsPage";
+import TeamMemberPage from "./pages/layouts/TeamMemberPage";
 
 function App(): JSX.Element {
   return (
@@ -20,9 +21,12 @@ function App(): JSX.Element {
         {/* Define routes for the app */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/dashboard" element={<DashboardPage />} />
-      <Route path="/product-owner" element={<ProductOwnerPage />} />
       <Route path="/role-options" element={<RoleOptionsPage />} />
+
+      <Route path="/product-owner" element={<ProductOwnerPage />} />
       <Route path="/scrum-facilitator" element={<ScrumFacilPage />} />
+      <Route path="/team-member" element={<TeamMemberPage />} />
+      
       <Route path="/to-do/planning" element={<ToDoPage />} />
       <Route path="/communication" element={<CommunicationPage />} />
       <Route path="/progress" element={<ProgressPage />} />
