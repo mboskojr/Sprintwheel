@@ -36,3 +36,6 @@ class StoryOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+class StoryReorderRequest(BaseModel):
+    ordered_ids: list[UUID]

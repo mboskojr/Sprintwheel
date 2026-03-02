@@ -10,6 +10,7 @@ from app.models.project import Project
 from app.models.sprint import Sprint
 from app.schemas import StoryCreate, StoryUpdate, StoryOut
 from app.models.project_members import ProjectMember
+from app.schemas.story import StoryReorderRequest
 
 router = APIRouter(prefix="/stories", tags=["stories"])
 
