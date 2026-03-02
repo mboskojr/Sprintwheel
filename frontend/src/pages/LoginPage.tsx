@@ -4,6 +4,8 @@ import logo from "../assets/logo.png";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { login, me, register } from "../api/auth";
+import { GoogleLogin } from "@react-oauth/google";
+import { googleLogin } from "../api/auth";
 
 function LoginPage(): JSX.Element{
   const navigate = useNavigate();
@@ -20,25 +22,23 @@ function LoginPage(): JSX.Element{
     e.preventDefault();
     setStatus("");
     setUser(null);
-
+  
     try {
-      //  if registering then create the user first
       if (mode === "register") {
         await register(name, email, password);
       }
-
-      // login
+  
       const tok = await login(email, password);
       localStorage.setItem("token", tok.access_token);
-
+  
       const u = await me(tok.access_token);
-      setUser(u);
-
+      localStorage.setItem("user", JSON.stringify(u));
+      
       setStatus(mode === "register" ? "Account created & logged in!" : "Logged in!");
+      navigate("/dashboard");
     } catch (err: any) {
       setStatus(err?.message ?? "Request failed");
     }
-    navigate("/dashboard");
   }
 
   return (
@@ -87,6 +87,50 @@ function LoginPage(): JSX.Element{
                 {mode === "login" ? "Sign in" : "Create account"}
               </button>
 
+              {/* Divider */}
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
+                  margin: "18px 0",
+                  opacity: 0.95,
+                }}
+              >
+                <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.25)" }} />
+                <span style={{ color: "rgba(255,255,255,0.85)", fontSize: 14, fontWeight: 600 }}>
+                  OR
+                </span>
+                <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.25)" }} />
+              </div>
+              {/* Google Button */}
+              {mode === "login" && (
+                <div style={{ display: "flex", justifyContent: "center", transform: "scale(1.15)" }}>
+                  <GoogleLogin
+                    onSuccess={async (credentialResponse) => {
+                      try {
+                        const idToken = credentialResponse.credential;
+                        if (!idToken) return;
+
+                        const token = await googleLogin(idToken);
+                        localStorage.setItem("token", token.access_token);
+
+                        const u = await me(token.access_token);
+                        localStorage.setItem("user", JSON.stringify(u));
+
+                        navigate("/dashboard");
+                      } catch (err: any) {
+                        setStatus(err?.message ?? "Google login failed");
+                      }
+                    }}
+                    onError={() => {
+                      setStatus("Google login failed");
+                    }}
+                    size="large"
+                    width="360"
+                  />
+                </div>
+              )}
               <div style={{ marginTop: 14, textAlign: "center" }}>
                 {mode === "login" ? (
                   <button type="button" className="switch" onClick={()=>setMode("register")}>

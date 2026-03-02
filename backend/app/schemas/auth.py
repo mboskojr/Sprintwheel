@@ -8,7 +8,7 @@ class RegisterIn(BaseModel):
 class LoginIn(BaseModel):
     email: EmailStr
     password: str = Field(min_length=1, max_length=72)
-    
+
 class TokenOut(BaseModel):
     access_token: str
     token_type: str = "bearer"
@@ -18,3 +18,6 @@ class UserOut(BaseModel):
     name: str
     email: EmailStr
     role: str
+
+    class Config:
+        from_attributes = True

@@ -3,3 +3,4 @@ from .project import Project
 from .sprint import Sprint
 from .story import Story
 from .task import Task
+from .project_members import ProjectMember
