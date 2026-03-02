@@ -1,9 +1,10 @@
 import uuid
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
-from app.models.user import User
+from app.models.user import User, UserProject
 from app.core.security import hash_password, verify_password
 from app.core.jwt import create_access_token
 from app.core.deps import get_current_user
@@ -26,6 +27,9 @@ def register(data: RegisterIn, db: Session = Depends(get_db)):
         hashed_password=hash_password(data.password),
     )
     db.add(user)
+    db.flush()
+    user_project = UserProject(user_id=user.id, projects=[])
+    db.add(user_project)
     db.commit()
     db.refresh(user)
     return user
