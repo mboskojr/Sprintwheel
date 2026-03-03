@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
 import type { CSSProperties, JSX } from "react";
+import{ useNavigate } from "react-router-dom";
 
 /** inline styles for quick layout + vibes */
 const styles: Record<string, CSSProperties> = {
@@ -106,23 +107,36 @@ const styles: Record<string, CSSProperties> = {
   },
   
 };
-
 function NavItem({
   icon,
   label,
   collapsed,
+  to,
 }: {
   icon: string;
   label: string;
   collapsed: boolean;
+  to: string;
 }): JSX.Element {
+  const navigate = useNavigate();
+
   return (
-    <div style={styles.navItem} title={collapsed ? label : undefined}>
+    <div
+      style={styles.navItem}
+      title={collapsed ? label : undefined}
+      role="button"
+      tabIndex={0}
+      onClick={() => navigate(to)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") navigate(to);
+      }}
+    >
       <span style={styles.icon}>{icon}</span>
       {!collapsed && <span style={styles.navLabel}>{label}</span>}
     </div>
   );
 }
+
 
 export default function DashboardPage(): JSX.Element {
   const [collapsed, setCollapsed] = useState(false);
@@ -147,15 +161,49 @@ export default function DashboardPage(): JSX.Element {
           </button>
         </div>
 
-        {/* sidebar nav (these are placeholders for now) */}
-        <nav style={styles.nav}>
-          <NavItem icon="📝" label="To-Do / Planning" collapsed={collapsed} />
-          <NavItem icon="📧" label="Communication" collapsed={collapsed} />
-          <NavItem icon="📊" label="Progress" collapsed={collapsed} />
-          <NavItem icon="📌" label="Project Details" collapsed={collapsed} />
-          <NavItem icon="🧠" label="Education" collapsed={collapsed} />
-          <NavItem icon="⚙️" label="Settings" collapsed={collapsed} />
-        </nav>
+       <nav style={styles.nav}>
+  <NavItem
+    icon="📝"
+    label="To-Do / Planning"
+    collapsed={collapsed}
+    to="/to-do/planning"
+  />
+
+  <NavItem
+    icon="📧"
+    label="Communication"
+    collapsed={collapsed}
+    to="/communication"
+  />
+
+  <NavItem
+    icon="📊"
+    label="Progress"
+    collapsed={collapsed}
+    to="/progress"
+  />
+
+  <NavItem
+    icon="📌"
+    label="Project Details"
+    collapsed={collapsed}
+    to="/project-details"
+  />
+
+  <NavItem
+    icon="🧠"
+    label="Education"
+    collapsed={collapsed}
+    to="/education"
+  />
+
+  <NavItem
+    icon="⚙️"
+    label="Settings"
+    collapsed={collapsed}
+    to="/settings"
+  />
+</nav>
       </aside>
 
       {/* main dashboard content */}
@@ -167,7 +215,7 @@ export default function DashboardPage(): JSX.Element {
   animate={{ opacity: 1, y: 0 }}
   transition={{ duration: 1, ease: "easeOut" }}
 >
-  Hi Savannah, welcome to the Dashboard.
+  Hi Developer, welcome to the Dashboard.
 </motion.h1>
           {/* task board placeholder lives right under the intro */}
           <section style={styles.taskBoard}>

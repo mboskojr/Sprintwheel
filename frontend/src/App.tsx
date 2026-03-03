@@ -3,8 +3,8 @@ import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/layouts/DashboardPage";
 import ProductOwnerPage from "./pages/layouts/ProductOwnerPage";
 import RoleOptionsPage from "./pages/RoleOptionsPage";
-import ScrumFacilPage from "./pages/layouts/ScrumFacilPage";
-import type { JSX } from "react/jsx-dev-runtime"; //added quick fix
+import ScrumFacilitatorPage from "./pages/layouts/ScrumFacilitatorPage";
+import type { JSX } from "react/jsx-dev-runtime";
 import CommunicationPage from "./pages/CommunicationPage";
 import ToDoPage from "./pages/ToDoPage";
 import ProgressPage from "./pages/ProgressPage";
@@ -22,7 +22,7 @@ function App(): JSX.Element {
       <Route path="/dashboard" element={<DashboardPage />} />
       <Route path="/product-owner" element={<ProductOwnerPage />} />
       <Route path="/role-options" element={<RoleOptionsPage />} />
-      <Route path="/scrum-facilitator" element={<ScrumFacilPage />} />
+      <Route path="/scrum-facilitator" element={<ScrumFacilitatorPage />} />
       <Route path="/to-do/planning" element={<ToDoPage />} />
       <Route path="/communication" element={<CommunicationPage />} />
       <Route path="/progress" element={<ProgressPage />} />

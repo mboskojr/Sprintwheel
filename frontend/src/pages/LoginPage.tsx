@@ -38,7 +38,7 @@ function LoginPage(): JSX.Element{
     } catch (err: any) {
       setStatus(err?.message ?? "Request failed");
     }
-    navigate("/dashboard");
+    navigate("/role-options");
   }
 
   return (

@@ -81,7 +81,7 @@ function NavItem({
   );
 }
 
-export default function ProductOwnerPage(): JSX.Element {
+export default function ScrumFacilitatorPage(): JSX.Element {
   const [collapsed, setCollapsed] = useState(false);
 
   return (
@@ -120,33 +120,24 @@ export default function ProductOwnerPage(): JSX.Element {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, ease: "easeOut" }}
           >
-            Hi Product Owner, welcome to the Dashboard.
+            Hi Scrum Facilitator, welcome to the Dashboard.
           </motion.h1>
           <div style={{ color: "white", padding: 40 }}>
-            <p>This is the Product Owner page.</p>
-            <h2>Project Microcharter</h2>
-            <p> Project Microcharter details will be found here.</p>
-            <h2>Product Backlog</h2>
-            <img
-              src="/product_backlog_framework.jpeg"
-              alt="Product Backlog showing list of user stories and tasks"
-              style={{ maxWidth: "100%", height: "auto", marginTop: 20 }}
-            />
+            <p>This is the Scrum Facilitator page.</p>
+            <h2>Impediment Tracker</h2>
+            <p> Impediment Tracker details will be found here.</p>
+            
+            <h2>Retrospective Notes</h2>
             <p>
               Function: takes data from Task Board and computes it here allows PO to drag & drop
               assignments for particular sprints
             </p>
 
-            <h2>Product Roadmap</h2>
-            <img
-              src="/product_roadmap_placeholder.png"
-              alt="Product Roadmap showing timeline of product development and key milestones"
-              style={{ maxWidth: "100%", height: "auto", marginTop: 20 }}
-            />
-
-            <h2>Team Progress</h2>
-            <p>Function: streamlined from velocity, burndown chart and serves as info radiator devs can post here</p>
-            <p>Allows PO to create acceptance criteria & answer team questions</p>
+            <h2>Set a Meeting</h2>
+            <p> Meeting scheduling feature will be found here.</p>
+            
+            <h2>Admin Scrum Edu</h2>
+            <p> Assign Modules to Devs & PO</p>
           </div>
         </div>
       </main>
