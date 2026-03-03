@@ -270,14 +270,13 @@ export default function DashboardPage(): JSX.Element {
   animate={{ opacity: 1, y: 0 }}
   transition={{ duration: 1, ease: "easeOut" }}
 >
-  Hi Developer, welcome to the Dashboard.
 </motion.h1>
           <motion.h1
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, ease: "easeOut" }}
           >
-            🤓 Hi {user?.name ?? "there"}, welcome to the Dashboard! 🤓 
+            Hi {user?.name ?? "there"}, welcome to the Dashboard! 
           </motion.h1>
           <div style={{ marginTop: 20 }}>
               <h3>Your Projects</h3>

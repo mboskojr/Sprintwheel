@@ -11,6 +11,7 @@ import ProgressPage from "./pages/ProgressPage";
 import ProjectDetails from "./pages/ProjectDetails";
 import EducationPage from "./pages/EducationPage";
 import SettingsPage from "./pages/SettingsPage";
+import BackendDebug from "./pages/BackendDebug";
 
 function App(): JSX.Element {
   return (
@@ -31,7 +32,7 @@ function App(): JSX.Element {
       <Route path="/project-details" element={<ProjectDetails />} />
       <Route path="/education" element={<EducationPage />} />
       <Route path="/settings" element={<SettingsPage />} />
-    
+      <Route path="/backend-debug" element={<BackendDebug />} />
     </Routes>
   );
 }

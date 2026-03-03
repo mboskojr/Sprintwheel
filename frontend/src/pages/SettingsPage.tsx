@@ -4,16 +4,16 @@ export default function SettingsPage(): JSX.Element {
     return (
         <div style={{ color: "white", padding: 40 }}>
             <h1>Settings</h1>
-            <p>This is the Settings page.</p>
+            <h2>This is the Settings page.</h2>
             <p> This is where the User Profile, Notification Preferences, & Account Settings will live</p>
-            <p>Consdirations: Light/Dark Mode </p>
+            <h2>Consdirations: Light/Dark Mode </h2>
             <p>Other considerations: Custom Dashboard Layout, Integrations, Team Permissions & Access Controls.</p>
-            <p>User Profile</p>
+            <h2>User Profile</h2>
             <img src="/user_profile_placeholder.png" alt="User Profile showing user's name, profile picture, and basic information" style={{ maxWidth: "100%", height: "auto", marginTop: 20 }} />
-            <p>Notification Preferences</p>
+            <h2>Notification Preferences</h2>
             <img src="/notification_preferences_placeholder.png" alt="Notification Preferences showing options for email and in-app notifications" style={{ maxWidth: "100%", height: "auto", marginTop: 20 }} />
-            <p>Account Settings</p>
-            <img src="/account_settings_placeholder.png" alt="Account Settings showing options for changing password, managing connected accounts, and deleting account" style={{ maxWidth: "100%", height: "auto", marginTop: 20 }} />
+            <h2>Account Settings</h2>
+            <img src="/account_settings_placeholder.png" alt="Account Settings showing options for changing role, changing password, managing connected accounts, and deleting account" style={{ maxWidth: "100%", height: "auto", marginTop: 20 }} />
         </div>
     );
 }

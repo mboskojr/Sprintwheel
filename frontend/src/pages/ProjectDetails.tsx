@@ -1,6 +1,8 @@
 import type{ CSSProperties, JSX} from "react";
+import { useEffect, useState } from "react";
+import { listProjects, type Project } from "../api/projects";
 
-export default function CommunicationPage(): JSX.Element {
+export default function ProjectDetailsPage(): JSX.Element {
     return (
         <div style={{ color: "white", padding: 40 }}>
             <h1>Project Details Page</h1>

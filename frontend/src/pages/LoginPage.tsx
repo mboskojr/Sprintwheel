@@ -33,13 +33,13 @@ function LoginPage(): JSX.Element{
   
       const u = await me(tok.access_token);
       localStorage.setItem("user", JSON.stringify(u));
-      
+      navigate(u.role ? "/dashboard" : "/role-options")
+
       setStatus(mode === "register" ? "Account created & logged in!" : "Logged in!");
-      navigate("/dashboard");
+      navigate("/role-options");
     } catch (err: any) {
       setStatus(err?.message ?? "Request failed");
     }
-    navigate("/role-options");
   }
 
   return (
@@ -119,7 +119,7 @@ function LoginPage(): JSX.Element{
                         const u = await me(token.access_token);
                         localStorage.setItem("user", JSON.stringify(u));
 
-                        navigate("/dashboard");
+                        navigate("/role-options");
                       } catch (err: any) {
                         setStatus(err?.message ?? "Google login failed");
                       }

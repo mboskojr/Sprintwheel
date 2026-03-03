@@ -1,8 +1,11 @@
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { CSSProperties, JSX } from "react";
 import { useNavigate } from "react-router-dom";
+import { me } from "../../api/auth"; 
+import { listProjects, type Project } from "../../api/projects";
 
+type User = { id: string; name: string; email: string; role: string };
 /** inline styles for quick layout + vibes */
 const styles: Record<string, CSSProperties> = {
   shell: {
@@ -83,7 +86,58 @@ function NavItem({
 
 export default function ProductOwnerPage(): JSX.Element {
   const [collapsed, setCollapsed] = useState(false);
-
+  const navigate = useNavigate();
+  const [user, setUser] = useState<User | null>(() => {
+  const raw = localStorage.getItem("user");
+      return raw ? JSON.parse(raw) : null;
+    });
+    const [projects, setProjects] = useState<Project[]>([]);
+    const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
+    const [loadingProjects, setLoadingProjects] = useState(false);
+    const [projectError, setProjectError] = useState<string>("");
+    
+    useEffect(() => {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        navigate("/login", { replace: true });
+        return;
+      }
+  
+      // Always verify token → fetch current user from backend
+      me(token)
+        .then((u: User) => {
+          setUser(u);
+          localStorage.setItem("user", JSON.stringify(u));
+        })
+        .catch(() => {
+          // token invalid/expired → force re-login
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          navigate("/login", { replace: true });
+        });
+    }, [navigate]);
+      useEffect(() => {
+        if (!user) return;
+      
+        setLoadingProjects(true);
+        setProjectError("");
+      
+        listProjects()
+          .then((data) => {
+            setProjects(data);
+      
+            if (data.length > 0) {
+              setActiveProjectId(data[0].id);
+            }
+          })
+          .catch((e: any) => {
+            setProjectError(e.message);
+          })
+          .finally(() => {
+            setLoadingProjects(false);
+          });
+      }, [user]);
+  
   return (
     <div style={styles.shell}>
       <aside
@@ -120,7 +174,7 @@ export default function ProductOwnerPage(): JSX.Element {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, ease: "easeOut" }}
           >
-            Hi Product Owner, welcome to the Dashboard.
+            Hi {user?.name ?? "there"}, welcome to the Dashboard! 
           </motion.h1>
           <div style={{ color: "white", padding: 40 }}>
             <p>This is the Product Owner page.</p>
