@@ -14,3 +14,4 @@ class Sprint(Base):
     start_date = Column(Date, nullable=False)
     end_date = Column(Date, nullable=False)
     is_active = Column(Boolean, default=True)
+    sprint_velocity = Column(Integer, nullable=False, default=0)

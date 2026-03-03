@@ -6,6 +6,7 @@ from datetime import date, timedelta
 from uuid import UUID
 from app.db.session import get_db
 from app.core.deps import get_current_user
+from app.models import Story
 from app.models.user import User
 from app.models.sprint import Sprint
 from app.models.project import Project
@@ -66,6 +67,7 @@ def create_sprint(
         start_date=data.start_date,
         end_date=end_date,
         is_active=data.is_active,
+        sprint_velocity=0,
     )
     db.add(sprint)
     db.commit()
@@ -142,6 +144,32 @@ def update_sprint(
     db.commit()
     db.refresh(sprint)
     return sprint
+
+
+@router.patch("/{sprint_id}/velocity", response_model=SprintOut)
+def update_sprint_velocity(
+    sprint_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    sprint = db.query(Sprint).filter(Sprint.id == sprint_id).first()
+    if not sprint:
+        raise HTTPException(status_code=404, detail="Sprint not found")
+
+    velocity = (
+        db.query(func.coalesce(func.sum(Story.points), 0))
+        .filter(
+            Story.sprint_id == sprint_id,
+            Story.isDone == True,
+        )
+        .scalar()
+    )
+    sprint.sprint_velocity = int(velocity)
+
+    db.commit()
+    db.refresh(sprint)
+    return sprint
+
 
 
 @router.delete("/{sprint_id}")

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer
+from sqlalchemy import Column, String, Integer, Float
 from sqlalchemy.dialects.postgresql import UUID
 import uuid
 
@@ -12,7 +12,4 @@ class Project(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name = Column(String, nullable=False)
     sprint_duration = Column(Integer, nullable=False)
-
-
-class JoinProjectIn(BaseModel):
-    role: str
+    project_velocity = Column(Float, nullable=False, default=0.0)

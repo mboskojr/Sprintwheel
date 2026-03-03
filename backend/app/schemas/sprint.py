@@ -25,6 +25,7 @@ class SprintOut(BaseModel):
     start_date: date
     end_date: date
     is_active: bool
+    sprint_velocity: int
 
     class Config:
         from_attributes = True

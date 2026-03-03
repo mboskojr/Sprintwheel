@@ -7,6 +7,9 @@ from app.core.deps import get_current_user
 from app.models.user import User
 from app.models.project import Project
 from app.schemas.project import ProjectCreate, ProjectUpdate, ProjectOut, UpdateRoleIn
+from app.schemas.project import ProjectCreate, ProjectUpdate, ProjectOut
+from sqlalchemy import func
+from app.models.sprint import Sprint
 from app.models.project_members import ProjectMember
 from app.schemas.project import ProjectCreate, ProjectUpdate, ProjectOut, JoinProjectIn, ProjectMembershipOut
 
@@ -94,6 +97,29 @@ def update_project(
 
     project.name = data.name
     project.sprint_duration = data.sprint_duration
+    db.commit()
+    db.refresh(project)
+    return project
+
+
+@router.patch("/{project_id}/velocity", response_model=ProjectOut)
+def update_project_velocity(
+    project_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    project = db.query(Project).filter(Project.id == project_id).first()
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    avg_velocity = (
+        db.query(func.coalesce(func.avg(Sprint.sprint_velocity), 0.0))
+        .filter(Sprint.project_id == project_id)
+        .scalar()
+    )
+
+    project.project_velocity = float(avg_velocity)
+
     db.commit()
     db.refresh(project)
     return project

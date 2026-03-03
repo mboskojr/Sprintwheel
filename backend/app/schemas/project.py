@@ -16,6 +16,7 @@ class ProjectOut(BaseModel):
     id: UUID
     name: str
     sprint_duration: int
+    project_velocity: float
     
 class JoinProjectIn(BaseModel):
     role: str
