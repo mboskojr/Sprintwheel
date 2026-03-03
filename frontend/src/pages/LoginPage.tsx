@@ -6,37 +6,99 @@ import { useNavigate } from "react-router-dom";
 import { login, me, register } from "../api/auth";
 import { GoogleLogin } from "@react-oauth/google";
 import { googleLogin } from "../api/auth";
+import { listProjects } from "../api/projects";
 
-function LoginPage(): JSX.Element{
+function roleToUrlKey(role: string): string {
+  switch (role) {
+    case "Product Owner":
+      return "product-owner";
+    case "Scrum Facilitator":
+      return "scrum-facilitator";
+    case "Developer":
+      return "developer";
+    case "Member":
+      return "member";
+    default:
+      return "member";
+  }
+}
+
+function roleKeyToLanding(roleKey: string): string {
+  switch (roleKey) {
+    case "product-owner":
+      return "product-owner";
+    case "scrum-facilitator":
+      return "scrum-facilitator";
+    case "developer":
+    case "member":
+    default:
+      return "dashboard";
+  }
+}
+
+function isValidPrimaryRole(role: string | null | undefined): role is
+  | "Product Owner"
+  | "Scrum Facilitator"
+  | "Developer" {
+  return role === "Product Owner" || role === "Scrum Facilitator" || role === "Developer";
+}
+
+function LoginPage(): JSX.Element {
   const navigate = useNavigate();
   const [mode, setMode] = useState<"login" | "register">("login");
 
-  const [name, setName] = useState(""); 
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   const [status, setStatus] = useState<string>("");
   const [user, setUser] = useState<any>(null);
 
+  async function routeAfterAuth() {
+    const projects = await listProjects();
+
+    if (!projects.length) {
+      navigate("/new-project", { replace: true });
+      return;
+    }
+
+    const first = projects[0] as any;
+    const projectId: string = first.id;
+
+    // IMPORTANT: This only works if listProjects includes role for the current user per project.
+    const roleFromApi: string | undefined = first.role ?? first.user_role;
+
+    // If role isn't one of the 3 primary roles, force role selection for that project
+    if (!isValidPrimaryRole(roleFromApi)) {
+      navigate(`/projects/${projectId}/role-options`, { replace: true });
+      return;
+    }
+
+    const roleKey = roleToUrlKey(roleFromApi);
+    const landing = roleKeyToLanding(roleKey);
+
+    navigate(`/projects/${projectId}/${roleKey}/${landing}`, { replace: true });
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setStatus("");
     setUser(null);
-  
+
     try {
       if (mode === "register") {
         await register(name, email, password);
       }
-  
+
       const tok = await login(email, password);
       localStorage.setItem("token", tok.access_token);
-  
+
       const u = await me(tok.access_token);
       localStorage.setItem("user", JSON.stringify(u));
-      navigate(u.role ? "/dashboard" : "/role-options")
 
       setStatus(mode === "register" ? "Account created & logged in!" : "Logged in!");
-      navigate("/role-options");
+
+      await routeAfterAuth();
     } catch (err: any) {
       setStatus(err?.message ?? "Request failed");
     }
@@ -45,7 +107,6 @@ function LoginPage(): JSX.Element{
   return (
     <main className="app-background">
       <div className="hero">
-
         {/* top */}
         <div className="hero-top">
           <img className="logo" src={logo} alt="SprintWheel logo" />
@@ -70,18 +131,18 @@ function LoginPage(): JSX.Element{
               {mode === "register" && (
                 <label className="field">
                   <span className="label">Name</span>
-                  <Banner value={name} onChange={(e)=>setName(e.target.value)} required />
+                  <Banner value={name} onChange={(e) => setName(e.target.value)} required />
                 </label>
               )}
 
               <label className="field">
                 <span className="label">Email</span>
-                <Banner value={email} onChange={(e)=>setEmail(e.target.value)} type="email" required />
+                <Banner value={email} onChange={(e) => setEmail(e.target.value)} type="email" required />
               </label>
 
               <label className="field">
                 <span className="label">Password</span>
-                <Banner value={password} onChange={(e)=>setPassword(e.target.value)} type="password" required />
+                <Banner value={password} onChange={(e) => setPassword(e.target.value)} type="password" required />
               </label>
 
               <button className="primary-btn" type="submit">
@@ -104,6 +165,7 @@ function LoginPage(): JSX.Element{
                 </span>
                 <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.25)" }} />
               </div>
+
               {/* Google Button */}
               {mode === "login" && (
                 <div style={{ display: "flex", justifyContent: "center", transform: "scale(1.15)" }}>
@@ -119,7 +181,7 @@ function LoginPage(): JSX.Element{
                         const u = await me(token.access_token);
                         localStorage.setItem("user", JSON.stringify(u));
 
-                        navigate("/role-options");
+                        await routeAfterAuth();
                       } catch (err: any) {
                         setStatus(err?.message ?? "Google login failed");
                       }
@@ -132,13 +194,14 @@ function LoginPage(): JSX.Element{
                   />
                 </div>
               )}
+
               <div style={{ marginTop: 14, textAlign: "center" }}>
                 {mode === "login" ? (
-                  <button type="button" className="switch" onClick={()=>setMode("register")}>
+                  <button type="button" className="switch" onClick={() => setMode("register")}>
                     New here? Create an account
                   </button>
                 ) : (
-                  <button type="button" className="switch" onClick={()=>setMode("login")}>
+                  <button type="button" className="switch" onClick={() => setMode("login")}>
                     Already have an account? Sign in
                   </button>
                 )}
@@ -154,7 +217,6 @@ function LoginPage(): JSX.Element{
           <h1 className="brand">SprintWheel</h1>
           <p className="byline">Presented by: Stack Overthrow</p>
         </div>
-
       </div>
     </main>
   );

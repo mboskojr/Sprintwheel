@@ -1,8 +1,17 @@
 import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import type { CSSProperties, JSX } from "react";
+import { updateRole } from "../api/projects";
+import { useState } from "react";
+
 
 const styles: Record<string, CSSProperties> = {
+  error: {
+  marginTop: 14,
+  fontSize: 12,
+  color: "#ffb4b4",
+  opacity: 0.95,
+          },
   shell: {
     minHeight: "100vh",
     width: "100%",
@@ -105,16 +114,51 @@ function RolePill({
     </motion.button>
   );
 }
+function roleToUrlKey(role: string): string {
+  switch (role) {
+    case "Product Owner":
+      return "product-owner";
+    case "Scrum Facilitator":
+      return "scrum-facilitator";
+    case "Developer":
+      return "developer";
+    default:
+      return "member";
+  }
+}
 
 export default function RoleOptionsPage(): JSX.Element {
   const navigate = useNavigate();
+  const { projectId } = useParams<{ projectId: string }>();
+  const [error, setError] = useState<string>("");
+  const [busy, setBusy] = useState<boolean>(false);
+
+  const setRoleAndGo = async (roleLabel: string, destination: string) => {
+    if (!projectId || busy) return;
+    setError("");
+    setBusy(true);
+
+    try {
+      // Update role for *current user* in this project (backend uses current_user)
+      await updateRole(projectId, { role: roleLabel });
+
+      const roleKey = roleToUrlKey(roleLabel);
+      navigate(`/projects/${projectId}/${roleKey}/${destination}`);
+    } catch (err: any) {
+      setError(
+        err?.message ||
+          "Could not update your role. Please try again (and confirm you are logged in)."
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
     <div style={styles.shell}>
       <div style={styles.card}>
         <div style={styles.header}>
           <h1 style={styles.title}>Choose your role</h1>
-
           <p style={styles.subtitle}>
             This sets the layout + tools you’ll see. You can change it later in
             Settings.
@@ -126,23 +170,25 @@ export default function RoleOptionsPage(): JSX.Element {
             icon="💼"
             title="Product Owner"
             description="Prioritize the backlog, manage scope, and align stakeholders."
-            onClick={() => navigate("/product-owner")}
+            onClick={() => setRoleAndGo("Product Owner", "product-owner")}
           />
 
           <RolePill
             icon="🧭"
             title="Scrum Facilitator"
             description="Run standups, track blockers, and keep the sprint moving."
-            onClick={() => navigate("/scrum-facilitator")}
+            onClick={() => setRoleAndGo("Scrum Facilitator", "scrum-facilitator")}
           />
 
           <RolePill
             icon="💻"
             title="Developer"
             description="Jump into tasks, progress, and sprint insights."
-            onClick={() => navigate("/dashboard")}
+            onClick={() => setRoleAndGo("Developer", "dashboard")}
           />
         </div>
+
+        {error ? <div style={styles.error}>{error}</div> : null}
 
         <div style={styles.footer}></div>
       </div>

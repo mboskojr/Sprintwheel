@@ -13,20 +13,5 @@ class User(Base):
     hashed_password = Column(String, nullable=False)
     role = Column(String, default="user")
 
-    project_relation = relationship(
-        "UserProject",
-        back_populates="user",
-        uselist=False,
-        cascade="all, delete-orphan",
-    )
-
-class UserProject(Base):
-    __tablename__ = "user_projects"
-
-    user_id = Column(String, ForeignKey("users.id"), primary_key=True)
-    projects = Column(MutableList.as_mutable(JSON), default=list, nullable=False)
-    user = relationship("User", back_populates="project_relation")
-
-
 
 
