@@ -9,10 +9,20 @@ from app.models.story import Story
 from app.models.project import Project
 from app.models.sprint import Sprint
 from app.schemas import StoryCreate, StoryUpdate, StoryOut
+from app.models.project_members import ProjectMember
+from app.schemas.story import StoryReorderRequest
 
 router = APIRouter(prefix="/stories", tags=["stories"])
 
-
+def require_project_member(db: Session, project_id: UUID, user_id: str) -> None:
+    pm = (
+        db.query(ProjectMember)
+        .filter(ProjectMember.project_id == project_id,
+                ProjectMember.user_id == user_id)
+        .first()
+    )
+    if not pm:
+        raise HTTPException(status_code=404, detail="Project not found")
 
 
 @router.post("", response_model=StoryOut)
@@ -21,6 +31,7 @@ def create_story(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    require_project_member(db, data.project_id, current_user.id)
     project = db.query(Project).filter(Project.id == data.project_id).first()
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
@@ -47,6 +58,49 @@ def create_story(
     return story
 
 
+@router.post("/backlog", response_model=StoryOut)
+def create_backlog_story(
+    data: StoryCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    project = db.query(Project).filter(Project.id == data.project_id).first()
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    if data.sprint_id is not None:
+        raise HTTPException(
+            status_code=400,
+            detail="Backlog stories cannot be assigned to a sprint",
+        )
+    
+    max_priority = (
+        db.query(Story.priority)
+        .filter(
+            Story.project_id == data.project_id,
+            Story.sprint_id.is_(None),
+        )
+        .order_by(Story.priority.desc())
+        .first()
+    )
+    next_priority = max_priority[0] + 1 if max_priority else 1
+
+    story = Story(
+        project_id=data.project_id,
+        sprint_id=None,
+        title=data.title,
+        description=data.description,
+        points=data.points,
+        status=data.status,
+        priority=next_priority,
+    )
+
+    db.add(story)
+    db.commit()
+    db.refresh(story)
+    return story
+
+
 @router.get("", response_model=list[StoryOut])
 def list_stories(
     project_id: UUID | None = None,
@@ -54,12 +108,63 @@ def list_stories(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    if not project_id:
+        raise HTTPException(status_code=400, detail="project_id is required")
+    require_project_member(db, project_id, current_user.id)
     q = db.query(Story)
     if project_id:
         q = q.filter(Story.project_id == project_id)
     if sprint_id is not None:
         q = q.filter(Story.sprint_id == sprint_id)
     return q.order_by(Story.priority.desc()).all()
+
+
+@router.get("/backlog", response_model=list[StoryOut])
+def get_product_backlog(
+    project_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return (
+        db.query(Story)
+        .filter(
+            Story.project_id == project_id,
+            Story.sprint_id.is_(None),
+        )
+        .order_by(Story.priority.desc())
+        .all()
+    )
+
+
+@router.put("/backlog/reorder")
+def reorder_backlog(
+    data: StoryReorderRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    stories = (
+        db.query(Story)
+        .filter(
+            Story.id.in_(data.ordered_ids),
+            Story.sprint_id.is_(None),
+        )
+        .all()
+    )
+
+    if len(stories) != len(data.ordered_ids):
+        raise HTTPException(status_code=400, detail="Invalid story IDs")
+    
+    project_ids = {story.project_id for story in stories}
+    if len(project_ids) != 1:
+        raise HTTPException(status_code=400, detail="All backlog stories must belong to the same project")
+    
+    story_map = {story.id: story for story in stories}
+
+    for index, story_id in enumerate(data.ordered_ids):
+        story_map[story_id].priority = len(data.ordered_ids) - index
+    
+    db.commit()
+    return {"status": "success"}
 
 
 @router.get("/{story_id}", response_model=StoryOut)
@@ -71,6 +176,7 @@ def get_story(
     story = db.query(Story).filter(Story.id == story_id).first()
     if not story:
         raise HTTPException(status_code=404, detail="Story not found")
+    require_project_member(db, story.project_id, current_user.id)
     return story
 
 
@@ -84,6 +190,7 @@ def update_story(
     story = db.query(Story).filter(Story.id == story_id).first()
     if not story:
         raise HTTPException(status_code=404, detail="Story not found")
+    require_project_member(db, story.project_id, current_user.id)
 
     if data.sprint_id is not None:
         sprint = db.query(Sprint).filter(Sprint.id == data.sprint_id).first()
@@ -110,6 +217,7 @@ def assign_story_to_sprint(
     story = db.query(Story).filter(Story.id == story_id).first()
     if not story:
         raise HTTPException(status_code=404, detail="Story not found")
+    require_project_member(db, story.project_id, current_user.id)
 
     sprint = db.query(Sprint).filter(Sprint.id == sprint_id).first()
     if not sprint:
@@ -133,6 +241,7 @@ def unassign_story_from_sprint(
     story = db.query(Story).filter(Story.id == story_id).first()
     if not story:
         raise HTTPException(status_code=404, detail="Story not found")
+    require_project_member(db, story.project_id, current_user.id)
 
     story.sprint_id = None
     db.commit()
@@ -149,6 +258,7 @@ def toggle_story_done(
     story = db.query(Story).filter(Story.id == story_id).first()
     if not story:
         raise HTTPException(status_code=404, detail="Story not found")
+    require_project_member(db, story.project_id, current_user.id)
 
     # Flip the boolean
     story.isDone = not story.isDone
@@ -168,6 +278,7 @@ def delete_story(
     story = db.query(Story).filter(Story.id == story_id).first()
     if not story:
         raise HTTPException(status_code=404, detail="Story not found")
+    require_project_member(db, story.project_id, current_user.id)
 
     db.delete(story)
     db.commit()

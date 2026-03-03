@@ -53,3 +53,17 @@ async function safeError(res: Response) {
     return `${res.status} ${res.statusText}`;
   }
 }
+
+export async function googleLogin(id_token: string): Promise<TokenOut> {
+    const res = await fetch(`${API_BASE}/auth/google`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id_token }),
+    });
+  
+    if (!res.ok) {
+      const msg = await safeError(res);
+      throw new Error(msg);
+    }
+    return res.json();
+  }

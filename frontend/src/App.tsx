@@ -20,6 +20,8 @@ function App(): JSX.Element {
         {/* Define routes for the app */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/dashboard" element={<DashboardPage />} />
+      <Route path="/role-options" element={<RoleOptionsPage />} />
+
       <Route path="/product-owner" element={<ProductOwnerPage />} />
       <Route path="/role-options" element={<RoleOptionsPage />} />
       <Route path="/scrum-facilitator" element={<ScrumFacilitatorPage />} />
