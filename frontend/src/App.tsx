@@ -12,27 +12,32 @@ import ProjectDetails from "./pages/ProjectDetails";
 import EducationPage from "./pages/EducationPage";
 import SettingsPage from "./pages/SettingsPage";
 import BackendDebug from "./pages/BackendDebug";
+import NewProject from "./pages/NewProject";
+
+
 
 function App(): JSX.Element {
   return (
     <Routes>
-        {/* Default: send site root to login */}
-      <Route path="/" element={<Navigate to="/login" replace/>} />
-        {/* Define routes for the app */}
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/dashboard" element={<DashboardPage />} />
-      <Route path="/role-options" element={<RoleOptionsPage />} />
+      {/* Default: send site root to login */}
+      <Route path="/" element={<Navigate to="/login" replace />} />
 
-      <Route path="/product-owner" element={<ProductOwnerPage />} />
-      <Route path="/role-options" element={<RoleOptionsPage />} />
-      <Route path="/scrum-facilitator" element={<ScrumFacilitatorPage />} />
-      <Route path="/to-do/planning" element={<ToDoPage />} />
-      <Route path="/communication" element={<CommunicationPage />} />
-      <Route path="/progress" element={<ProgressPage />} />
-      <Route path="/project-details" element={<ProjectDetails />} />
-      <Route path="/education" element={<EducationPage />} />
-      <Route path="/settings" element={<SettingsPage />} />
+      {/* No role in URL */}
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/new-project" element={<NewProject />} />
       <Route path="/backend-debug" element={<BackendDebug />} />
+      <Route path="/projects/:projectId/role-options" element={<RoleOptionsPage />} />
+
+      {/* Role included in URL for all other project pages */}
+      <Route path="/projects/:projectId/:role/dashboard" element={<DashboardPage />} />
+      <Route path="/projects/:projectId/:role/product-owner" element={<ProductOwnerPage />} />
+      <Route path="/projects/:projectId/:role/scrum-facilitator" element={<ScrumFacilitatorPage />} />
+      <Route path="/projects/:projectId/:role/to-do/planning" element={<ToDoPage />} />
+      <Route path="/projects/:projectId/:role/communication" element={<CommunicationPage />} />
+      <Route path="/projects/:projectId/:role/progress" element={<ProgressPage />} />
+      <Route path="/projects/:projectId/:role/project-details" element={<ProjectDetails />} />
+      <Route path="/projects/:projectId/:role/education" element={<EducationPage />} />
+      <Route path="/projects/:projectId/:role/settings" element={<SettingsPage />} />
     </Routes>
   );
 }
