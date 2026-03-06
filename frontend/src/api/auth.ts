@@ -48,7 +48,26 @@ export async function me(token: string): Promise<UserOut> {
 async function safeError(res: Response) {
   try {
     const data = await res.json();
-    return data?.detail ?? JSON.stringify(data);
+
+    if (typeof data === "string") return data;
+    if (typeof data?.detail === "string") return data.detail;
+    if (typeof data?.message === "string") return data.message;
+
+    if (Array.isArray(data?.detail)) {
+      return data.detail
+        .map((item: any) => {
+          if (typeof item?.msg === "string") {
+            const field = Array.isArray(item?.loc)
+              ? item.loc[item.loc.length - 1]
+              : "field";
+            return `${field}: ${item.msg}`;
+          }
+          return JSON.stringify(item);
+        })
+        .join(", ");
+    }
+
+    return JSON.stringify(data);
   } catch {
     return `${res.status} ${res.statusText}`;
   }
