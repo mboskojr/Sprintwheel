@@ -4,9 +4,9 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "concurrently -n FRONTEND,BACKEND -c auto \"npm run dev:frontend\" \"npm run dev:backend\"",
-    "dev:frontend": "vite",
-    "dev:backend": "cd ../backend && python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload",
+  "dev": "concurrently -n FRONTEND,BACKEND -c auto \"npm run dev:frontend\" \"npm run dev:backend\"",
+    "dev:frontend": "echo Frontend running at: http://localhost:5173/ && vite",
+    "dev:backend": "cd ../backend && python -m pip install -r requirements.txt && python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload",
 
     "build": "tsc -b && vite build",
     "lint": "eslint .",
