@@ -2,7 +2,7 @@
 import { motion } from "framer-motion";
 import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { createProject, getProject, joinProject } from "../api/projects";
+import { createProject, joinProject } from "../api/projects";
 
 type Status = "idle" | "loading" | "success" | "error";
 
@@ -25,8 +25,15 @@ const styles: Record<string, React.CSSProperties> = {
     padding: 28,
     boxShadow: "0 20px 60px rgba(0,0,0,0.35)",
   },
-  header: { marginBottom: 18 },
-  title: { margin: 0, fontSize: 34, fontWeight: 800, letterSpacing: -0.3 },
+  header: {
+    marginBottom: 18,
+  },
+  title: {
+    margin: 0,
+    fontSize: 34,
+    fontWeight: 800,
+    letterSpacing: -0.3,
+  },
   subtitle: {
     margin: "10px 0 0 0",
     opacity: 0.82,
@@ -52,7 +59,11 @@ const styles: Record<string, React.CSSProperties> = {
     gap: 12,
     marginBottom: 10,
   },
-  panelTitleWrap: { display: "flex", alignItems: "center", gap: 12 },
+  panelTitleWrap: {
+    display: "flex",
+    alignItems: "center",
+    gap: 12,
+  },
   icon: {
     width: 44,
     height: 44,
@@ -64,13 +75,30 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 20,
     flexShrink: 0,
   },
-  panelTitle: { margin: 0, fontSize: 18, fontWeight: 800 },
-  panelDesc: { margin: "6px 0 0 0", fontSize: 13, opacity: 0.8 },
+  panelTitle: {
+    margin: 0,
+    fontSize: 18,
+    fontWeight: 800,
+  },
+  panelDesc: {
+    margin: "6px 0 0 0",
+    fontSize: 13,
+    opacity: 0.8,
+  },
   formRow: {
     display: "grid",
     gridTemplateColumns: "1fr",
-    gap: 10,
+    gap: 12,
     marginTop: 12,
+  },
+  fieldGroup: {
+    display: "grid",
+    gap: 6,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: 700,
+    opacity: 0.92,
   },
   input: {
     width: "100%",
@@ -84,10 +112,13 @@ const styles: Record<string, React.CSSProperties> = {
     outline: "none",
     fontSize: 14,
   },
+  inputError: {
+    border: "1px solid #ff8e8e",
+  },
   inlineRow: {
     display: "flex",
     gap: 10,
-    alignItems: "center",
+    alignItems: "flex-end",
     flexWrap: "wrap",
   },
   button: {
@@ -106,19 +137,19 @@ const styles: Record<string, React.CSSProperties> = {
     cursor: "not-allowed",
   },
   hint: {
-    marginTop: 10,
+    marginTop: 4,
     fontSize: 12,
     opacity: 0.7,
     lineHeight: 1.5,
   },
   error: {
-    marginTop: 10,
+    marginTop: 4,
     fontSize: 12,
     color: "#ffb4b4",
     lineHeight: 1.5,
   },
   success: {
-    marginTop: 10,
+    marginTop: 4,
     fontSize: 12,
     color: "#b9ffcc",
     lineHeight: 1.5,
@@ -128,56 +159,75 @@ const styles: Record<string, React.CSSProperties> = {
 export default function NewProject(): React.JSX.Element {
   const navigate = useNavigate();
 
-  // Create Project state
-  const [projectName, setProjectName] = useState<string>("New Project");
-  const [sprintDurationInput, setSprintDurationInput] = useState<string>("14");
+  const [projectName, setProjectName] = useState("");
+  const [sprintDurationInput, setSprintDurationInput] = useState("");
   const [createStatus, setCreateStatus] = useState<Status>("idle");
-  const [createMsg, setCreateMsg] = useState<string>("");
+  const [createMsg, setCreateMsg] = useState("");
 
-  // Join Project state
-  const [joinProjectId, setJoinProjectId] = useState<string>("");
+  const [joinProjectId, setJoinProjectId] = useState("");
   const [joinStatus, setJoinStatus] = useState<Status>("idle");
-  const [joinMsg, setJoinMsg] = useState<string>("");
+  const [joinMsg, setJoinMsg] = useState("");
 
   const isBusy = useMemo(
     () => createStatus === "loading" || joinStatus === "loading",
     [createStatus, joinStatus]
   );
 
+  const trimmedProjectName = projectName.trim();
+  const trimmedSprint = sprintDurationInput.trim();
+  const trimmedJoinId = joinProjectId.trim();
+
+  const projectNameEmpty =
+    createStatus === "error" && trimmedProjectName.length === 0;
+
+  const sprintEmpty =
+    createStatus === "error" && trimmedSprint.length === 0;
+
+  const sprintInvalid =
+    createStatus === "error" &&
+    trimmedSprint.length > 0 &&
+    (!Number.isInteger(Number(trimmedSprint)) || Number(trimmedSprint) <= 0);
+
+  const joinInputError =
+    joinStatus === "error" &&
+    (joinMsg.toLowerCase().includes("invalid") ||
+      joinMsg.toLowerCase().includes("not found") ||
+      joinMsg.toLowerCase().includes("please enter"));
+
   async function handleCreateProject() {
     if (isBusy) return;
-
-    const name = projectName.trim() || "New Project";
-    const parsedDuration = Number(sprintDurationInput);
-    const duration =
-      Number.isFinite(parsedDuration) && parsedDuration > 0
-        ? parsedDuration
-        : 14;
 
     setCreateStatus("loading");
     setCreateMsg("");
     setJoinStatus("idle");
     setJoinMsg("");
 
+    if (!trimmedProjectName || !trimmedSprint) {
+      setCreateStatus("error");
+      setCreateMsg("Please fill in all required fields.");
+      return;
+    }
+
+    const sprintNumber = Number(trimmedSprint);
+
+    if (!Number.isInteger(sprintNumber) || sprintNumber <= 0) {
+      setCreateStatus("error");
+      setCreateMsg("Please enter a valid whole number for sprint length in days.");
+      return;
+    }
+
     try {
       const created = await createProject({
-        name,
-        sprint_duration: duration,
+        name: trimmedProjectName,
+        sprint_duration: sprintNumber,
       });
 
       setCreateStatus("success");
       setCreateMsg(`Created project "${created.name}". Redirecting...`);
-
-      // New flow:
-      // After creating a project, send the user to role-options first.
-      // Any default role assignment should be handled by the backend.
       navigate(`/projects/${created.id}/role-options`, { replace: true });
     } catch (err: any) {
       setCreateStatus("error");
-      setCreateMsg(
-        err?.message ||
-          "Could not create the project. Please try again (and check backend/auth)."
-      );
+      setCreateMsg(err?.message || "Could not create the project.");
     }
   }
 
@@ -185,9 +235,10 @@ export default function NewProject(): React.JSX.Element {
     if (isBusy) return;
 
     const id = joinProjectId.trim();
+
     if (!id) {
       setJoinStatus("error");
-      setJoinMsg("Please enter a project ID.");
+      setJoinMsg("Please enter a Project ID.");
       return;
     }
 
@@ -197,26 +248,30 @@ export default function NewProject(): React.JSX.Element {
     setCreateMsg("");
 
     try {
-      // Verify the project exists first
-      await getProject(id);
-
-      // Join with Developer as the initial/default role
       await joinProject(id, { role: "Developer" });
 
       setJoinStatus("success");
       setJoinMsg('Joined project as "Developer". Redirecting...');
-
-      // Role-options route has no role segment
       navigate(`/projects/${id}/role-options`, { replace: true });
     } catch (err: any) {
-      const msg =
-        err?.status === 404 || /404|not found/i.test(String(err?.message))
-          ? "Project not found. Double-check the project ID."
-          : err?.message ||
-            "Could not join that project. Please try again (and check backend/auth).";
+      const message = String(err?.message || "");
+      const lower = message.toLowerCase();
+      const status = err?.status;
+
+      if (status === 404 || lower.includes("not found")) {
+        setJoinStatus("error");
+        setJoinMsg("Project ID is invalid or not found.");
+        return;
+      }
+
+      if (lower.includes("already")) {
+        setJoinStatus("error");
+        setJoinMsg("You have already joined this project.");
+        return;
+      }
 
       setJoinStatus("error");
-      setJoinMsg(msg);
+      setJoinMsg(message || "Could not join the project.");
     }
   }
 
@@ -249,29 +304,55 @@ export default function NewProject(): React.JSX.Element {
                 <div>
                   <h2 style={styles.panelTitle}>Create New Project</h2>
                   <p style={styles.panelDesc}>
-                    Start fresh. We&apos;ll create it and send you to role setup.
+                    Start a new project and continue to role setup.
                   </p>
                 </div>
               </div>
             </div>
 
             <div style={styles.formRow}>
-              <input
-                style={styles.input}
-                value={projectName}
-                onChange={(e) => setProjectName(e.target.value)}
-                placeholder="Project name"
-                disabled={isBusy}
-              />
+              <div style={styles.fieldGroup}>
+                <label style={styles.label} htmlFor="project-name">
+                  Project Name
+                </label>
+                <input
+                  id="project-name"
+                  style={{
+                    ...styles.input,
+                    ...(projectNameEmpty ? styles.inputError : {}),
+                  }}
+                  value={projectName}
+                  onChange={(e) => setProjectName(e.target.value)}
+                  disabled={isBusy}
+                />
+                {projectNameEmpty && (
+                  <div style={styles.error}>Project name cannot be empty.</div>
+                )}
+              </div>
 
-              <input
-                style={styles.input}
-                value={sprintDurationInput}
-                onChange={(e) => setSprintDurationInput(e.target.value)}
-                placeholder="Sprint duration (days)"
-                inputMode="numeric"
-                disabled={isBusy}
-              />
+              <div style={styles.fieldGroup}>
+                <label style={styles.label} htmlFor="sprint-length">
+                  Sprint Length in Days
+                </label>
+                <input
+                  id="sprint-length"
+                  style={{
+                    ...styles.input,
+                    ...((sprintEmpty || sprintInvalid) ? styles.inputError : {}),
+                  }}
+                  value={sprintDurationInput}
+                  onChange={(e) => setSprintDurationInput(e.target.value)}
+                  disabled={isBusy}
+                />
+                {sprintEmpty && (
+                  <div style={styles.error}>Sprint length cannot be empty.</div>
+                )}
+                {sprintInvalid && (
+                  <div style={styles.error}>
+                    Please enter a valid whole number for sprint length.
+                  </div>
+                )}
+              </div>
 
               <motion.button
                 type="button"
@@ -288,16 +369,20 @@ export default function NewProject(): React.JSX.Element {
                 {createStatus === "loading" ? "Creating..." : "Create New Project"}
               </motion.button>
 
-              {createStatus === "error" && (
-                <div style={styles.error}>{createMsg}</div>
-              )}
               {createStatus === "success" && (
                 <div style={styles.success}>{createMsg}</div>
               )}
+
+              {createStatus === "error" &&
+                !projectNameEmpty &&
+                !sprintEmpty &&
+                !sprintInvalid && (
+                  <div style={styles.error}>{createMsg}</div>
+                )}
+
               {createStatus === "idle" && (
                 <div style={styles.hint}>
-                  Tip: you can rename the project and adjust sprint settings
-                  later.
+                  Enter a project name and sprint length to create your project.
                 </div>
               )}
             </div>
@@ -310,45 +395,55 @@ export default function NewProject(): React.JSX.Element {
                 <div>
                   <h2 style={styles.panelTitle}>Join Project</h2>
                   <p style={styles.panelDesc}>
-                    Enter a Project ID to join. If it exists, we&apos;ll add you
-                    and take you to role setup.
+                    Enter a Project ID to join an existing project.
                   </p>
                 </div>
               </div>
             </div>
 
             <div style={styles.formRow}>
-              <div style={styles.inlineRow}>
-                <input
-                  style={styles.input}
-                  value={joinProjectId}
-                  onChange={(e) => setJoinProjectId(e.target.value)}
-                  onKeyDown={onJoinKeyDown}
-                  placeholder="Project ID (e.g., 3f9a2c...)"
-                  disabled={isBusy}
-                />
+              <div style={styles.fieldGroup}>
+                <label style={styles.label} htmlFor="join-project-id">
+                  Project ID
+                </label>
 
-                <motion.button
-                  type="button"
-                  style={{
-                    ...styles.button,
-                    ...(isBusy ? styles.buttonDisabled : {}),
-                  }}
-                  onClick={handleJoinProject}
-                  disabled={isBusy}
-                  whileHover={isBusy ? undefined : { y: -2 }}
-                  whileTap={isBusy ? undefined : { scale: 0.98 }}
-                >
-                  {joinStatus === "loading" ? "Joining..." : "Enter"}
-                </motion.button>
+                <div style={styles.inlineRow}>
+                  <input
+                    id="join-project-id"
+                    style={{
+                      ...styles.input,
+                      ...(joinInputError ? styles.inputError : {}),
+                    }}
+                    value={joinProjectId}
+                    onChange={(e) => setJoinProjectId(e.target.value)}
+                    onKeyDown={onJoinKeyDown}
+                    disabled={isBusy}
+                  />
+
+                  <motion.button
+                    type="button"
+                    style={{
+                      ...styles.button,
+                      ...(isBusy ? styles.buttonDisabled : {}),
+                    }}
+                    onClick={handleJoinProject}
+                    disabled={isBusy}
+                    whileHover={isBusy ? undefined : { y: -2 }}
+                    whileTap={isBusy ? undefined : { scale: 0.98 }}
+                  >
+                    {joinStatus === "loading" ? "Joining..." : "Enter"}
+                  </motion.button>
+                </div>
               </div>
 
               {joinStatus === "error" && (
                 <div style={styles.error}>{joinMsg}</div>
               )}
+
               {joinStatus === "success" && (
                 <div style={styles.success}>{joinMsg}</div>
               )}
+
               {joinStatus === "idle" && (
                 <div style={styles.hint}>
                   Press <b>Enter</b> to submit quickly.

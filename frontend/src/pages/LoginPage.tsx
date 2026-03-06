@@ -80,12 +80,38 @@ function LoginPage(): JSX.Element {
     setStatus("");
     setUser(null);
 
-    try {
-      if (mode === "register") {
-        await register(name, email, password);
+    const trimmedName = name.trim();
+    const trimmedEmail = email.trim();
+    const trimmedPassword = password;
+
+    if (!trimmedEmail || !trimmedPassword) {
+      setStatus("Please fill in all required fields.");
+      return;
+    }
+
+    if (mode === "register") {
+      if (!trimmedName) {
+        setStatus("Please enter your name.");
+        return;
       }
 
-      const tok = await login(email, password);
+      if (trimmedPassword.length < 8) {
+        setStatus("Password must be at least 8 characters.");
+        return;
+      }
+
+      if (trimmedPassword.length > 72) {
+        setStatus("Password must be 72 characters or fewer.");
+        return;
+      }
+    }
+
+    try {
+      if (mode === "register") {
+        await register(trimmedName, trimmedEmail, trimmedPassword);
+      }
+
+      const tok = await login(trimmedEmail, trimmedPassword);
       localStorage.setItem("token", tok.access_token);
 
       const u = await me(tok.access_token);
@@ -124,18 +150,32 @@ function LoginPage(): JSX.Element {
               {mode === "register" && (
                 <label className="field">
                   <span className="label">Name</span>
-                  <Banner value={name} onChange={(e) => setName(e.target.value)} required />
+                  <Banner
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    required
+                  />
                 </label>
               )}
 
               <label className="field">
                 <span className="label">Email</span>
-                <Banner value={email} onChange={(e) => setEmail(e.target.value)} type="email" required />
+                <Banner
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  type="email"
+                  required
+                />
               </label>
 
               <label className="field">
                 <span className="label">Password</span>
-                <Banner value={password} onChange={(e) => setPassword(e.target.value)} type="password" required />
+                <Banner
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  type="password"
+                  required
+                />
               </label>
 
               <button className="primary-btn" type="submit">
@@ -151,15 +191,39 @@ function LoginPage(): JSX.Element {
                   opacity: 0.95,
                 }}
               >
-                <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.25)" }} />
-                <span style={{ color: "rgba(255,255,255,0.85)", fontSize: 14, fontWeight: 600 }}>
+                <div
+                  style={{
+                    flex: 1,
+                    height: 1,
+                    background: "rgba(255,255,255,0.25)",
+                  }}
+                />
+                <span
+                  style={{
+                    color: "rgba(255,255,255,0.85)",
+                    fontSize: 14,
+                    fontWeight: 600,
+                  }}
+                >
                   OR
                 </span>
-                <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.25)" }} />
+                <div
+                  style={{
+                    flex: 1,
+                    height: 1,
+                    background: "rgba(255,255,255,0.25)",
+                  }}
+                />
               </div>
 
               {mode === "login" && (
-                <div style={{ display: "flex", justifyContent: "center", transform: "scale(1.15)" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "center",
+                    transform: "scale(1.15)",
+                  }}
+                >
                   <GoogleLogin
                     onSuccess={async (credentialResponse) => {
                       try {
@@ -189,11 +253,19 @@ function LoginPage(): JSX.Element {
 
               <div style={{ marginTop: 14, textAlign: "center" }}>
                 {mode === "login" ? (
-                  <button type="button" className="switch" onClick={() => setMode("register")}>
+                  <button
+                    type="button"
+                    className="switch"
+                    onClick={() => setMode("register")}
+                  >
                     New here? Create an account
                   </button>
                 ) : (
-                  <button type="button" className="switch" onClick={() => setMode("login")}>
+                  <button
+                    type="button"
+                    className="switch"
+                    onClick={() => setMode("login")}
+                  >
                     Already have an account? Sign in
                   </button>
                 )}
