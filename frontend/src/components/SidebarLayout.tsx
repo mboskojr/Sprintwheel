@@ -100,7 +100,7 @@ const styles: Record<string, CSSProperties> = {
   },
   select: {
     width: "100%",
-    background: "rgba(255,255,255,0.08)",
+    background: "#2a2f3a",
     border: "1px solid rgba(255,255,255,0.15)",
     color: "white",
     borderRadius: 10,
@@ -328,7 +328,11 @@ export default function SidebarLayout({
                 onChange={(e) => handleProjectSwitch(e.target.value)}
               >
                 {projects.map((project) => (
-                  <option key={project.id} value={project.id}>
+                  <option
+                    key={project.id}
+                    value={project.id}
+                    style={{ backgroundColor: "#2a2f3a", color: "white" }}
+                  >
                     {project.name}
                   </option>
                 ))}
