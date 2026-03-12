@@ -24,27 +24,32 @@ def require_project_member(db: Session, project_id: UUID, user_id: str) -> None:
     if not pm:
         raise HTTPException(status_code=404, detail="Project not found")
 
+
 @router.post("", response_model=TaskOut)
 def create_task(
     data: TaskCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+
     story = db.query(Story).filter(Story.id == data.story_id).first()
     if not story:
         raise HTTPException(status_code=404, detail="Story not found")
+
     require_project_member(db, story.project_id, current_user.id)
 
     task = Task(
         story_id=data.story_id,
         assignee_id=data.assignee_id,
         title=data.title,
-        description=data.description,
-        isDone=False,
+        description=data.description or "",
+        status=data.status,
     )
+
     db.add(task)
     db.commit()
     db.refresh(task)
+
     return task
 
 
@@ -109,7 +114,7 @@ def update_task(
     return task
 
 
-@router.post("/{task_id}/toggle-done", response_model=TaskOut)
+'''@router.post("/{task_id}/toggle-done", response_model=TaskOut)
 def toggle_story_done(
     task_id: UUID,
     db: Session = Depends(get_db),
@@ -130,9 +135,7 @@ def toggle_story_done(
 
     db.commit()
     db.refresh(task)
-    return task
-
-
+    return task'''
 
 
 @router.delete("/{task_id}")

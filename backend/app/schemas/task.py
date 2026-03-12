@@ -7,16 +7,16 @@ class TaskCreate(BaseModel):
     assignee_id: UUID | None = None  # must match users.id type (string)
     title: str = Field(min_length=1, max_length=200)
     description: str | None = None
-
+    status: str = "todo"
 
 
 
 class TaskUpdate(BaseModel):
-    story_id: UUID
+    story_id: UUID | None = None
     assignee_id: UUID | None = None
     title: str | None = Field(default=None, min_length=1, max_length=200)
     description: str | None = None
-    isDone: bool | None = Field(default=False)
+    status: str | None = None
 
 
 class TaskOut(BaseModel):
@@ -25,8 +25,8 @@ class TaskOut(BaseModel):
     assignee_id: UUID | None
     title: str
     description: str | None = None
-    isDone: bool
-
+    #isDone: bool
+    status: str
 
     class Config:
         from_attributes = True
