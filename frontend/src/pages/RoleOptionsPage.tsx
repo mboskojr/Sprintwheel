@@ -28,6 +28,7 @@ const styles: Record<string, CSSProperties> = {
     borderRadius: 24,
     padding: 28,
     boxShadow: "0 20px 60px rgba(0,0,0,0.35)",
+    position: "relative", // added this for adding close button
   },
   header: { marginBottom: 18 },
   title: { margin: 0, fontSize: 34, fontWeight: 800, letterSpacing: -0.3 },
@@ -83,6 +84,22 @@ const styles: Record<string, CSSProperties> = {
     fontSize: 12,
     lineHeight: 1.5,
   },
+  closeButton: {
+    position: "absolute",
+    top: 16,
+    right: 16,
+    borderRadius: 999,
+    padding: "12px 16px",
+    background: "rgba(255,255,255,0.12)",
+    border: "1px solid rgba(255,255,255,0.18)",
+    color: "white",
+    cursor: "pointer",
+    fontWeight: 800,
+    fontSize: 16,
+    display: "grid",
+    placeItems: "center",
+    whiteSpace: "nowrap",
+  },    
 };
 
 type RoleButtonProps = {
@@ -187,6 +204,18 @@ export default function RoleOptionsPage(): JSX.Element {
   return (
     <div style={styles.shell}>
       <div style={styles.card}>
+
+        <motion.button // added close button
+          type="button"
+          style={styles.closeButton}
+          onClick={() => navigate(-1)}
+          aria-label="Close"
+          whileHover={{ y: -2}}  // slight lift on hover
+          whileTap={{ scale: 0.98}} // press effect
+        >
+          ×
+        </motion.button>
+
         <div style={styles.header}>
           <h1 style={styles.title}>Choose your role</h1>
           <p style={styles.subtitle}>
