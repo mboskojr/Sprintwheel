@@ -24,6 +24,7 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: 24,
     padding: 28,
     boxShadow: "0 20px 60px rgba(0,0,0,0.35)",
+    position: "relative", // added this for adding close button
   },
   header: {
     marginBottom: 18,
@@ -154,6 +155,22 @@ const styles: Record<string, React.CSSProperties> = {
     color: "#b9ffcc",
     lineHeight: 1.5,
   },
+  closeButton: {
+    position: "absolute",
+    top: 16,
+    right: 16,
+    borderRadius: 999,
+    padding: "12px 16px",
+    background: "rgba(255,255,255,0.12)",
+    border: "1px solid rgba(255,255,255,0.18)",
+    color: "white",
+    cursor: "pointer",
+    fontWeight: 800,
+    fontSize: 16,
+    display: "grid",
+    placeItems: "center",
+    whiteSpace: "nowrap",
+  },  
 };
 
 export default function NewProject(): React.JSX.Element {
@@ -289,6 +306,18 @@ export default function NewProject(): React.JSX.Element {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.25 }}
       >
+
+        <motion.button
+          type="button"
+          style={styles.closeButton}
+          onClick={() => navigate(-1)}
+          aria-label="Close"
+          whileHover={{ y: -2}}  // slight lift on hover
+          whileTap={{ scale: 0.98}} // press effect
+        >
+          ×
+        </motion.button>
+
         <div style={styles.header}>
           <h1 style={styles.title}>Projects</h1>
           <p style={styles.subtitle}>
