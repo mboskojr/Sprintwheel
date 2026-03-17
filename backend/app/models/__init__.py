@@ -4,3 +4,5 @@ from .sprint import Sprint
 from .story import Story
 from .task import Task
 from .project_members import ProjectMember
+from .project_event import ProjectEvent
+from .information_radiator import InformationRadiatorBoard, InformationRadiatorNote

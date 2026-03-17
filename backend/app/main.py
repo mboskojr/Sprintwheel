@@ -7,6 +7,7 @@ from app.routers.sprint import router as sprints_router
 from app.routers.story import router as stories_router
 from app.routers.task import router as tasks_router
 from app.routers.project_events import router as project_events_router
+from app.routers.information_radiator import router as information_radiator_router
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title="SprintWheel API")
@@ -36,6 +37,7 @@ app.include_router(sprints_router)
 app.include_router(stories_router)
 app.include_router(tasks_router)
 app.include_router(project_events_router)
+app.include_router(information_radiator_router)
 
 @app.get("/")
 def root():
