@@ -10,7 +10,8 @@ from app.models import Story
 from app.models.user import User
 from app.models.sprint import Sprint
 from app.models.project import Project
-from app.schemas.sprint import SprintCreate, SprintUpdate, SprintOut
+from app.schemas import StoryOut
+from app.schemas.sprint import SprintCreate, SprintUpdate, SprintOut, SprintBurndownOut
 from app.models.project_members import ProjectMember
 
 router = APIRouter(prefix="/sprints", tags=["sprints"])
@@ -171,6 +172,71 @@ def update_sprint_velocity(
     return sprint
 
 
+@router.get("/{sprint_id}/burndown", response_model=SprintBurndownOut)
+def get_sprint_burndown(
+    sprint_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    sprint = db.query(Sprint).filter(Sprint.id == sprint_id).first()
+    if not sprint:
+        raise HTTPException(status_code=404, detail="Sprint not found")
+    require_project_member(db, sprint.project_id, current_user.id)
+
+
+    today = date.today()
+    days_remaining = (sprint.end_date - today).days
+
+    remaining_points = (
+        db.query(func.coalesce(func.sum(Story.points), 0))
+        .filter(
+            Story.sprint_id == sprint_id,
+            Story.isDone == False,
+        )
+        .scalar()
+    )
+    remaining_points = int(remaining_points)
+
+    if days_remaining > 0:
+        points_per_day_needed = remaining_points / days_remaining
+    else:
+        points_per_day_needed = float(remaining_points)
+
+    return {
+        "sprint_id": sprint.id,
+        "today": today,
+        "end_date": sprint.end_date,
+        "days_remaining": days_remaining,
+        "remaining_points": remaining_points,
+        "points_per_day_needed": points_per_day_needed,
+    }
+
+@router.get("/{sprint_id}/stories/sorted/points", response_model=list[StoryOut])
+def get_sprint_stories_sorted_by_points(
+    sprint_id: UUID,
+    order: str = "desc",  # "asc" or "desc"
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    sprint = db.query(Sprint).filter(Sprint.id == sprint_id).first()
+    if not sprint:
+        raise HTTPException(status_code=404, detail="Sprint not found")
+    require_project_member(db, sprint.project_id, current_user.id)
+
+
+    q = db.query(Story).filter(Story.sprint_id == sprint_id)
+
+    if order == "asc":
+        q = q.order_by(Story.points.asc())
+    elif order == "desc":
+        q = q.order_by(Story.points.desc())
+    else:
+        raise HTTPException(
+            status_code=400,
+            detail="order must be 'asc' or 'desc'"
+        )
+
+    return q.all()
 
 @router.delete("/{sprint_id}")
 def delete_sprint(

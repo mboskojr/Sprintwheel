@@ -16,6 +16,14 @@ class SprintUpdate(BaseModel):
     end_date: date | None = None
     is_active: bool | None = None
 
+class SprintBurndownOut(BaseModel):
+    sprint_id: UUID
+    today: date
+    end_date: date
+    days_remaining: int
+    remaining_points: int
+    points_per_day_needed: float
+
 
 class SprintOut(BaseModel):
     id: UUID

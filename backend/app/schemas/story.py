@@ -1,3 +1,5 @@
+from datetime import date
+
 from pydantic import BaseModel, Field
 from uuid import UUID
 
@@ -33,9 +35,18 @@ class StoryOut(BaseModel):
 
     isDone: bool
     priority: int
+    date_completed: date | None = None
 
     class Config:
         from_attributes = True
 
+
+class StoryDateUpdate(BaseModel):
+    date_completed: date | None = None
+
+
 class StoryReorderRequest(BaseModel):
     ordered_ids: list[UUID]
+
+class StoryPointsUpdate(BaseModel):
+    points: int = Field(ge=0)

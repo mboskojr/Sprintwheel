@@ -1,3 +1,5 @@
+from datetime import date
+
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
@@ -10,7 +12,7 @@ from app.models.project import Project
 from app.models.sprint import Sprint
 from app.schemas import StoryCreate, StoryUpdate, StoryOut
 from app.models.project_members import ProjectMember
-from app.schemas.story import StoryReorderRequest
+from app.schemas.story import StoryReorderRequest, StoryPointsUpdate, StoryDateUpdate
 
 router = APIRouter(prefix="/stories", tags=["stories"])
 
@@ -260,13 +262,72 @@ def toggle_story_done(
         raise HTTPException(status_code=404, detail="Story not found")
     require_project_member(db, story.project_id, current_user.id)
 
-    # Flip the boolean
-    story.isDone = not story.isDone
+    sprint = None
+    if story.sprint_id is not None:
+        sprint = db.query(Sprint).filter(Sprint.id == story.sprint_id).first()
+
+    points = story.points or 0
+
+    if story.isDone:
+        story.isDone = False
+        story.date_completed = None
+        if sprint is not None:
+            sprint.sprint_velocity -= points
+            if sprint.sprint_velocity < 0:
+                sprint.sprint_velocity = 0
+    else:
+        story.isDone = True
+        story.date_completed = date.today()
+        if sprint is not None:
+            sprint.sprint_velocity += points
 
     db.commit()
     db.refresh(story)
     return story
 
+
+@router.patch("/{story_id}/points", response_model=StoryOut)
+def update_story_points(
+    story_id: UUID,
+    data: StoryPointsUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    story = db.query(Story).filter(Story.id == story_id).first()
+    if not story:
+        raise HTTPException(status_code=404, detail="Story not found")
+
+    require_project_member(db, story.project_id, current_user.id)
+
+    story.points = data.points
+
+    db.commit()
+    db.refresh(story)
+
+    return story
+
+
+
+
+@router.patch("/{story_id}/date", response_model=StoryOut)
+def update_story_date_completed(
+    story_id: UUID,
+    data: StoryDateUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    story = db.query(Story).filter(Story.id == story_id).first()
+    if not story:
+        raise HTTPException(status_code=404, detail="Story not found")
+
+    require_project_member(db, story.project_id, current_user.id)
+
+    story.date_completed = data.date_completed
+
+    db.commit()
+    db.refresh(story)
+
+    return story
 
 
 @router.delete("/{story_id}")

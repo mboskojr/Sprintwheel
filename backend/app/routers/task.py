@@ -9,6 +9,9 @@ from app.models.task import Task
 from app.models.story import Story
 from app.schemas import TaskOut, TaskCreate, TaskUpdate
 from app.models.project_members import ProjectMember
+from datetime import date
+
+from app.schemas.task import TaskDateUpdate
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
 
@@ -136,6 +139,51 @@ def toggle_story_done(
     db.commit()
     db.refresh(task)
     return task'''
+
+@router.patch("/{task_id}/complete-date", response_model=TaskOut)
+def set_task_completed_date(
+    task_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    task = db.query(Task).filter(Task.id == task_id).first()
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    story = db.query(Story).filter(Story.id == task.story_id).first()
+    if not story:
+        raise HTTPException(status_code=404, detail="Story not found")
+
+    require_project_member(db, story.project_id, current_user.id)
+    task.date_completed = date.today()
+
+    db.commit()
+    db.refresh(task)
+    return task
+
+
+@router.patch("/{task_id}/set-date", response_model=TaskOut)
+def update_task_completed_date(
+    task_id: UUID,
+    data: TaskDateUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    task = db.query(Task).filter(Task.id == task_id).first()
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    story = db.query(Story).filter(Story.id == task.story_id).first()
+    if not story:
+        raise HTTPException(status_code=404, detail="Story not found")
+
+    require_project_member(db, story.project_id, current_user.id)
+    task.date_completed = data.date_completed
+
+    db.commit()
+    db.refresh(task)
+
+    return task
 
 
 @router.delete("/{task_id}")

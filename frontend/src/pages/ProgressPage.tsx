@@ -1,17 +1,18 @@
 import type{ CSSProperties, JSX } from "react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
-
+//import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
+import SprintBurndownChart from "../components/SprintBurndownChart";
 
 export default function ProgressPage(): JSX.Element {
 
     const containerStyle: CSSProperties = { padding: 40 };
 
     // data to hold space for test graph
-    const testData = [
+    {/*const testData = [
         { date: "Day 1", remaining: 0, ideal: 0 },
         { date: "Day 2", remaining: 0, ideal: 0 },
         { date: "Day 3", remaining: 0, ideal: 0 },
     ];
+    */}
 
 
     return (
@@ -21,13 +22,20 @@ export default function ProgressPage(): JSX.Element {
             <p> This is where the Burndown Chart, Velocity Chart, & Sprint Report will live</p>
 
 
+            <h2>Sprint #BLANK Burndown Chart</h2>
+            <div style={{ padding: 40 }}>
+                <SprintBurndownChart />
+            </div>
+
+
             {/* Placeholder Recharts graph*/}
+            {/*
             <div style={{ marginTop: 20}}>
                 <LineChart
                 width={800}
                 height={350}
                 data={testData}
-                margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                margin={{ top: 20, right: 30, left: 5, bottom: 10 }}
                 >
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="date" />
@@ -38,6 +46,9 @@ export default function ProgressPage(): JSX.Element {
                     <Line type="monotone" dataKey="ideal" stroke="#8884d8" strokeDasharray="5 5" name="Ideal" />
                 </LineChart>
             </div>
+            */}
+
+
         </div>
     );
 }

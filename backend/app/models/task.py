@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, String, Integer, ForeignKey, Boolean
+from sqlalchemy import Column, String, Integer, ForeignKey, Boolean, Date
 from sqlalchemy.dialects.postgresql import UUID
 
 from app.db.session import Base
@@ -15,3 +15,4 @@ class Task(Base):
     #isDone = Column(Boolean, default=False)
     status = Column(String, nullable=False, default="todo")
     position = Column(Integer, default=0)
+    date_completed = Column(Date, nullable=True)

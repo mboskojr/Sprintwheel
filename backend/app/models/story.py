@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, ForeignKey, Boolean
+from sqlalchemy import Column, String, Integer, ForeignKey, Boolean, Date
 from sqlalchemy.dialects.postgresql import UUID
 import uuid
 
@@ -18,3 +18,4 @@ class Story(Base):
 
     isDone = Column(Boolean, default=False)
     priority = Column(Integer, default=10)
+    date_completed = Column(Date, nullable=True)
