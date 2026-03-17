@@ -37,7 +37,7 @@ export default function SprintBurndownChart() {
                     }} />
                 <YAxis width="auto" 
                     label={{ 
-                        value: "Task Points Remaining", 
+                        value: "Remaining Task Points", 
                         position: "insideLeft", 
                         angle: -90,
                         textAnchor: "middle",
@@ -63,7 +63,7 @@ export default function SprintBurndownChart() {
                     dataKey="remaining"
                     stroke="#560b8e"
                     strokeWidth={2}
-                    name="Remaining Tasks"
+                    name="Remaining Points"
                 />
                 <Tooltip />
             </LineChart>
