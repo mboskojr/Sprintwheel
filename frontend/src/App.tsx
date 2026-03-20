@@ -13,6 +13,7 @@ import EducationPage from "./pages/EducationPage";
 import SettingsPage from "./pages/SettingsPage";
 import BackendDebug from "./pages/BackendDebug";
 import NewProject from "./pages/NewProject";
+import ProductBacklogPage from "./pages/ProductBacklogPage";
 
 
 
@@ -38,6 +39,7 @@ function App(): JSX.Element {
       <Route path="/projects/:projectId/:role/project-details" element={<ProjectDetails />} />
       <Route path="/projects/:projectId/:role/education" element={<EducationPage />} />
       <Route path="/projects/:projectId/:role/settings" element={<SettingsPage />} />
+      <Route path="/projects/:projectId/:role/product-backlog" element={<ProductBacklogPage />} />
     </Routes>
   );
 }

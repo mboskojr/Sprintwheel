@@ -69,6 +69,8 @@ def create_backlog_story(
     project = db.query(Project).filter(Project.id == data.project_id).first()
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
+
+    require_project_member(db, data.project_id, current_user.id)
     
     if data.sprint_id is not None:
         raise HTTPException(
@@ -93,7 +95,7 @@ def create_backlog_story(
         title=data.title,
         description=data.description,
         points=data.points,
-        status=data.status,
+        #status=data.status,
         priority=next_priority,
     )
 
