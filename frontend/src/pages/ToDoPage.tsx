@@ -19,7 +19,7 @@ export default function ToDoPage(): JSX.Element {
 
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import type { JSX } from "react";
+import type { JSX, CSSProperties } from "react";
 
 import {
   DndContext,
@@ -40,6 +40,12 @@ interface Board {
   done: Task[];
 }
 
+interface PendingDelete {
+  taskId: string;
+  status: keyof Board;
+  title: string;
+}
+
 export default function ToDoPage(): JSX.Element {
   const { projectId } = useParams();
 
@@ -56,6 +62,7 @@ export default function ToDoPage(): JSX.Element {
   });
 
   const [storyId, setStoryId] = useState<string | null>(null);
+  const [taskToDelete, setTaskToDelete] = useState<PendingDelete | null>(null);
 
   useEffect(() => {
     if (!projectId) return;
@@ -68,18 +75,19 @@ export default function ToDoPage(): JSX.Element {
       .then(res => res.json())
       .then(data => {
         setStoryId(data.story_id);
-      
+
         setBoard({
           todo: data.todo,
           in_progress: data.in_progress,
           done: data.done
         });
-      });
+      })
+      .catch(err => console.error("Error fetching board:", err));
   }, [projectId]);
 
   function createTask(status: keyof Board) {
-    const title = inputs[status];
-    if (!title || !projectId) return;
+    const title = inputs[status].trim();
+    if (!title || !projectId || !storyId) return;
 
     fetch("http://127.0.0.1:8000/tasks", {
       method: "POST",
@@ -99,7 +107,7 @@ export default function ToDoPage(): JSX.Element {
         const newTask: Task = {
           id: responseData.id,
           title: responseData.title || title,
-          status: status
+          status
         };
 
         setBoard(prev => ({
@@ -144,41 +152,43 @@ export default function ToDoPage(): JSX.Element {
     };
 
     for (const column of Object.keys(newBoard) as (keyof Board)[]) {
-      const index = newBoard[column].findIndex(t => String(t.id) === String(taskId));
+      const index = newBoard[column].findIndex(
+        t => String(t.id) === String(taskId)
+      );
 
       if (index !== -1) {
         movedTask = newBoard[column][index];
         newBoard[column].splice(index, 1);
+        break;
       }
     }
 
     if (!movedTask) return;
 
-    movedTask.status = newStatus;
+    movedTask = { ...movedTask, status: newStatus };
     newBoard[newStatus].push(movedTask);
 
     setBoard(newBoard);
 
     fetch(`http://127.0.0.1:8000/tasks/${taskId}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`
-        },
-        body: JSON.stringify({
-          status: newStatus
-        })
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`
+      },
+      body: JSON.stringify({
+        status: newStatus
       })
-      .then(async res => {
-        if (!res.ok) {
-          console.error("PATCH error:", await res.text());
-        }
+    }).then(async res => {
+      if (!res.ok) {
+        console.error("PATCH error:", await res.text());
+      }
     });
   }
 
   return (
     <div style={pageStyle}>
-      <h1 style={{ marginBottom: 30 , textAlign: "center" }}>Task Board</h1>
+      <h1 style={{ marginBottom: 30, textAlign: "center" }}>Task Board</h1>
 
       <DndContext onDragEnd={handleDragEnd}>
         <div style={boardStyle}>
@@ -192,7 +202,7 @@ export default function ToDoPage(): JSX.Element {
               setInputs(prev => ({ ...prev, todo: v }))
             }
             createTask={() => createTask("todo")}
-            deleteTask={deleteTask}
+            setTaskToDelete={setTaskToDelete}
           />
 
           <Column
@@ -205,7 +215,7 @@ export default function ToDoPage(): JSX.Element {
               setInputs(prev => ({ ...prev, in_progress: v }))
             }
             createTask={() => createTask("in_progress")}
-            deleteTask={deleteTask}
+            setTaskToDelete={setTaskToDelete}
           />
 
           <Column
@@ -218,15 +228,65 @@ export default function ToDoPage(): JSX.Element {
               setInputs(prev => ({ ...prev, done: v }))
             }
             createTask={() => createTask("done")}
-            deleteTask={deleteTask}
+            setTaskToDelete={setTaskToDelete}
           />
         </div>
       </DndContext>
+
+      {taskToDelete && (
+        <div style={modalOverlayStyle}>
+          <div style={modalStyle}>
+            <h3 style={modalTitleStyle}>Delete task?</h3>
+            <p style={modalTextStyle}>
+              Are you sure you want to delete "{taskToDelete.title}"?
+            </p>
+
+            <div style={modalButtonRowStyle}>
+              <button
+                style={cancelButtonStyle}
+                onClick={() => setTaskToDelete(null)}
+              >
+                Cancel
+              </button>
+
+              <button
+                style={confirmDeleteButtonStyle}
+                onClick={() => {
+                  deleteTask(taskToDelete.taskId, taskToDelete.status);
+                  setTaskToDelete(null);
+                }}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-function Column({ id, title, tasks, color, input, setInput, createTask, deleteTask }: any) {
+interface ColumnProps {
+  id: keyof Board;
+  title: string;
+  tasks: Task[];
+  color: string;
+  input: string;
+  setInput: (value: string) => void;
+  createTask: () => void;
+  setTaskToDelete: (task: PendingDelete | null) => void;
+}
+
+function Column({
+  id,
+  title,
+  tasks,
+  color,
+  input,
+  setInput,
+  createTask,
+  setTaskToDelete
+}: ColumnProps) {
   const { setNodeRef } = useDroppable({
     id,
     data: { column: id }
@@ -234,7 +294,7 @@ function Column({ id, title, tasks, color, input, setInput, createTask, deleteTa
 
   return (
     <div ref={setNodeRef} style={{ ...columnStyle, background: color }}>
-      <h3 style={{ color: "#rgba(255,255,255,0.04)" }}>{title}</h3>
+      <h3 style={columnTitleStyle}>{title}</h3>
 
       <div style={addTaskContainer}>
         <input
@@ -242,6 +302,11 @@ function Column({ id, title, tasks, color, input, setInput, createTask, deleteTa
           value={input}
           placeholder="Add note..."
           onChange={e => setInput(e.target.value)}
+          onKeyDown={e => {
+            if (e.key === "Enter") {
+              createTask();
+            }
+          }}
         />
 
         <button style={addButtonStyle} onClick={createTask}>
@@ -250,11 +315,17 @@ function Column({ id, title, tasks, color, input, setInput, createTask, deleteTa
       </div>
 
       <div style={stackContainer}>
-        {tasks.map((task: Task) => (
-          <TaskCard 
-            key={task.id} 
-            task={task} 
-            onDelete={() => deleteTask(task.id, id)}
+        {tasks.map(task => (
+          <TaskCard
+            key={task.id}
+            task={task}
+            onDelete={() =>
+              setTaskToDelete({
+                taskId: task.id,
+                status: id,
+                title: task.title
+              })
+            }
           />
         ))}
       </div>
@@ -262,12 +333,18 @@ function Column({ id, title, tasks, color, input, setInput, createTask, deleteTa
   );
 }
 
-function TaskCard({ task, onDelete }: { task: Task, onDelete: () => void }) {
+function TaskCard({
+  task,
+  onDelete
+}: {
+  task: Task;
+  onDelete: () => void;
+}) {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: task.id
   });
 
-  const style = {
+  const style: CSSProperties = {
     ...cardStyle,
     transform: transform
       ? `translate3d(${transform.x}px, ${transform.y}px, 0)`
@@ -275,14 +352,14 @@ function TaskCard({ task, onDelete }: { task: Task, onDelete: () => void }) {
   };
 
   return (
-    <div ref={setNodeRef} {...listeners} {...attributes} style={style as React.CSSProperties}>
+    <div ref={setNodeRef} {...listeners} {...attributes} style={style}>
       <span>{task.title}</span>
-      <button 
+      <button
         style={deleteButtonStyle}
-        onPointerDown={(e) => e.stopPropagation()} 
-        onClick={(e) => {
-            e.stopPropagation();
-            onDelete();
+        onPointerDown={e => e.stopPropagation()}
+        onClick={e => {
+          e.stopPropagation();
+          onDelete();
         }}
       >
         ✕
@@ -291,33 +368,39 @@ function TaskCard({ task, onDelete }: { task: Task, onDelete: () => void }) {
   );
 }
 
-const pageStyle = {
+const pageStyle: CSSProperties = {
   color: "white",
   padding: 40,
   background: "#0f172a",
   minHeight: "100vh"
 };
 
-const boardStyle = {
+const boardStyle: CSSProperties = {
   display: "flex",
   gap: 30
 };
 
-const columnStyle = {
+const columnStyle: CSSProperties = {
   flex: 1,
   padding: 20,
   borderRadius: 14,
   minHeight: 450
 };
 
-const stackContainer = {
+const columnTitleStyle: CSSProperties = {
+  color: "#111",
+  fontWeight: 700,
+  letterSpacing: "0.5px"
+};
+
+const stackContainer: CSSProperties = {
   marginTop: 20,
   display: "flex",
   flexDirection: "column",
   gap: 12
 };
 
-const cardStyle = {
+const cardStyle: CSSProperties = {
   background: "white",
   padding: 14,
   borderRadius: 8,
@@ -331,13 +414,13 @@ const cardStyle = {
   alignItems: "center"
 };
 
-const addTaskContainer = {
+const addTaskContainer: CSSProperties = {
   display: "flex",
   gap: 6,
   marginTop: 10
 };
 
-const inputStyle = {
+const inputStyle: CSSProperties = {
   flex: 1,
   padding: 8,
   borderRadius: 6,
@@ -347,7 +430,7 @@ const inputStyle = {
   background: "white"
 };
 
-const addButtonStyle = {
+const addButtonStyle: CSSProperties = {
   padding: "6px 10px",
   borderRadius: 6,
   border: "none",
@@ -356,7 +439,7 @@ const addButtonStyle = {
   color: "white"
 };
 
-const deleteButtonStyle = {
+const deleteButtonStyle: CSSProperties = {
   background: "transparent",
   border: "none",
   color: "#999",
@@ -365,5 +448,59 @@ const deleteButtonStyle = {
   padding: "4px",
   display: "flex",
   alignItems: "center",
+  justifyContent: "center"
+};
+
+const modalOverlayStyle: CSSProperties = {
+  position: "fixed",
+  inset: 0,
+  background: "rgba(0, 0, 0, 0.45)",
+  display: "flex",
+  alignItems: "center",
   justifyContent: "center",
+  zIndex: 1000
+};
+
+const modalStyle: CSSProperties = {
+  background: "white",
+  borderRadius: 16,
+  padding: 24,
+  width: "90%",
+  maxWidth: 400,
+  boxShadow: "0 10px 30px rgba(0,0,0,0.25)"
+};
+
+const modalTitleStyle: CSSProperties = {
+  marginTop: 0,
+  marginBottom: 10,
+  color: "#111"
+};
+
+const modalTextStyle: CSSProperties = {
+  color: "#444",
+  marginBottom: 20
+};
+
+const modalButtonRowStyle: CSSProperties = {
+  display: "flex",
+  justifyContent: "flex-end",
+  gap: 12
+};
+
+const cancelButtonStyle: CSSProperties = {
+  padding: "8px 16px",
+  borderRadius: 8,
+  border: "1px solid #ccc",
+  background: "white",
+  color: "#111",
+  cursor: "pointer"
+};
+
+const confirmDeleteButtonStyle: CSSProperties = {
+  padding: "8px 16px",
+  borderRadius: 8,
+  border: "none",
+  background: "#dc2626",
+  color: "white",
+  cursor: "pointer"
 };
