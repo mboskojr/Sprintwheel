@@ -383,39 +383,34 @@ function NavItem({
 }
 
 function getRoleMenuItems(basePath: string, role: RoleKey): SidebarItem[] {
+  const commonItems: SidebarItem[] = [
+    { icon: "📝", label: "To-Do / Planning", path: `${basePath}/to-do/planning` },
+    { icon: "📧", label: "Communication", path: `${basePath}/communication` },
+    { icon: "📊", label: "Progress", path: `${basePath}/progress` },
+    { icon: "📁", label: "Project Details", path: `${basePath}/project-details` },
+    { icon: "📅", label: "Calendar", path: `${basePath}/calendar` },
+    { icon: "📚", label: "Education", path: `${basePath}/education` },
+    { icon: "⚙️", label: "Settings", path: `${basePath}/settings` },
+  ];
+
   switch (role) {
     case "product-owner":
       return [
         { icon: "📌", label: "Product Owner Home", path: `${basePath}/product-owner-dashboard` },
-        { icon: "📝", label: "To-Do / Planning", path: `${basePath}/to-do/planning` },
-        { icon: "📧", label: "Communication", path: `${basePath}/communication` },
-        { icon: "📊", label: "Progress", path: `${basePath}/progress` },
-        { icon: "📁", label: "Project Details", path: `${basePath}/project-details` },
-        { icon: "📚", label: "Education", path: `${basePath}/education` },
-        { icon: "⚙️", label: "Settings", path: `${basePath}/settings` },
+        ...commonItems,
       ];
 
     case "scrum-facilitator":
       return [
         { icon: "🧭", label: "Scrum Facilitator Home", path: `${basePath}/scrum-facilitator-dashboard` },
-        { icon: "📝", label: "To-Do / Planning", path: `${basePath}/to-do/planning` },
-        { icon: "📧", label: "Communication", path: `${basePath}/communication` },
-        { icon: "📊", label: "Progress", path: `${basePath}/progress` },
-        { icon: "📁", label: "Project Details", path: `${basePath}/project-details` },
-        { icon: "📚", label: "Education", path: `${basePath}/education` },
-        { icon: "⚙️", label: "Settings", path: `${basePath}/settings` },
+        ...commonItems,
       ];
 
     case "developer":
     default:
       return [
         { icon: "💻", label: "Developer Dashboard", path: `${basePath}/developer-dashboard` },
-        { icon: "📝", label: "To-Do / Planning", path: `${basePath}/to-do/planning` },
-        { icon: "📧", label: "Communication", path: `${basePath}/communication` },
-        { icon: "📊", label: "Progress", path: `${basePath}/progress` },
-        { icon: "📁", label: "Project Details", path: `${basePath}/project-details` },
-        { icon: "📚", label: "Education", path: `${basePath}/education` },
-        { icon: "⚙️", label: "Settings", path: `${basePath}/settings` },
+        ...commonItems,
       ];
   }
 }
@@ -615,7 +610,7 @@ export default function SidebarLayout({
               type="button"
               style={{
                 ...styles.bottomButton,
-                marginTop: "auto",
+                marginTop: 6,
               }}
               onClick={logout}
             >

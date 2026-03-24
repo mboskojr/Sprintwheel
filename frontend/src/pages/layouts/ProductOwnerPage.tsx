@@ -1,10 +1,11 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
 import type { CSSProperties, JSX } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { me } from "../../api/auth";
 import { listProjects, type Project } from "../../api/projects";
 import SidebarLayout from "../../components/SidebarLayout";
+import DashboardCalendarPreview from "../../components/DashboardCalendarPreview";
 
 type User = {
   id: string;
@@ -94,16 +95,21 @@ const styles: Record<string, CSSProperties> = {
     lineHeight: 1.4,
   },
 
+  calendarSection: {
+    marginTop: 20,
+    marginBottom: 20,
+  },
+
   topGrid: {
     display: "grid",
-    gridTemplateColumns: "1.15fr 1.15fr 0.8fr",
+    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
     gap: 20,
     alignItems: "stretch",
   },
 
   bottomGrid: {
     display: "grid",
-    gridTemplateColumns: "1fr 1fr",
+    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
     gap: 20,
     marginTop: 20,
   },
@@ -112,109 +118,63 @@ const styles: Record<string, CSSProperties> = {
     background: "rgba(255,255,255,0.05)",
     border: "1px solid rgba(255,255,255,0.08)",
     borderRadius: 24,
-    padding: 18,
-    boxShadow: "0 12px 32px rgba(0,0,0,0.18)",
+    padding: 22,
+    boxShadow: "0 18px 44px rgba(0,0,0,0.22)",
+    backdropFilter: "blur(10px)",
+    WebkitBackdropFilter: "blur(10px)",
+    display: "flex",
+    flexDirection: "column",
+    minHeight: 280,
   },
 
   cardTitle: {
     margin: 0,
-    fontSize: 18,
-    fontWeight: 650,
+    fontSize: 22,
+    fontWeight: 700,
   },
 
   cardDescription: {
-    margin: "8px 0 16px 0",
+    margin: "10px 0 18px 0",
     fontSize: 14,
-    lineHeight: 1.5,
-    color: "rgba(255,255,255,0.68)",
+    lineHeight: 1.6,
+    color: "rgba(255,255,255,0.72)",
+    maxWidth: 520,
   },
 
   imageWrap: {
+    marginTop: "auto",
     width: "100%",
-    overflow: "hidden",
     borderRadius: 18,
+    overflow: "hidden",
+    background: "rgba(255,255,255,0.04)",
     border: "1px solid rgba(255,255,255,0.06)",
-    background: "rgba(255,255,255,0.03)",
+    minHeight: 160,
   },
 
   image: {
     display: "block",
     width: "100%",
-    height: "auto",
+    height: 180,
     objectFit: "cover",
-  },
-
-  sideColumn: {
-    display: "grid",
-    gap: 14,
-  },
-
-  statCard: {
-    background: "rgba(255,255,255,0.04)",
-    border: "1px solid rgba(255,255,255,0.06)",
-    borderRadius: 18,
-    padding: 16,
-  },
-
-  statLabel: {
-    margin: 0,
-    fontSize: 12,
-    textTransform: "uppercase",
-    letterSpacing: 1,
-    color: "rgba(255,255,255,0.56)",
-  },
-
-  statValue: {
-    margin: "8px 0 0 0",
-    fontSize: 22,
-    fontWeight: 700,
-    lineHeight: 1.1,
-  },
-
-  statText: {
-    margin: "6px 0 0 0",
-    fontSize: 13,
-    lineHeight: 1.4,
-    color: "rgba(255,255,255,0.66)",
-  },
-
-  emptyState: {
-    marginTop: 20,
-    background: "rgba(255,255,255,0.05)",
-    border: "1px solid rgba(255,255,255,0.08)",
-    borderRadius: 22,
-    padding: 18,
-  },
-
-  emptyTitle: {
-    margin: 0,
-    fontSize: 17,
-    fontWeight: 650,
-  },
-
-  emptyText: {
-    margin: "8px 0 0 0",
-    fontSize: 14,
-    lineHeight: 1.5,
-    color: "rgba(255,255,255,0.68)",
   },
 
   overlay: {
     position: "absolute",
     inset: 0,
-    zIndex: 30,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
+    zIndex: 5,
+    display: "grid",
+    placeItems: "center",
     padding: 24,
-    background: "rgba(11, 15, 23, 0.38)",
-    cursor: "pointer",
+    background:
+      "radial-gradient(circle at center, rgba(15,23,42,0.38), rgba(2,6,23,0.78))",
+    backdropFilter: "blur(10px)",
+    WebkitBackdropFilter: "blur(10px)",
   },
 
   glassCard: {
-    width: "min(760px, 94%)",
-    borderRadius: 30,
-    padding: "42px 34px",
+    width: "min(760px, 100%)",
+    borderRadius: 28,
+    padding: "32px 30px",
     textAlign: "center",
     background: "rgba(255,255,255,0.08)",
     border: "1px solid rgba(255,255,255,0.14)",
@@ -263,6 +223,7 @@ const styles: Record<string, CSSProperties> = {
 
 export default function ProductOwnerPage(): JSX.Element {
   const navigate = useNavigate();
+  const { projectId, role } = useParams();
 
   const [user, setUser] = useState<User | null>(() => {
     const raw = localStorage.getItem("user");
@@ -304,7 +265,10 @@ export default function ProductOwnerPage(): JSX.Element {
     listProjects()
       .then((data) => {
         setProjects(data);
-        if (data.length > 0) {
+
+        if (projectId) {
+          setActiveProjectId(projectId);
+        } else if (data.length > 0) {
           setActiveProjectId(data[0].id);
         }
       })
@@ -314,7 +278,7 @@ export default function ProductOwnerPage(): JSX.Element {
       .finally(() => {
         setLoadingProjects(false);
       });
-  }, [user]);
+  }, [user, projectId]);
 
   const activeProject = useMemo(() => {
     return projects.find((project) => project.id === activeProjectId) ?? null;
@@ -399,8 +363,8 @@ export default function ProductOwnerPage(): JSX.Element {
                   {loadingProjects
                     ? "Loading projects..."
                     : projectError
-                    ? projectError
-                    : `${projects.length} project${projects.length === 1 ? "" : "s"} available`}
+                      ? projectError
+                      : `${projects.length} project${projects.length === 1 ? "" : "s"} available`}
                 </p>
               </div>
             </section>
@@ -446,7 +410,7 @@ export default function ProductOwnerPage(): JSX.Element {
                 </p>
                 <div style={styles.imageWrap}>
                   <img
-                    src="/product_roadmap_placeholder.png"
+                    src="/roadmap-placeholder.png"
                     alt="Product roadmap preview"
                     style={styles.image}
                   />
@@ -454,29 +418,29 @@ export default function ProductOwnerPage(): JSX.Element {
               </div>
 
               <div style={styles.card}>
-                <h2 style={styles.cardTitle}>Team Progress</h2>
+                <h2 style={styles.cardTitle}>Insights & Progress</h2>
                 <p style={styles.cardDescription}>
-                  Monitor progress through velocity, burndown, updates, and team
-                  communication while supporting acceptance criteria and answers.
+                  Track how the product is moving forward and identify areas
+                  that need prioritization or refinement.
                 </p>
                 <div style={styles.imageWrap}>
                   <img
-                    src="/progress-insights-placeholder.png"
-                    alt="Team progress preview"
+                    src="/analytics-placeholder.png"
+                    alt="Insights and progress preview"
                     style={styles.image}
                   />
                 </div>
               </div>
             </section>
 
-            {projects.length === 0 && !loadingProjects && !projectError && (
-              <section style={styles.emptyState}>
-                <h3 style={styles.emptyTitle}>No Projects Yet</h3>
-                <p style={styles.emptyText}>
-                  Once a project is created, it will appear here so the product
-                  owner dashboard can show active planning, backlog, and product
-                  management context.
-                </p>
+            {projectId && role && (
+              <section style={styles.calendarSection}>
+                <DashboardCalendarPreview
+                  projectId={projectId}
+                  role={role}
+                  title="Project Calendar"
+                  subtitle="View this month’s schedule at a glance. Click anywhere on the calendar to open the full calendar page."
+                />
               </section>
             )}
           </motion.div>

@@ -2,22 +2,52 @@ from datetime import datetime
 from uuid import UUID as PyUUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm import Session
 from sqlalchemy import and_
+from sqlalchemy.orm import Session
 
-from app.db.session import get_db
 from app.core.deps import get_current_user
-from app.models.user import User
+from app.db.session import get_db
 from app.models.project_event import ProjectEvent
-from app.schemas.project_event import ProjectEventCreate, ProjectEventUpdate, ProjectEventOut
+from app.models.project_members import ProjectMember
+from app.models.user import User
+from app.schemas.project_event import (
+    ProjectEventCreate,
+    ProjectEventOut,
+    ProjectEventUpdate,
+)
 
 router = APIRouter(prefix="/projects", tags=["events"])
 
 
-def require_can_edit_events(user: User) -> None:
-    if user.role not in {"admin", "product_owner", "scrum_master"}:
+def get_project_membership(project_id: PyUUID, user: User, db: Session) -> ProjectMember:
+    membership = (
+        db.query(ProjectMember)
+        .filter(
+            ProjectMember.project_id == project_id,
+            ProjectMember.user_id == user.id,
+        )
+        .first()
+    )
+
+    if not membership:
+        raise HTTPException(status_code=403, detail="Not a member of this project")
+
+    return membership
+
+
+def require_can_edit_events(project_id: PyUUID, user: User, db: Session) -> ProjectMember:
+    membership = get_project_membership(project_id, user, db)
+
+    if membership.role not in {
+        "Product Owner",
+        "Scrum Facilitator",
+        "Developer",
+        "Member",
+    }:
         raise HTTPException(status_code=403, detail="Not authorized to manage events")
-    
+
+    return membership
+
 
 @router.get("/{project_id}/events", response_model=list[ProjectEventOut])
 def list_project_events(
@@ -28,6 +58,8 @@ def list_project_events(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
+    get_project_membership(project_id, user, db)
+
     if end <= start:
         raise HTTPException(status_code=400, detail="end must be after start")
 
@@ -36,8 +68,9 @@ def list_project_events(
         ProjectEvent.start_at < end,
         ProjectEvent.end_at > start,
     ]
+
     if not include_cancelled:
-        filters.append(ProjectEvent.is_cancelled == False)  # noqa: E712
+        filters.append(ProjectEvent.is_cancelled == False)
 
     return (
         db.query(ProjectEvent)
@@ -54,7 +87,7 @@ def create_project_event(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    require_can_edit_events(user)
+    require_can_edit_events(project_id, user, db)
 
     event = ProjectEvent(
         project_id=project_id,
@@ -75,16 +108,25 @@ def create_project_event(
     return event
 
 
-@router.patch("/events/{event_id}", response_model=ProjectEventOut)
+@router.patch("/{project_id}/events/{event_id}", response_model=ProjectEventOut)
 def update_event(
+    project_id: PyUUID,
     event_id: str,
     payload: ProjectEventUpdate,
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    require_can_edit_events(user)
+    require_can_edit_events(project_id, user, db)
 
-    event = db.query(ProjectEvent).filter(ProjectEvent.id == event_id).first()
+    event = (
+        db.query(ProjectEvent)
+        .filter(
+            ProjectEvent.id == event_id,
+            ProjectEvent.project_id == project_id,
+        )
+        .first()
+    )
+
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
 
@@ -92,11 +134,12 @@ def update_event(
 
     new_start = data.get("start_at", event.start_at)
     new_end = data.get("end_at", event.end_at)
+
     if new_end <= new_start:
         raise HTTPException(status_code=400, detail="end_at must be after start_at")
 
-    for k, v in data.items():
-        setattr(event, k, v)
+    for key, value in data.items():
+        setattr(event, key, value)
 
     db.add(event)
     db.commit()
@@ -104,15 +147,24 @@ def update_event(
     return event
 
 
-@router.delete("/events/{event_id}", response_model=ProjectEventOut)
+@router.delete("/{project_id}/events/{event_id}", response_model=ProjectEventOut)
 def cancel_event(
+    project_id: PyUUID,
     event_id: str,
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    require_can_edit_events(user)
+    require_can_edit_events(project_id, user, db)
 
-    event = db.query(ProjectEvent).filter(ProjectEvent.id == event_id).first()
+    event = (
+        db.query(ProjectEvent)
+        .filter(
+            ProjectEvent.id == event_id,
+            ProjectEvent.project_id == project_id,
+        )
+        .first()
+    )
+
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
 

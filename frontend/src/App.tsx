@@ -1,4 +1,4 @@
-import {Routes, Route, Navigate} from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/layouts/DashboardPage";
 import ProductOwnerPage from "./pages/layouts/ProductOwnerPage";
@@ -14,22 +14,18 @@ import SettingsPage from "./pages/SettingsPage";
 import BackendDebug from "./pages/BackendDebug";
 import NewProject from "./pages/NewProject";
 import ProductBacklogPage from "./pages/ProductBacklogPage";
-
-
+import CalendarPage from "./pages/CalendarPage";
 
 function App(): JSX.Element {
   return (
     <Routes>
-      {/* Default: send site root to login */}
       <Route path="/" element={<Navigate to="/login" replace />} />
 
-      {/* No role in URL */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/new-project" element={<NewProject />} />
       <Route path="/backend-debug" element={<BackendDebug />} />
       <Route path="/projects/:projectId/role-options" element={<RoleOptionsPage />} />
 
-      {/* Role included in URL for all other project pages */}
       <Route path="/projects/:projectId/:role/developer-dashboard" element={<DashboardPage />} />
       <Route path="/projects/:projectId/:role/product-owner-dashboard" element={<ProductOwnerPage />} />
       <Route path="/projects/:projectId/:role/scrum-facilitator-dashboard" element={<ScrumFacilitatorPage />} />
@@ -40,6 +36,7 @@ function App(): JSX.Element {
       <Route path="/projects/:projectId/:role/education" element={<EducationPage />} />
       <Route path="/projects/:projectId/:role/settings" element={<SettingsPage />} />
       <Route path="/projects/:projectId/:role/product-backlog" element={<ProductBacklogPage />} />
+      <Route path="/projects/:projectId/:role/calendar" element={<CalendarPage />} />
     </Routes>
   );
 }

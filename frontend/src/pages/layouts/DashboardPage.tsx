@@ -1,10 +1,11 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import type { CSSProperties, JSX } from "react";
 import { me } from "../../api/auth";
 import { listProjects, type Project } from "../../api/projects";
 import SidebarLayout from "../../components/SidebarLayout";
+import DashboardCalendarPreview from "../../components/DashboardCalendarPreview";
 
 type User = {
   id: string;
@@ -108,6 +109,11 @@ const styles: Record<string, CSSProperties> = {
     gap: 20,
     marginTop: 20,
     width: "100%",
+  },
+
+  calendarSection: {
+    marginTop: 20,
+    marginBottom: 20,
   },
 
   card: {
@@ -305,6 +311,7 @@ const styles: Record<string, CSSProperties> = {
 
 export default function DashboardPage(): JSX.Element {
   const navigate = useNavigate();
+  const { projectId, role } = useParams();
 
   const [user, setUser] = useState<User | null>(() => {
     const raw = localStorage.getItem("user");
@@ -346,7 +353,9 @@ export default function DashboardPage(): JSX.Element {
     listProjects()
       .then((data) => {
         setProjects(data);
-        if (data.length > 0) {
+        if (projectId) {
+          setActiveProjectId(projectId);
+        } else if (data.length > 0) {
           setActiveProjectId(data[0].id);
         }
       })
@@ -356,15 +365,17 @@ export default function DashboardPage(): JSX.Element {
       .finally(() => {
         setLoadingProjects(false);
       });
-  }, [user]);
+  }, [user, projectId]);
 
   const activeProject = useMemo(() => {
     return projects.find((project) => project.id === activeProjectId) ?? null;
   }, [projects, activeProjectId]);
 
+  const resolvedRole = role ?? user?.role ?? "developer";
+
   const todoPreviewPath =
-    activeProjectId && user?.role
-      ? `/projects/${activeProjectId}/${user.role}/to-do/planning`
+    activeProjectId && resolvedRole
+      ? `/projects/${activeProjectId}/${resolvedRole}/to-do/planning`
       : "";
 
   return (
@@ -539,6 +550,17 @@ export default function DashboardPage(): JSX.Element {
                 </div>
               </div>
             </section>
+
+            {projectId && resolvedRole && (
+              <section style={styles.calendarSection}>
+                <DashboardCalendarPreview
+                  projectId={projectId}
+                  role={resolvedRole}
+                  title="Project Calendar"
+                  subtitle="View this month’s schedule at a glance. Click anywhere on the calendar to open the full calendar page."
+                />
+              </section>
+            )}
 
             {projects.length === 0 && !loadingProjects && !projectError && (
               <section style={styles.emptyState}>

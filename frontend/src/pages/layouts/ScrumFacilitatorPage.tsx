@@ -1,10 +1,11 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
 import type { CSSProperties, JSX } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { me } from "../../api/auth";
 import { listProjects, type Project } from "../../api/projects";
 import SidebarLayout from "../../components/SidebarLayout";
+import DashboardCalendarPreview from "../../components/DashboardCalendarPreview";
 
 type User = {
   id: string;
@@ -96,7 +97,7 @@ const styles: Record<string, CSSProperties> = {
 
   topGrid: {
     display: "grid",
-    gridTemplateColumns: "1.15fr 1.15fr 0.8fr",
+    gridTemplateColumns: "1fr 1fr",
     gap: 20,
     alignItems: "stretch",
   },
@@ -106,6 +107,11 @@ const styles: Record<string, CSSProperties> = {
     gridTemplateColumns: "1fr 1fr",
     gap: 20,
     marginTop: 20,
+  },
+
+  calendarSection: {
+    marginTop: 20,
+    marginBottom: 20,
   },
 
   card: {
@@ -142,40 +148,6 @@ const styles: Record<string, CSSProperties> = {
     width: "100%",
     height: "auto",
     objectFit: "cover",
-  },
-
-  sideColumn: {
-    display: "grid",
-    gap: 14,
-  },
-
-  statCard: {
-    background: "rgba(255,255,255,0.04)",
-    border: "1px solid rgba(255,255,255,0.06)",
-    borderRadius: 18,
-    padding: 16,
-  },
-
-  statLabel: {
-    margin: 0,
-    fontSize: 12,
-    textTransform: "uppercase",
-    letterSpacing: 1,
-    color: "rgba(255,255,255,0.56)",
-  },
-
-  statValue: {
-    margin: "8px 0 0 0",
-    fontSize: 22,
-    fontWeight: 700,
-    lineHeight: 1.1,
-  },
-
-  statText: {
-    margin: "6px 0 0 0",
-    fontSize: 13,
-    lineHeight: 1.4,
-    color: "rgba(255,255,255,0.66)",
   },
 
   emptyState: {
@@ -263,6 +235,7 @@ const styles: Record<string, CSSProperties> = {
 
 export default function ScrumFacilitatorPage(): JSX.Element {
   const navigate = useNavigate();
+  const { projectId, role } = useParams();
 
   const [user, setUser] = useState<User | null>(() => {
     const raw = localStorage.getItem("user");
@@ -304,7 +277,10 @@ export default function ScrumFacilitatorPage(): JSX.Element {
     listProjects()
       .then((data) => {
         setProjects(data);
-        if (data.length > 0) {
+
+        if (projectId) {
+          setActiveProjectId(projectId);
+        } else if (data.length > 0) {
           setActiveProjectId(data[0].id);
         }
       })
@@ -314,7 +290,7 @@ export default function ScrumFacilitatorPage(): JSX.Element {
       .finally(() => {
         setLoadingProjects(false);
       });
-  }, [user]);
+  }, [user, projectId]);
 
   const activeProject = useMemo(() => {
     return projects.find((project) => project.id === activeProjectId) ?? null;
@@ -468,6 +444,17 @@ export default function ScrumFacilitatorPage(): JSX.Element {
                 </div>
               </div>
             </section>
+
+            {projectId && role && (
+              <section style={styles.calendarSection}>
+                <DashboardCalendarPreview
+                  projectId={projectId}
+                  role={role}
+                  title="Project Calendar"
+                  subtitle="View this month’s schedule at a glance. Click anywhere on the calendar to open the full calendar page."
+                />
+              </section>
+            )}
 
             {projects.length === 0 && !loadingProjects && !projectError && (
               <section style={styles.emptyState}>
