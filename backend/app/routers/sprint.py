@@ -181,34 +181,49 @@ def get_sprint_burndown(
     sprint = db.query(Sprint).filter(Sprint.id == sprint_id).first()
     if not sprint:
         raise HTTPException(status_code=404, detail="Sprint not found")
+
     require_project_member(db, sprint.project_id, current_user.id)
 
-
+    sprint_days = (sprint.end_date - sprint.start_date).days + 1
+    final_array = [None] * sprint_days
     today = date.today()
-    days_remaining = (sprint.end_date - today).days
 
     remaining_points = (
         db.query(func.coalesce(func.sum(Story.points), 0))
-        .filter(
-            Story.sprint_id == sprint_id,
-            Story.isDone == False,
-        )
+        .filter(Story.sprint_id == sprint_id)
         .scalar()
     )
     remaining_points = int(remaining_points)
 
-    if days_remaining > 0:
-        points_per_day_needed = remaining_points / days_remaining
-    else:
-        points_per_day_needed = float(remaining_points)
+    index_day = sprint.start_date
+
+    for day in range(sprint_days):
+        if index_day > today:
+            break
+
+        points_completed_that_day = (
+            db.query(func.coalesce(func.sum(Story.points), 0))
+            .filter(
+                Story.sprint_id == sprint_id,
+                Story.isDone == True,
+                Story.date_completed == index_day,
+            )
+            .scalar()
+        )
+        points_completed_that_day = int(points_completed_that_day)
+
+        remaining_points -= points_completed_that_day
+
+        days_left = (sprint.end_date - index_day).days + 1
+        if days_left > 0:
+            final_array[day] = round(remaining_points / days_left, 2)
+        else:
+            final_array[day] = round(float(remaining_points), 2)
+
+        index_day += timedelta(days=1)
 
     return {
-        "sprint_id": sprint.id,
-        "today": today,
-        "end_date": sprint.end_date,
-        "days_remaining": days_remaining,
-        "remaining_points": remaining_points,
-        "points_per_day_needed": points_per_day_needed,
+        "burndown_array": final_array
     }
 
 @router.get("/{sprint_id}/stories/sorted/points", response_model=list[StoryOut])

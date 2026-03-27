@@ -1,5 +1,5 @@
-from sqlalchemy import Column, Date, Boolean, ForeignKey, Integer, String
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import Column, Date, Boolean, ForeignKey, Integer, String, Float
+from sqlalchemy.dialects.postgresql import UUID, ARRAY
 import uuid
 
 from app.db.session import Base
@@ -15,3 +15,4 @@ class Sprint(Base):
     end_date = Column(Date, nullable=False)
     is_active = Column(Boolean, default=True)
     sprint_velocity = Column(Integer, nullable=False, default=0)
+    burndown_array = Column(ARRAY(Float), nullable=False, default=[])
