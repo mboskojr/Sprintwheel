@@ -20,6 +20,7 @@ from app.schemas.project import (
 )
 from app.models.task import Task
 from app.models.story import Story
+from app.services.notification_service import notify_added_to_project, notify_project_created
 
 router = APIRouter(prefix="/projects", tags=["projects"])
 
@@ -54,6 +55,7 @@ def create_project(
 
     db.commit()
     db.refresh(project)
+    notify_project_created(db, current_user.id, project.name)
     return project
 
 
@@ -224,6 +226,8 @@ def join_project(
     )
     db.commit()
 
+    notify_added_to_project(db, current_user.id, project.name, data.role.value)
+
     return {
         "status": "ok",
         "project_id": project_id,
@@ -325,3 +329,28 @@ def get_project_board(
         "in_progress": board["in_progress"],
         "done": board["done"]
     }
+
+@router.get("/{project_id}/members")
+def get_project_members(
+    project_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    require_project_member(db, project_id, current_user.id)
+    
+    rows = (
+        db.query(ProjectMember, User)
+        .join(User, User.id == ProjectMember.user_id)
+        .filter(ProjectMember.project_id == project_id)
+        .all()
+    )
+    
+    return [
+        {
+            "user_id": str(pm.user_id),
+            "name": user.name,
+            "email": user.email,
+            "role": pm.role,
+        }
+        for pm, user in rows
+    ]

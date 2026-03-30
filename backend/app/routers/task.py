@@ -12,6 +12,8 @@ from app.models.project_members import ProjectMember
 from datetime import date
 
 from app.schemas.task import TaskDateUpdate
+from app.services.notification_service import notify_task_assigned, notify_assignee_changed, notify_task_status_changed
+from app.models.project import Project
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
 
@@ -51,6 +53,12 @@ def create_task(
 
     db.add(task)
     db.commit()
+    if task.assignee_id:
+        assignee = db.query(User).filter(User.id == task.assignee_id).first()
+        project = db.query(Project).filter(Project.id == story.project_id).first()
+        if assignee and project:
+            notify_task_assigned(db, assignee.id, task.title, project.name)
+
     db.refresh(task)
 
     return task
@@ -109,11 +117,34 @@ def update_task(
 
     require_project_member(db, story.project_id, current_user.id)
 
+    old_assignee_id = task.assignee_id
+    old_status = task.status 
+
     for k, v in data.model_dump(exclude_unset=True).items():
         setattr(task, k, v)
 
     db.commit()
     db.refresh(task)
+
+    if data.assignee_id and data.assignee_id != old_assignee_id:
+        new_assignee = db.query(User).filter(User.id == task.assignee_id).first()
+        if new_assignee:
+            notify_assignee_changed(db, new_assignee.id, task.title, new_assignee.name)
+    if data.status and data.status != old_status:
+        # notify assignee
+        if task.assignee_id:
+            notify_task_status_changed(db, task.assignee_id, task.title, task.status)
+        
+        # also notify all other project members
+        story = db.query(Story).filter(Story.id == task.story_id).first()
+        if story:
+            members = db.query(ProjectMember).filter(
+                ProjectMember.project_id == story.project_id
+            ).all()
+            for m in members:
+                if str(m.user_id) != str(task.assignee_id):  # don't double-notify assignee
+                    notify_task_status_changed(db, m.user_id, task.title, task.status)
+
     return task
 
 

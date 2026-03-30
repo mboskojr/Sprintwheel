@@ -15,6 +15,7 @@ from app.schemas.project_event import (
     ProjectEventOut,
     ProjectEventUpdate,
 )
+from app.services.notification_service import notify_event_created, notify_event_updated, notify_event_cancelled
 
 router = APIRouter(prefix="/projects", tags=["events"])
 
@@ -104,6 +105,9 @@ def create_project_event(
     )
     db.add(event)
     db.commit()
+    members = db.query(ProjectMember).filter(ProjectMember.project_id == project_id).all()
+    for m in members:
+        notify_event_created(db, m.user_id, event.title, event.start_at)
     db.refresh(event)
     return event
 
@@ -143,6 +147,9 @@ def update_event(
 
     db.add(event)
     db.commit()
+    members = db.query(ProjectMember).filter(ProjectMember.project_id == project_id).all()
+    for m in members:
+        notify_event_updated(db, m.user_id, event.title)
     db.refresh(event)
     return event
 
@@ -171,5 +178,8 @@ def cancel_event(
     event.is_cancelled = True
     db.add(event)
     db.commit()
+    members = db.query(ProjectMember).filter(ProjectMember.project_id == project_id).all()
+    for m in members:
+        notify_event_cancelled(db, m.user_id, event.title)
     db.refresh(event)
     return event

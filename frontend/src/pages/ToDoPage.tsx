@@ -17,7 +17,7 @@ export default function ToDoPage(): JSX.Element {
     );
 }*/ 
 
-import { useEffect, useState } from "react";
+/* import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import type { JSX, CSSProperties } from "react";
 
@@ -503,4 +503,391 @@ const confirmDeleteButtonStyle: CSSProperties = {
   background: "#dc2626",
   color: "white",
   cursor: "pointer"
+}; */
+import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+import type { JSX, CSSProperties } from "react";
+import { DndContext, useDraggable, useDroppable, type DragEndEvent } from "@dnd-kit/core";
+
+interface Task {
+  id: string;
+  title: string;
+  status: "todo" | "in_progress" | "done";
+  assignee_id: string | null;
+}
+
+interface Member {
+  user_id: string;
+  name: string;
+  email: string;
+  role: string;
+}
+
+interface Board {
+  todo: Task[];
+  in_progress: Task[];
+  done: Task[];
+}
+
+interface PendingDelete {
+  taskId: string;
+  status: keyof Board;
+  title: string;
+}
+
+const API = "http://127.0.0.1:8000";
+
+function authHeaders() {
+  return { Authorization: `Bearer ${localStorage.getItem("token")}` };
+}
+
+export default function ToDoPage(): JSX.Element {
+  const { projectId } = useParams();
+
+  const [board, setBoard] = useState<Board>({ todo: [], in_progress: [], done: [] });
+  const [inputs, setInputs] = useState({ todo: "", in_progress: "", done: "" });
+  const [assignees, setAssignees] = useState<Record<string, string>>({ todo: "", in_progress: "", done: "" });
+  const [storyId, setStoryId] = useState<string | null>(null);
+  const [taskToDelete, setTaskToDelete] = useState<PendingDelete | null>(null);
+  const [members, setMembers] = useState<Member[]>([]);
+
+  useEffect(() => {
+    if (!projectId) return;
+    fetch(`${API}/projects/${projectId}/board`, { headers: authHeaders() })
+      .then(r => r.json())
+      .then(data => {
+        setStoryId(data.story_id);
+        setBoard({ todo: data.todo, in_progress: data.in_progress, done: data.done });
+      })
+      .catch(err => console.error("Error fetching board:", err));
+  }, [projectId]);
+
+  useEffect(() => {
+    if (!projectId) return;
+    fetch(`${API}/projects/${projectId}/members`, { headers: authHeaders() })
+      .then(r => r.ok ? r.json() : [])
+      .then(data => setMembers(Array.isArray(data) ? data : []))
+      .catch(() => setMembers([]));
+  }, [projectId]);
+
+  function createTask(status: keyof Board) {
+    const title = inputs[status].trim();
+    if (!title || !projectId || !storyId) return;
+    const assignee_id = assignees[status] || null;
+
+    fetch(`${API}/tasks`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...authHeaders() },
+      body: JSON.stringify({ title, description: "", story_id: storyId, status, assignee_id }),
+    })
+      .then(r => r.json())
+      .then(data => {
+        setBoard(prev => ({
+          ...prev,
+          [status]: [...prev[status], { id: data.id, title: data.title || title, status, assignee_id: data.assignee_id }]
+        }));
+        setInputs(prev => ({ ...prev, [status]: "" }));
+        setAssignees(prev => ({ ...prev, [status]: "" }));
+      })
+      .catch(err => console.error("Error creating task:", err));
+  }
+
+  function deleteTask(taskId: string, status: keyof Board) {
+    setBoard(prev => ({ ...prev, [status]: prev[status].filter(t => t.id !== taskId) }));
+    fetch(`${API}/tasks/${taskId}`, { method: "DELETE", headers: authHeaders() })
+      .catch(err => console.error("Error deleting task:", err));
+  }
+
+  // Reassign a task to a new user (or clear with "")
+  function reassignTask(taskId: string, newAssigneeId: string | null) {
+    // Update board state immediately
+    setBoard(prev => {
+      const updated = { ...prev };
+      for (const col of Object.keys(updated) as (keyof Board)[]) {
+        updated[col] = updated[col].map(t =>
+          t.id === taskId ? { ...t, assignee_id: newAssigneeId } : t
+        );
+      }
+      return updated;
+    });
+
+    fetch(`${API}/tasks/${taskId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...authHeaders() },
+      body: JSON.stringify({ assignee_id: newAssigneeId }),
+    }).catch(err => console.error("Reassign error:", err));
+  }
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over) return;
+    const taskId = active.id as string;
+    const newStatus = over.data.current?.column as keyof Board;
+    if (!newStatus) return;
+
+    const newBoard: Board = {
+      todo: [...board.todo],
+      in_progress: [...board.in_progress],
+      done: [...board.done]
+    };
+    let movedTask: Task | undefined;
+
+    for (const col of Object.keys(newBoard) as (keyof Board)[]) {
+      const idx = newBoard[col].findIndex(t => String(t.id) === String(taskId));
+      if (idx !== -1) { movedTask = newBoard[col][idx]; newBoard[col].splice(idx, 1); break; }
+    }
+    if (!movedTask) return;
+
+    movedTask = { ...movedTask, status: newStatus };
+    newBoard[newStatus].push(movedTask);
+    setBoard(newBoard);
+
+    fetch(`${API}/tasks/${taskId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...authHeaders() },
+      body: JSON.stringify({ status: newStatus }),
+    }).catch(err => console.error("PATCH error:", err));
+  }
+
+  function getMemberName(userId: string | null): string {
+    if (!userId) return "";
+    const m = members.find(m => m.user_id === userId);
+    return m ? (m.name || m.email) : "";
+  }
+
+  return (
+    <div style={pageStyle}>
+      <h1 style={{ marginBottom: 30, textAlign: "center" }}>Task Board</h1>
+      <DndContext onDragEnd={handleDragEnd}>
+        <div style={boardStyle}>
+          {(["todo", "in_progress", "done"] as (keyof Board)[]).map(col => (
+            <Column
+              key={col}
+              id={col}
+              title={col === "todo" ? "TO DO" : col === "in_progress" ? "IN PROGRESS" : "DONE"}
+              tasks={board[col]}
+              color={col === "todo" ? "#fca5a5" : col === "in_progress" ? "#fde68a" : "#86efac"}
+              input={inputs[col]}
+              assigneeId={assignees[col]}
+              members={members}
+              setInput={v => setInputs(prev => ({ ...prev, [col]: v }))}
+              setAssigneeId={v => setAssignees(prev => ({ ...prev, [col]: v }))}
+              createTask={() => createTask(col)}
+              setTaskToDelete={setTaskToDelete}
+              getMemberName={getMemberName}
+              onReassign={reassignTask}
+            />
+          ))}
+        </div>
+      </DndContext>
+
+      {taskToDelete && (
+        <div style={modalOverlayStyle}>
+          <div style={modalStyle}>
+            <h3 style={modalTitleStyle}>Delete task?</h3>
+            <p style={modalTextStyle}>Are you sure you want to delete "{taskToDelete.title}"?</p>
+            <div style={modalButtonRowStyle}>
+              <button style={cancelButtonStyle} onClick={() => setTaskToDelete(null)}>Cancel</button>
+              <button style={confirmDeleteButtonStyle} onClick={() => { deleteTask(taskToDelete.taskId, taskToDelete.status); setTaskToDelete(null); }}>Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+interface ColumnProps {
+  id: keyof Board;
+  title: string;
+  tasks: Task[];
+  color: string;
+  input: string;
+  assigneeId: string;
+  members: Member[];
+  setInput: (v: string) => void;
+  setAssigneeId: (v: string) => void;
+  createTask: () => void;
+  setTaskToDelete: (t: PendingDelete | null) => void;
+  getMemberName: (id: string | null) => string;
+  onReassign: (taskId: string, newAssigneeId: string | null) => void;
+}
+
+function Column({ id, title, tasks, color, input, assigneeId, members, setInput, setAssigneeId, createTask, setTaskToDelete, getMemberName, onReassign }: ColumnProps) {
+  const { setNodeRef } = useDroppable({ id, data: { column: id } });
+
+  return (
+    <div ref={setNodeRef} style={{ ...columnStyle, background: color }}>
+      <h3 style={columnTitleStyle}>{title}</h3>
+
+      {members.length > 0 && (
+        <select
+          value={assigneeId}
+          onChange={e => setAssigneeId(e.target.value)}
+          style={assigneeSelectStyle}
+        >
+          <option value="">Assign to... </option>
+          {members.map(m => (
+            <option key={m.user_id} value={m.user_id}>
+              {m.name || m.email} — {m.role}
+            </option>
+          ))}
+        </select>
+      )}
+
+      <div style={addTaskContainer}>
+        <input
+          style={inputStyle}
+          value={input}
+          placeholder="Add task..."
+          onChange={e => setInput(e.target.value)}
+          onKeyDown={e => { if (e.key === "Enter") createTask(); }}
+        />
+        <button style={addButtonStyle} onClick={createTask}>+</button>
+      </div>
+
+      <div style={stackContainer}>
+        {tasks.map(task => (
+          <TaskCard
+            key={task.id}
+            task={task}
+            assigneeName={getMemberName(task.assignee_id)}
+            members={members}
+            onDelete={() => setTaskToDelete({ taskId: task.id, status: id, title: task.title })}
+            onReassign={onReassign}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function TaskCard({
+  task,
+  assigneeName,
+  members,
+  onDelete,
+  onReassign,
+}: {
+  task: Task;
+  assigneeName: string;
+  members: Member[];
+  onDelete: () => void;
+  onReassign: (taskId: string, newAssigneeId: string | null) => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform } = useDraggable({ id: task.id });
+  const [showReassign, setShowReassign] = useState(false);
+
+  function handleReassign(e: React.ChangeEvent<HTMLSelectElement>) {
+    const val = e.target.value;
+    onReassign(task.id, val === "" ? null : val);
+    setShowReassign(false);
+  }
+
+  return (
+    <div
+      ref={setNodeRef}
+      {...listeners}
+      {...attributes}
+      style={{
+        ...cardStyle,
+        transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
+      }}
+    >
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontWeight: 500, color: "#111" }}>{task.title}</div>
+
+        {/* Assignee row — click to open reassign dropdown */}
+        <div
+          onPointerDown={e => e.stopPropagation()}
+          style={{ marginTop: 6 }}
+        >
+          {!showReassign ? (
+            <button
+              onClick={e => { e.stopPropagation(); setShowReassign(true); }}
+              style={{
+                background: assigneeName ? "rgba(127,119,221,0.12)" : "rgba(0,0,0,0.06)",
+                border: "1px dashed " + (assigneeName ? "#afa9ec" : "#ccc"),
+                borderRadius: 6,
+                padding: "3px 8px",
+                fontSize: 11,
+                color: assigneeName ? "#534ab7" : "#888",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: 4,
+              }}
+            >
+              <span>👤</span>
+              {assigneeName || "Assign"}
+              <span style={{ opacity: 0.5, fontSize: 10 }}>✏️</span>
+            </button>
+          ) : (
+            <select
+              autoFocus
+              value={task.assignee_id ?? ""}
+              onChange={handleReassign}
+              onBlur={() => setShowReassign(false)}
+              style={{
+                width: "100%",
+                padding: "4px 8px",
+                borderRadius: 6,
+                border: "1px solid #afa9ec",
+                fontSize: 12,
+                color: "#111",
+                background: "white",
+                outline: "none",
+              }}
+            >
+              <option value="">— Unassign —</option>
+              {members.map(m => (
+                <option key={m.user_id} value={m.user_id}>
+                  {m.name || m.email}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
+      </div>
+
+      <button
+        style={deleteButtonStyle}
+        onPointerDown={e => e.stopPropagation()}
+        onClick={e => { e.stopPropagation(); onDelete(); }}
+      >
+        ✕
+      </button>
+    </div>
+  );
+}
+
+// Styles
+const pageStyle: CSSProperties = { color: "white", padding: 40, background: "#0f172a", minHeight: "100vh" };
+const boardStyle: CSSProperties = { display: "flex", gap: 30 };
+const columnStyle: CSSProperties = { flex: 1, padding: 20, borderRadius: 14, minHeight: 450 };
+const columnTitleStyle: CSSProperties = { color: "#111", fontWeight: 700, letterSpacing: "0.5px" };
+const stackContainer: CSSProperties = { marginTop: 12, display: "flex", flexDirection: "column", gap: 12 };
+const cardStyle: CSSProperties = {
+  background: "white", padding: 14, borderRadius: 8, color: "#111",
+  boxShadow: "0 4px 10px rgba(0,0,0,0.2)", cursor: "grab", touchAction: "none",
+  display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8,
 };
+const addTaskContainer: CSSProperties = { display: "flex", gap: 6, marginTop: 8 };
+const inputStyle: CSSProperties = { flex: 1, padding: 8, borderRadius: 6, border: "none", outline: "none", color: "#111", background: "white" };
+const addButtonStyle: CSSProperties = { padding: "6px 10px", borderRadius: 6, border: "none", cursor: "pointer", background: "#111", color: "white" };
+const assigneeSelectStyle: CSSProperties = {
+  width: "100%", marginTop: 10, padding: "7px 10px", borderRadius: 8,
+  border: "none", outline: "none", fontSize: 13, color: "#111",
+  background: "white", cursor: "pointer",
+};
+const deleteButtonStyle: CSSProperties = {
+  background: "transparent", border: "none", color: "#999",
+  cursor: "pointer", fontSize: "16px", padding: "2px", flexShrink: 0,
+};
+const modalOverlayStyle: CSSProperties = { position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 };
+const modalStyle: CSSProperties = { background: "white", borderRadius: 16, padding: 24, width: "90%", maxWidth: 400, boxShadow: "0 10px 30px rgba(0,0,0,0.25)" };
+const modalTitleStyle: CSSProperties = { marginTop: 0, marginBottom: 10, color: "#111" };
+const modalTextStyle: CSSProperties = { color: "#444", marginBottom: 20 };
+const modalButtonRowStyle: CSSProperties = { display: "flex", justifyContent: "flex-end", gap: 12 };
+const cancelButtonStyle: CSSProperties = { padding: "8px 16px", borderRadius: 8, border: "1px solid #ccc", background: "white", color: "#111", cursor: "pointer" };
+const confirmDeleteButtonStyle: CSSProperties = { padding: "8px 16px", borderRadius: 8, border: "none", background: "#dc2626", color: "white", cursor: "pointer" };

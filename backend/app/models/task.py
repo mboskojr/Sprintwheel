@@ -16,3 +16,4 @@ class Task(Base):
     status = Column(String, nullable=False, default="todo")
     position = Column(Integer, default=0)
     date_completed = Column(Date, nullable=True)
+    
