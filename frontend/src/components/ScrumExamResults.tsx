@@ -105,10 +105,18 @@ function ScrumExamResults({
               </span>
             </p>
 
-            {question.explanation && (
-              <p>
-                <strong>Explanation:</strong> {question.explanation}
-              </p>
+            {!isCorrect && (
+              <>
+                <p>
+                    <strong>Correct answer:</strong> {question.correctAnswer}
+                </p>
+
+                {question.explanation && (
+                    <p>
+                    <strong>Explanation:</strong> {question.explanation}
+                    </p>
+                )}
+              </>
             )}
           </div>
         );

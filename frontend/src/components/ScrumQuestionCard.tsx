@@ -4,6 +4,7 @@ import { useTheme } from "../pages/ThemeContext";
 
 type ScrumQuestionCardProps = {
   question: ScrumQuestion;
+  questionNumber: number;
   selectedAnswer?: string;
   onSelectAnswer: (questionId: number, selectedOption: string) => void;
 };
@@ -33,6 +34,7 @@ const styles: Record<string, CSSProperties> = {
 
 function ScrumQuestionCard({
   question,
+  questionNumber,
   selectedAnswer,
   onSelectAnswer,
 }: ScrumQuestionCardProps): JSX.Element {
@@ -50,7 +52,7 @@ function ScrumQuestionCard({
       }}
     >
       <h3 style={styles.title}>
-        {question.id}. {question.prompt}
+        {questionNumber}. {question.prompt}
       </h3>
 
       {question.options.map((option) => (

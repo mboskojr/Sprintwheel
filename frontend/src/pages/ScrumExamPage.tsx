@@ -4,8 +4,20 @@ import { useNavigate, useParams } from "react-router-dom";
 import SidebarLayout from "../components/SidebarLayout";
 import { useTheme } from "./ThemeContext";
 import { scrumQuestions } from "./ScrumQuestions";
+import type { ScrumQuestion } from "./ScrumQuestions";
 import ScrumQuestionCard from "../components/ScrumQuestionCard";
 import ScrumExamResults from "../components/ScrumExamResults";
+
+function shuffleArray<T>(array: T[]): T[] {
+  const shuffled = [...array];
+
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+
+  return shuffled;
+}
 
 const styles: Record<string, CSSProperties> = {
   page: {
@@ -156,6 +168,13 @@ function ScrumExamPage(): JSX.Element {
   const [submitted, setSubmitted] = useState(false);
   const [score, setScore] = useState(0);
 
+  const [questions, setQuestions] = useState<ScrumQuestion[]>(() =>
+    shuffleArray(scrumQuestions).map((q) => ({
+      ...q,
+      options: shuffleArray(q.options),
+    }))
+  );
+
   const navigate = useNavigate();
   const { projectId, role } = useParams();
   const { theme } = useTheme();
@@ -171,7 +190,7 @@ function ScrumExamPage(): JSX.Element {
   function handleSubmit(): void {
     let totalCorrect = 0;
 
-    scrumQuestions.forEach((question) => {
+    questions.forEach((question) => {
       if (answers[question.id] === question.correctAnswer) {
         totalCorrect++;
       }
@@ -190,6 +209,7 @@ function ScrumExamPage(): JSX.Element {
     setAnswers({});
     setSubmitted(false);
     setScore(0);
+    setQuestions(shuffleArray(scrumQuestions));
 
     window.scrollTo({
       top: 0,
@@ -198,9 +218,9 @@ function ScrumExamPage(): JSX.Element {
   }
 
   const answeredCount = useMemo(() => Object.keys(answers).length, [answers]);
-  const allAnswered = answeredCount === scrumQuestions.length;
-  const percentage = Math.round((score / scrumQuestions.length) * 100);
-  const progressPercentage = Math.round((answeredCount / scrumQuestions.length) * 100);
+  const allAnswered = answeredCount === questions.length;
+  const percentage = Math.round((score / questions.length) * 100);
+  const progressPercentage = Math.round((answeredCount / questions.length) * 100);
 
   return (
     <SidebarLayout>
@@ -255,7 +275,7 @@ function ScrumExamPage(): JSX.Element {
                 >
                 <div style={styles.progressTop}>
                   <p style={styles.progressLabel}>
-                    Progress: {answeredCount} / {scrumQuestions.length} answered
+                    Progress: {answeredCount} / {questions.length} answered
                   </p>
                   <span
                     style={{
@@ -278,10 +298,11 @@ function ScrumExamPage(): JSX.Element {
               </section>
               </div>
 
-              {scrumQuestions.map((question) => (
+              {questions.map((question, index) => (
                 <ScrumQuestionCard
                   key={question.id}
                   question={question}
+                  questionNumber={index + 1}
                   selectedAnswer={answers[question.id]}
                   onSelectAnswer={handleAnswerSelect}
                 />
@@ -303,7 +324,7 @@ function ScrumExamPage(): JSX.Element {
             </>
           ) : (
             <ScrumExamResults
-              questions={scrumQuestions}
+              questions={questions}
               answers={answers}
               score={score}
               percentage={percentage}

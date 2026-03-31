@@ -18,6 +18,7 @@ export const scrumQuestions: ScrumQuestion[] = [
       "Product Owner",
     ],
     correctAnswer: "Product Owner",
+    explanation: "The Product Owner is responsible for prioritizing stories in the backlog",
   },
   {
     id: 2,
@@ -30,6 +31,7 @@ export const scrumQuestions: ScrumQuestion[] = [
       "Once before the release",
     ],
     correctAnswer: "At the end of each sprint",
+    explanation: "Retrospectives are held at the end of each sprint to reflect on performance and identify improvements",
   },
   {
     id: 3,
@@ -42,6 +44,7 @@ export const scrumQuestions: ScrumQuestion[] = [
       "It is a very disciplined approach",
     ],
     correctAnswer: "It is a very disciplined approach",
+    explanation: "The waterfall model follows a structured, sequential process, making it a disciplined and predictable approach",
   },
   {
     id: 4,
@@ -54,6 +57,7 @@ export const scrumQuestions: ScrumQuestion[] = [
       "Sprint planning",
     ],
     correctAnswer: "Sprint backlog",
+    explanation: "The sprint backlog is an artifact, not a ceremony, while the others are Scrum events",
   },
   {
     id: 5,
@@ -66,6 +70,7 @@ export const scrumQuestions: ScrumQuestion[] = [
       "TPS reports",
     ],
     correctAnswer: "Information radiators",
+    explanation: "Information radiators visually display work status, showing what is to do, in progress, and done",
   },
   {
     id: 6,
@@ -78,6 +83,7 @@ export const scrumQuestions: ScrumQuestion[] = [
       "Sprint backlog",
     ],
     correctAnswer: "Bug history",
+    explanation: "Bug history is not a Scrum artifact, while product backlog, sprint backlog, and definition of done are official artifacts",
   },
   {
     id: 7,
@@ -90,6 +96,7 @@ export const scrumQuestions: ScrumQuestion[] = [
       "Risks",
     ],
     correctAnswer: "Ethical values",
+    explanation: "Ethical values are not part of a micro charter, which focuses on goals, scope, and trade-offs for the project",
   },
   {
     id: 8,
@@ -102,6 +109,7 @@ export const scrumQuestions: ScrumQuestion[] = [
       "A list of use cases in order of priority",
     ],
     correctAnswer: "Work left to be done over time",
+    explanation: "A burndown chart shows how much work remains over time, helping track progress toward completing a sprint",
   },
   {
     id: 9,
@@ -114,6 +122,7 @@ export const scrumQuestions: ScrumQuestion[] = [
       "CEO, manager, developer",
     ],
     correctAnswer: "Product owner, scrum master, team member",
+    explanation: "Scrum consists of three roles: Product Owner, Scrum Master, and the development team",
   },
   {
     id: 10,
@@ -126,6 +135,7 @@ export const scrumQuestions: ScrumQuestion[] = [
       "Stories",
     ],
     correctAnswer: "Stories",
+    explanation: "Stories are larger units of work that are typically broken down into smaller tasks",
   },
   {
     id: 11,
@@ -138,6 +148,7 @@ export const scrumQuestions: ScrumQuestion[] = [
       "Manages the publication of team reports",
     ],
     correctAnswer: "Controls the priority of backlog items",
+    explanation: "The Product Owner is responsible for prioritizing backlog items to maximize product value",
   },
   {
     id: 12,
@@ -150,6 +161,7 @@ export const scrumQuestions: ScrumQuestion[] = [
       "What features will be released in the product",
     ],
     correctAnswer: "What the team needs to do for each sprint",
+    explanation: "The sprint backlog is the set of work the team commits to complete during a sprint",
   },
   {
     id: 13,
@@ -162,6 +174,7 @@ export const scrumQuestions: ScrumQuestion[] = [
       "Requirement gathering",
     ],
     correctAnswer: "Periodic meetings",
+    explanation: "Periodic meetings are not a defined stage in waterfall, which follows phases like requirements, design, coding, and testing",
   },
   {
     id: 14,
@@ -174,6 +187,7 @@ export const scrumQuestions: ScrumQuestion[] = [
       "Creates initial product backlog",
     ],
     correctAnswer: "Judges the work done",
+    explanation: "The Product Owner defines and prioritizes work, but the team is responsible for evaluating and delivering it",
   },
   {
     id: 15,
@@ -186,6 +200,7 @@ export const scrumQuestions: ScrumQuestion[] = [
       "Adaptive, empirical process",
     ],
     correctAnswer: "Big design up front",
+    explanation: "Big design up front is not agile because agile focuses on iterative development and adapting over time",
   },
   {
     id: 16,
@@ -198,6 +213,7 @@ export const scrumQuestions: ScrumQuestion[] = [
       "Leave the number of points per sprint as is",
     ],
     correctAnswer: "Leave the number of points per sprint as is",
+    explanation: "If the team is consistently meeting goals, the current workload is well calibrated and should not be changed",
   },
   {
     id: 17,
@@ -210,6 +226,7 @@ export const scrumQuestions: ScrumQuestion[] = [
       "Its creator liked the way it sounded",
     ],
     correctAnswer: "It's a rugby term",
+    explanation: "The term scrum comes from rugby, where a scrum represents a team working closely together to move the ball forward",
   },
   {
     id: 18,
@@ -222,6 +239,7 @@ export const scrumQuestions: ScrumQuestion[] = [
       "Document as you go",
     ],
     correctAnswer: "Perfect the requirements before you code",
+    explanation: "Agile avoids fully defining perfect requirements upfront and instead adapts requirements throughout development",
   },
   {
     id: 19,
@@ -234,6 +252,7 @@ export const scrumQuestions: ScrumQuestion[] = [
       "Task score, task variance, task years",
     ],
     correctAnswer: "Task hours, task points, task count",
+    explanation: "Teams commonly estimate using time (hours), relative size (points), or number of tasks to plan sprint workload",
   },
   {
     id: 20,
@@ -246,6 +265,7 @@ export const scrumQuestions: ScrumQuestion[] = [
       "Removes impediments for the team",
     ],
     correctAnswer: "Team boss",
+    explanation: "The Scrum Master is not a boss but a servant-leader who supports and facilitates the team",
   },
   {
     id: 21,
@@ -258,6 +278,7 @@ export const scrumQuestions: ScrumQuestion[] = [
       "Q+A, testing, burn charts",
     ],
     correctAnswer: "Daily scrum, sprint review, retrospective",
+    explanation: "The daily scrum, sprint review, and retrospective are Scrum’s formal feedback loops for continuous inspection and improvement",
   },
   {
     id: 22,
@@ -270,6 +291,7 @@ export const scrumQuestions: ScrumQuestion[] = [
       "Requirements gathering",
     ],
     correctAnswer: "Requirements gathering",
+    explanation: "The waterfall process begins with requirements gathering to define what the system needs to do before any design or development starts",
   },
   {
     id: 23,
@@ -282,6 +304,7 @@ export const scrumQuestions: ScrumQuestion[] = [
       "Bold Development Up Front",
     ],
     correctAnswer: "Big Design Up Front",
+    explanation: "BDUF means designing the entire system upfront before development, which contrasts with Agile’s iterative approach",
   },
   {
     id: 24,
@@ -294,6 +317,7 @@ export const scrumQuestions: ScrumQuestion[] = [
       "Bi-lateral methodologies",
     ],
     correctAnswer: "Iterative methodologies",
+    explanation: "Agile methods are iterative, meaning work is done in repeated cycles with continuous feedback and improvement",
   },
   {
     id: 25,
@@ -306,6 +330,7 @@ export const scrumQuestions: ScrumQuestion[] = [
       "So it can be done anywhere, also in the corridor",
     ],
     correctAnswer: "To encourage brevity",
+    explanation: "Standing encourages meetings to stay short and focused",
   },
   {
     id: 26,
@@ -318,6 +343,7 @@ export const scrumQuestions: ScrumQuestion[] = [
       "5 +- 3",
     ],
     correctAnswer: "7 +- 2",
+    explanation: "A Scrum team is typically around 7 ± 2 members to stay small enough for collaboration but large enough to get work done",
   },
   {
     id: 27,
@@ -330,6 +356,7 @@ export const scrumQuestions: ScrumQuestion[] = [
       "It is two-dimensional",
     ],
     correctAnswer: "It is always a replacement for a product backlog",
+    explanation: "A story map complements the product backlog but does not replace it",
   },
   {
     id: 28,
@@ -342,6 +369,7 @@ export const scrumQuestions: ScrumQuestion[] = [
       "Write new passing tests",
     ],
     correctAnswer: "Write code to make the failing tests pass",
+    explanation: "In TDD, the red state means tests are failing, so the next step is to write code to make them pass",
   },
   {
     id: 29,
@@ -354,6 +382,7 @@ export const scrumQuestions: ScrumQuestion[] = [
       "Product marketer",
     ],
     correctAnswer: "Scrum master",
+    explanation: "Scrum Master is one of the three defined roles in a Scrum team",
   },
   {
     id: 30,
@@ -366,6 +395,7 @@ export const scrumQuestions: ScrumQuestion[] = [
       "Facilitator",
     ],
     correctAnswer: "Prioritizes stories",
+    explanation: "The Scrum Master does not prioritize stories; that responsibility belongs to the Product Owner",
   },
   {
     id: 31,
@@ -378,6 +408,7 @@ export const scrumQuestions: ScrumQuestion[] = [
       "1-4 weeks",
     ],
     correctAnswer: "1-4 weeks",
+    explanation: "Sprints are time-boxed to 1–4 weeks to keep work focused and allow for regular feedback and iteration",
   },
   {
     id: 32,
@@ -390,6 +421,7 @@ export const scrumQuestions: ScrumQuestion[] = [
       "Available funds",
     ],
     correctAnswer: "Features",
+    explanation: "The product backlog is a prioritized list of features and functionality to be built",
   },
   {
     id: 33,
@@ -402,6 +434,7 @@ export const scrumQuestions: ScrumQuestion[] = [
       "Decision planning meeting",
     ],
     correctAnswer: "Stand-up meeting",
+    explanation: "The daily scrum is commonly called a stand-up meeting because it’s a short, quick team check-in",
   },
   {
     id: 34,
@@ -414,6 +447,7 @@ export const scrumQuestions: ScrumQuestion[] = [
       "Changing the priority of the features to be implemented in the product backlog",
     ],
     correctAnswer: "Altering the internal structure of code without changing its external behavior",
+    explanation: "Refactoring improves the internal structure of code without changing what the code does externally",
   },
   {
     id: 35,
@@ -426,6 +460,7 @@ export const scrumQuestions: ScrumQuestion[] = [
       "Sprint backlogger",
     ],
     correctAnswer: "Product owner",
+    explanation: "The product owner is responsible for managing and prioritizing the product backlog",
   },
   {
     id: 36,
@@ -438,6 +473,7 @@ export const scrumQuestions: ScrumQuestion[] = [
       "Speed, scope, cost",
     ],
     correctAnswer: "Speed, scope, cost",
+    explanation: "The iron triangle consists of speed (time), scope, and cost, which must be balanced in any project",
   },
   {
     id: 37,
@@ -450,6 +486,7 @@ export const scrumQuestions: ScrumQuestion[] = [
       "Sprints",
     ],
     correctAnswer: "Sprints",
+    explanation: "Scrum uses sprints, which are short, repeated cycles of work that allow for continuous iteration and improvement",
   },
   {
     id: 38,
@@ -462,6 +499,7 @@ export const scrumQuestions: ScrumQuestion[] = [
       "Small",
     ],
     correctAnswer: "Optional",
+    explanation: "The daily scrum is a required event in Scrum and should not be optional",
   },
   {
     id: 39,
@@ -474,6 +512,7 @@ export const scrumQuestions: ScrumQuestion[] = [
       "A large piece of wood that one wears while performing sprints",
     ],
     correctAnswer: "The team's to-do list for the sprint",
+    explanation: "The sprint backlog is the set of tasks the team plans to complete during the current sprint",
   },
   {
     id: 40,
@@ -486,6 +525,7 @@ export const scrumQuestions: ScrumQuestion[] = [
       "Deliver product early and often",
     ],
     correctAnswer: "Design the full product first before all other stages",
+    explanation: "Agile avoids fully designing the entire product upfront and instead emphasizes iterative development and continuous improvement",
   },
   {
     id: 41,
@@ -498,6 +538,7 @@ export const scrumQuestions: ScrumQuestion[] = [
       "Story",
     ],
     correctAnswer: "Story",
+    explanation: "Backlog items are commonly called user stories because they describe features from the user’s perspective",
   },
   {
     id: 42,
@@ -510,6 +551,7 @@ export const scrumQuestions: ScrumQuestion[] = [
       "Requirements, design, implementation, verification, maintenance",
     ],
     correctAnswer: "Requirements, design, implementation, verification, maintenance",
+    explanation: "The waterfall model follows a linear sequence starting with requirements, then design, implementation, verification, and finally maintenance",
   },
   {
     id: 43,
@@ -522,6 +564,7 @@ export const scrumQuestions: ScrumQuestion[] = [
       "Working software",
     ],
     correctAnswer: "Working software",
+    explanation: "Working software is the primary measure of progress because it represents tangible, usable value delivered to users",
   },
   {
     id: 44,
@@ -534,6 +577,7 @@ export const scrumQuestions: ScrumQuestion[] = [
       "5",
     ],
     correctAnswer: "3",
+    explanation: "Scrum defines three roles: Product Owner, Scrum Master, and Developer",
   },
   {
     id: 45,
@@ -546,6 +590,7 @@ export const scrumQuestions: ScrumQuestion[] = [
       "What obstacles are slowing me down",
     ],
     correctAnswer: "What I plan to add for the next 3 scrums",
+    explanation: "The daily scrum focuses on short-term updates for the next day, not long-term plans across multiple future sprints",
   },
   {
     id: 46,
@@ -558,6 +603,7 @@ export const scrumQuestions: ScrumQuestion[] = [
       "Natural",
     ],
     correctAnswer: "Fibonacci",
+    explanation: "Fibonacci numbers grow with increasing gaps, making it easier for humans to distinguish relative effort between story sizes",
   },
   {
     id: 47,
@@ -570,6 +616,7 @@ export const scrumQuestions: ScrumQuestion[] = [
       "Inequality",
     ],
     correctAnswer: "Information",
+    explanation: "A task board is an information radiator because it visually shares project status and progress with the team at a glance",
   },
   {
     id: 48,
@@ -582,6 +629,7 @@ export const scrumQuestions: ScrumQuestion[] = [
       "Sprint review",
     ],
     correctAnswer: "Sprint refactoring",
+    explanation: "Sprint refactoring is not an official Scrum event, while planning, daily standups, reviews, and retrospectives are defined parts of the cycle",
   },
   {
     id: 49,
@@ -594,6 +642,7 @@ export const scrumQuestions: ScrumQuestion[] = [
       "To cut down planning so you can get to coding sooner",
     ],
     correctAnswer: "To provide predictability of schedule",
+    explanation: "Estimating story size helps teams forecast how much work they can complete over time, making delivery timelines more predictable",
   },
   {
     id: 50,
@@ -606,5 +655,6 @@ export const scrumQuestions: ScrumQuestion[] = [
       "Test driven development pair programming",
     ],
     correctAnswer: "Divide and conquer pairing",
+    explanation: "Divide and conquer isn’t true pair programming because the developers split up work instead of working together on the same code at the same time",
   },
 ];
