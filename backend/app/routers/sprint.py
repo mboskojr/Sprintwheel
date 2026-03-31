@@ -222,6 +222,10 @@ def get_sprint_burndown(
 
         index_day += timedelta(days=1)
 
+        sprint.burndown_array = final_array
+        db.commit()
+        db.refresh(sprint)
+
     return {
         "burndown_array": final_array
     }

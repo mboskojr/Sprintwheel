@@ -15,4 +15,4 @@ class Sprint(Base):
     end_date = Column(Date, nullable=False)
     is_active = Column(Boolean, default=True)
     sprint_velocity = Column(Integer, nullable=False, default=0)
-    burndown_array = Column(ARRAY(Float), nullable=False, default=[])
+    burndown_array = Column(ARRAY(Float), nullable=False, default=list)
