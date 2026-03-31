@@ -16,6 +16,7 @@ import NewProject from "./pages/NewProject";
 import ProductBacklogPage from "./pages/ProductBacklogPage";
 import CalendarPage from "./pages/CalendarPage";
 import { ThemeProvider } from "./pages/ThemeContext";
+import ScrumExamPage from "./pages/ScrumExamPage";
 function App(): JSX.Element {
   return (
     <Routes>
@@ -41,6 +42,7 @@ function App(): JSX.Element {
       <Route path="/projects/:projectId/:role/settings" element={<SettingsPage />} />
       <Route path="/projects/:projectId/:role/product-backlog" element={<ProductBacklogPage />} />
       <Route path="/projects/:projectId/:role/calendar" element={<CalendarPage />} />
+      <Route path="/projects/:projectId/:role/scrum-exam" element={<ScrumExamPage />} />
     </Routes>
     </ThemeProvider>
     }

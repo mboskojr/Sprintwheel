@@ -1,6 +1,7 @@
 import type { CSSProperties, JSX } from "react";
 import SidebarLayout from "../components/SidebarLayout";
 import { useTheme } from "./ThemeContext";
+import { useNavigate, useParams } from "react-router-dom";
 
 const styles: Record<string, CSSProperties> = {
   page: {
@@ -188,6 +189,8 @@ const styles: Record<string, CSSProperties> = {
 export default function ToDoPage(): JSX.Element {
   const { theme } = useTheme();
   const isDark = theme === "dark";
+  const navigate = useNavigate();
+  const { projectId, role } = useParams();
 
   return (
     <SidebarLayout>
@@ -262,7 +265,7 @@ export default function ToDoPage(): JSX.Element {
             <h2 style={styles.sectionTitle}>Topics</h2>
 
             <div style={styles.grid}>
-              {["📘", "👥", "📅", "📦"].map((icon, i) => (
+              {["📘", "👥", "📅", "📦", "📝"].map((icon, i) => (
                 <div
                   key={i}
                   style={{
@@ -277,7 +280,7 @@ export default function ToDoPage(): JSX.Element {
                 >
                   <div style={styles.iconCircle}>{icon}</div>
                   <h3 style={styles.cardTitle}>
-                    {["Scrum Guide", "Scrum Roles", "Scrum Events", "Scrum Artifacts"][i]}
+                    {["Scrum Guide", "Scrum Roles", "Scrum Events", "Scrum Artifacts", "Scrum Exam"][i]}
                   </h3>
                   <p
                     style={{
@@ -291,11 +294,19 @@ export default function ToDoPage(): JSX.Element {
                         "Understand each role and its responsibilities.",
                         "Explore key Scrum ceremonies and workflows.",
                         "Learn how progress and work are tracked in Scrum.",
+                        "Test your understanding of Scrum concepts."
                       ][i]
                     }
                   </p>
-                  <button style={styles.cardButton}>
-                    {["Start", "Learn", "Explore", "View"][i]}
+                  <button
+                    style={styles.cardButton}
+                    onClick={() => {
+                      if (i === 4) {
+                        navigate(`/projects/${projectId}/${role}/scrum-exam`);
+                      }
+                    }}
+                  >
+                    {["Start", "Learn", "Explore", "View", "Take Exam"][i]}
                   </button>
                 </div>
               ))}
