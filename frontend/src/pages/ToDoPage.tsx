@@ -663,6 +663,122 @@ export default function ToDoPage(): JSX.Element {
 
   return (
     <SidebarLayout>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap');
+
+        .task-input::placeholder { color: #6b7280; }
+
+        /* ── Ollie Todo ── */
+        @keyframes ollie-float {
+          0%,100%{transform:translateY(0px) rotate(-2deg)}
+          50%{transform:translateY(-10px) rotate(2deg)}
+        }
+        @keyframes ollie-blink {
+          0%,88%,100%{transform:scaleY(1)}
+          94%{transform:scaleY(0.08)}
+        }
+        @keyframes bulb-glow {
+          0%,100%{opacity:0.7;filter:drop-shadow(0 0 4px #fde68a)}
+          50%{opacity:1;filter:drop-shadow(0 0 14px #fde68a) drop-shadow(0 0 28px #fbbf24)}
+        }
+        @keyframes bulb-ray {
+          0%,100%{opacity:0.4;transform:scale(0.9)}
+          50%{opacity:1;transform:scale(1.1)}
+        }
+        @keyframes t-wave-slow { 0%,100%{transform:rotate(0deg)} 50%{transform:rotate(-7deg)} }
+        @keyframes t-wave-med  { 0%,100%{transform:rotate(0deg)} 50%{transform:rotate(6deg)} }
+
+        .ollie-todo-wrap  { animation:ollie-float 3.2s ease-in-out infinite; display:inline-block; }
+        .todo-eye-l { animation:ollie-blink 4s ease-in-out infinite; transform-origin:28px 34px; }
+        .todo-eye-r { animation:ollie-blink 4s ease-in-out infinite 0.18s; transform-origin:40px 34px; }
+        .bulb-glow  { animation:bulb-glow 1.6s ease-in-out infinite; }
+        .bulb-ray   { animation:bulb-ray  1.6s ease-in-out infinite; }
+        
+        .todo-t1 { animation:t-wave-slow 2.2s ease-in-out infinite;       transform-origin:18px 48px; }
+        .todo-t2 { animation:t-wave-med  2.5s ease-in-out infinite 0.2s;  transform-origin:23px 52px; }
+        .todo-t3 { animation:t-wave-slow 2.1s ease-in-out infinite 0.1s;  transform-origin:29px 54px; }
+        .todo-t4 { animation:t-wave-med  2.1s ease-in-out infinite 0.3s;  transform-origin:35px 54px; }
+        .todo-t5 { animation:t-wave-slow 2.5s ease-in-out infinite 0.15s; transform-origin:41px 52px; }
+        .todo-t6 { animation:t-wave-med  2.2s ease-in-out infinite 0.05s; transform-origin:46px 48px; }
+
+        /* Ollie Todo Book Arms */
+        @keyframes t-wave-books { 0%,100%{transform:rotate(0deg)} 50%{transform:rotate(-5deg)} }
+        .books-arm-l { animation:t-wave-books 2.8s ease-in-out infinite;       transform-origin:16px 36px; }
+        .books-arm-r { animation:t-wave-books 2.8s ease-in-out infinite 0.2s;  transform-origin:52px 36px; }
+
+        /* Ollie InProgress */
+        @keyframes prog-float {
+          0%,100%{transform:translateY(0px) rotate(-1.5deg)}
+          50%{transform:translateY(-8px) rotate(1.5deg)}
+        }
+        @keyframes prog-blink {
+          0%,88%,100%{transform:scaleY(1)}
+          94%{transform:scaleY(0.08)}
+        }
+        @keyframes pencil-write {
+          0%,100%{transform:rotate(-10deg) translate(0,0)}
+          30%{transform:rotate(-10deg) translate(2px,1px)}
+          60%{transform:rotate(-10deg) translate(-1px,2px)}
+        }
+        @keyframes check-pop {
+          0%,70%,100%{transform:scale(1)}
+          85%{transform:scale(1.3)}
+        }
+
+        .ollie-prog-wrap { animation:prog-float 2.8s ease-in-out infinite; display:inline-block; }
+        .prog-eye-l { animation:prog-blink 5s ease-in-out infinite; transform-origin:28px 34px; }
+        .prog-eye-r { animation:prog-blink 5s ease-in-out infinite 0.2s; transform-origin:40px 34px; }
+        .pencil-anim { animation:pencil-write 1.5s ease-in-out infinite; transform-origin:60px 25px; }
+        .check-anim  { animation:check-pop   2s ease-in-out infinite; transform-origin:58px 35px; }
+        
+        .prog-t1 { animation:t-wave-slow 2.2s ease-in-out infinite;       transform-origin:18px 48px; }
+        .prog-t2 { animation:t-wave-med  2.5s ease-in-out infinite 0.2s;  transform-origin:23px 52px; }
+        .prog-t3 { animation:t-wave-slow 2.1s ease-in-out infinite 0.1s;  transform-origin:29px 54px; }
+        .prog-t4 { animation:t-wave-med  2.1s ease-in-out infinite 0.3s;  transform-origin:35px 54px; }
+        .prog-t5 { animation:t-wave-slow 2.5s ease-in-out infinite 0.15s; transform-origin:41px 52px; }
+        .prog-t6 { animation:t-wave-med  2.2s ease-in-out infinite 0.05s; transform-origin:46px 48px; }
+
+        /* Ollie Done */
+        @keyframes done-bounce {
+          0%,100%{transform:translateY(0px) rotate(-2deg) scale(1)}
+          25%{transform:translateY(-14px) rotate(3deg) scale(1.07)}
+          75%{transform:translateY(-7px) rotate(-3deg) scale(1.04)}
+        }
+        @keyframes confetti-spin {
+          0%{transform:rotate(0deg) translate(0,-20px) scale(0);opacity:0}
+          30%{opacity:1;transform:rotate(120deg) translate(0,-20px) scale(1)}
+          100%{transform:rotate(360deg) translate(0,-20px) scale(0);opacity:0}
+        }
+        @keyframes confetti-spin2 {
+          0%{transform:rotate(60deg) translate(0,-26px) scale(0);opacity:0}
+          40%{opacity:1;transform:rotate(210deg) translate(0,-26px) scale(1)}
+          100%{transform:rotate(430deg) translate(0,-26px) scale(0);opacity:0}
+        }
+        @keyframes star-twinkle {
+          0%,100%{opacity:0;transform:scale(0.5) rotate(0deg)}
+          50%{opacity:1;transform:scale(1.2) rotate(20deg)}
+        }
+        @keyframes done-glow {
+          0%,100%{filter:drop-shadow(0 0 6px rgba(34,197,94,0.4))}
+          50%{filter:drop-shadow(0 0 18px rgba(34,197,94,0.85))}
+        }
+
+        .ollie-done-wrap { animation:done-bounce 1.9s ease-in-out infinite, done-glow 1.9s ease-in-out infinite; display:inline-block; }
+        .done-eye-l { animation:ollie-blink 3.5s ease-in-out infinite; transform-origin:28px 34px; }
+        .done-eye-r { animation:ollie-blink 3.5s ease-in-out infinite 0.15s; transform-origin:40px 34px; }
+        .conf1 { animation:confetti-spin  1.8s ease-out infinite;       transform-origin:32px 24px; }
+        .conf2 { animation:confetti-spin2 1.8s ease-out infinite 0.5s;  transform-origin:32px 24px; }
+        .star1 { animation:star-twinkle 1.4s ease-in-out infinite;      transform-origin:12px 12px; }
+        .star2 { animation:star-twinkle 1.4s ease-in-out infinite 0.7s; transform-origin:52px 10px; }
+        
+        .done-t1 { animation:t-wave-slow 1.9s ease-in-out infinite;       transform-origin:18px 48px; }
+        .done-t2 { animation:t-wave-med  2.0s ease-in-out infinite 0.2s;  transform-origin:23px 52px; }
+        .done-t3 { animation:t-wave-slow 1.8s ease-in-out infinite 0.1s;  transform-origin:29px 54px; }
+        .done-t4 { animation:t-wave-med  1.8s ease-in-out infinite 0.3s;  transform-origin:35px 54px; }
+        .done-t5 { animation:t-wave-slow 2.0s ease-in-out infinite 0.15s; transform-origin:41px 52px; }
+        .done-t6 { animation:t-wave-med  1.9s ease-in-out infinite 0.05s; transform-origin:46px 48px; }
+      `}</style>
+
       <div
         style={{
           ...pageStyle,
@@ -670,9 +786,9 @@ export default function ToDoPage(): JSX.Element {
           color: isDark ? "white" : "#111827",
         }}
       >
-        <h1 style={{ marginBottom: 30, textAlign: "left" }}>Task Board</h1>
-        <p>Track, assign, and move tasks across your sprint board.</p>
-        <p>Drag cards into designated columns to keep your team's work organized and moving forward.</p>
+        <h1 style={pageTitleStyle}>Task Board</h1>
+        <p style={pageSubStyle}>Track, assign, and move tasks across your sprint board.</p>
+        <p style={pageSubStyle}>Drag cards into designated columns to keep your team's work organized and moving forward.</p>
 
         <DndContext onDragEnd={handleDragEnd}>
           <div style={boardStyle}>
@@ -700,26 +816,14 @@ export default function ToDoPage(): JSX.Element {
 
         {taskToDelete && (
           <div style={modalOverlayStyle}>
-            <div
-              style={{
-                ...modalStyle,
-                background: isDark ? modalStyle.background : "#ffffff",
-                border: isDark ? modalStyle.border : "1px solid rgba(0,0,0,0.08)",
-                boxShadow: isDark ? modalStyle.boxShadow : "0 10px 30px rgba(0,0,0,0.12)",
-              }}
-            >
-              <h3 style={{ ...modalTitleStyle, color: isDark ? "white" : "#111827" }}>Delete task?</h3>
-              <p style={{ ...modalTextStyle, color: isDark ? "rgba(255,255,255,0.85)" : "#4b5563" }}>
+            <div style={modalStyle}>
+              <h3 style={modalTitleStyle}>Delete task?</h3>
+              <p style={modalTextStyle}>
                 Are you sure you want to delete "{taskToDelete.title}"?
               </p>
               <div style={modalButtonRowStyle}>
                 <button
-                  style={{
-                    ...cancelButtonStyle,
-                    background: isDark ? cancelButtonStyle.background : "#f3f4f6",
-                    border: isDark ? cancelButtonStyle.border : "1px solid rgba(0,0,0,0.08)",
-                    color: isDark ? "white" : "#111827",
-                  }}
+                  style={cancelButtonStyle}
                   onClick={() => setTaskToDelete(null)}
                 >
                   Cancel
@@ -742,6 +846,220 @@ export default function ToDoPage(): JSX.Element {
   );
 }
 
+function OllieTodo({ isDark }: { isDark: boolean }) {
+  return (
+    <div className="ollie-todo-wrap">
+      <svg width="110" height="110" viewBox="0 0 80 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+
+        {/* Lightbulb above head */}
+        <g className="bulb-glow" style={{ transformOrigin: "40px 10px" }}>
+          {/* rays */}
+          <g className="bulb-ray">
+            <line x1="40" y1="2"  x2="40" y2="-3" stroke="#fde68a" strokeWidth="1.5" strokeLinecap="round"/>
+            <line x1="32" y1="4"  x2="29" y2="0"  stroke="#fde68a" strokeWidth="1.5" strokeLinecap="round"/>
+            <line x1="48" y1="4"  x2="51" y2="0"  stroke="#fde68a" strokeWidth="1.5" strokeLinecap="round"/>
+            <line x1="27" y1="10" x2="22" y2="9"  stroke="#fde68a" strokeWidth="1.5" strokeLinecap="round"/>
+            <line x1="53" y1="10" x2="58" y2="9"  stroke="#fde68a" strokeWidth="1.5" strokeLinecap="round"/>
+          </g>
+          {/* bulb glass */}
+          <ellipse cx="40" cy="11" rx="6" ry="7" fill="#fef9c3" stroke="#fbbf24" strokeWidth="1.2"/>
+          {/* filament */}
+          <path d="M37 14 Q40 11 43 14" stroke="#f59e0b" strokeWidth="1" fill="none" strokeLinecap="round"/>
+          {/* base */}
+          <rect x="37" y="17" width="6" height="3" rx="1" fill="#d97706"/>
+          <line x1="37" y1="18.5" x2="43" y2="18.5" stroke="#92400e" strokeWidth="0.8"/>
+          {/* inner glow */}
+          <ellipse cx="40" cy="10" rx="4" ry="4.5" fill="#fde68a" opacity="0.5"/>
+        </g>
+
+        {/*  6 Bottom Tentacles */}
+        <g className="todo-t1"><path d="M18 48 Q14 54 16 60 Q18 66 15 70" stroke="#7f77dd" strokeWidth="3.5" strokeLinecap="round" fill="none"/><circle cx="15" cy="70" r="2" fill="#534ab7"/></g>
+        <g className="todo-t2"><path d="M23 52 Q21 58 23 64 Q25 68 22 72" stroke="#7f77dd" strokeWidth="3.5" strokeLinecap="round" fill="none"/><circle cx="22" cy="72" r="2" fill="#534ab7"/></g>
+        <g className="todo-t3"><path d="M29 54 Q29 60 31 66 Q32 70 30 73" stroke="#7f77dd" strokeWidth="3.5" strokeLinecap="round" fill="none"/><circle cx="30" cy="73" r="2" fill="#534ab7"/></g>
+        <g className="todo-t4"><path d="M35 54 Q37 60 35 66 Q34 70 36 73" stroke="#7f77dd" strokeWidth="3.5" strokeLinecap="round" fill="none"/><circle cx="36" cy="73" r="2" fill="#534ab7"/></g>
+        <g className="todo-t5"><path d="M41 52 Q43 58 41 64 Q39 68 42 72" stroke="#7f77dd" strokeWidth="3.5" strokeLinecap="round" fill="none"/><circle cx="42" cy="72" r="2" fill="#534ab7"/></g>
+        <g className="todo-t6"><path d="M46 48 Q50 54 48 60 Q46 66 49 70" stroke="#7f77dd" strokeWidth="3.5" strokeLinecap="round" fill="none"/><circle cx="49" cy="70" r="2" fill="#534ab7"/></g>
+
+        {/* Book arms */}
+        <g className="books-arm-l">
+          <path d="M16 36 Q10 25 10 15" stroke="#7f77dd" strokeWidth="3.5" strokeLinecap="round" fill="none"/>
+          {/* Book Icon */}
+          <g transform="translate(10, 15) rotate(-10)">
+            <rect x="-5" y="-6" width="10" height="12" rx="1" fill="#93c5fd" stroke="#2563eb" strokeWidth="1"/>
+            <line x1="-3" y1="-3" x2="3" y2="-3" stroke="#2563eb" strokeWidth="0.8"/>
+            <line x1="-3" y1="0"  x2="3" y2="0"  stroke="#2563eb" strokeWidth="0.8"/>
+          </g>
+        </g>
+        <g className="books-arm-r">
+          <path d="M52 36 Q58 25 58 15" stroke="#7f77dd" strokeWidth="3.5" strokeLinecap="round" fill="none"/>
+          {/* Book Icon */}
+          <g transform="translate(58, 15) rotate(10)">
+            <rect x="-5" y="-6" width="10" height="12" rx="1" fill="#93c5fd" stroke="#2563eb" strokeWidth="1"/>
+            <line x1="-3" y1="-3" x2="3" y2="-3" stroke="#2563eb" strokeWidth="0.8"/>
+            <line x1="-3" y1="0"  x2="3" y2="0"  stroke="#2563eb" strokeWidth="0.8"/>
+          </g>
+        </g>
+
+        {/* Body */}
+        <ellipse cx="34" cy="36" rx="18" ry="16" fill="#7f77dd"/>
+        <ellipse cx="28" cy="30" rx="6" ry="4" fill="#afa9ec" opacity="0.45"/>
+
+        {/* Eyes */}
+        <circle cx="28" cy="34" r="4" fill="white" className="todo-eye-l"/>
+        <circle cx="40" cy="34" r="4" fill="white" className="todo-eye-r"/>
+        <circle cx="29" cy="34" r="2" fill="#1a1a2e" className="todo-eye-l"/>
+        <circle cx="41" cy="34" r="2" fill="#1a1a2e" className="todo-eye-r"/>
+        <circle cx="30" cy="33" r="0.8" fill="white" className="todo-eye-l"/>
+        <circle cx="42" cy="33" r="0.8" fill="white" className="todo-eye-r"/>
+
+        {/* Smile */}
+        <path d="M29 40 Q34 44 39 40" stroke="white" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+
+        {/* Blush */}
+        <ellipse cx="24" cy="38" rx="3" ry="1.5" fill="#ed93b1" opacity="0.6"/>
+        <ellipse cx="44" cy="38" rx="3" ry="1.5" fill="#ed93b1" opacity="0.6"/>
+      </svg>
+    </div>
+  );
+}
+
+function OllieInProgress({ isDark }: { isDark: boolean }) {
+  return (
+    <div className="ollie-prog-wrap">
+      <svg width="110" height="110" viewBox="0 0 80 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+
+        {/* Clipboard (left arm) */}
+        <g style={{ transform: "rotate(-12deg)", transformOrigin: "16px 40px" }}>
+          <path d="M20 40 Q10 32 8 22" stroke="#7f77dd" strokeWidth="2.8" strokeLinecap="round" fill="none"/>
+          {/* clipboard board */}
+          <rect x="0" y="5" width="16" height="20" rx="2" fill="#fef3c7" stroke="#d97706" strokeWidth="1.2"/>
+          {/* clip at top */}
+          <rect x="5" y="3" width="6" height="5" rx="1.5" fill="#d97706"/>
+          {/* lines */}
+          <line x1="3" y1="13" x2="13" y2="13" stroke="#a16207" strokeWidth="0.9"/>
+          <line x1="3" y1="17" x2="13" y2="17" stroke="#a16207" strokeWidth="0.9"/>
+          <line x1="3" y1="21" x2="10" y2="21" stroke="#a16207" strokeWidth="0.9"/>
+          {/* checkboxes */}
+          <rect x="3" y="11.5" width="2" height="2" rx="0.4" fill="none" stroke="#a16207" strokeWidth="0.7"/>
+          <rect x="3" y="15.5" width="2" height="2" rx="0.4" fill="none" stroke="#a16207" strokeWidth="0.7"/>
+          {/* check mark on first box */}
+          <path d="M3.3 12.5 L4 13.3 L5.5 11.8" stroke="#16a34a" strokeWidth="0.8" strokeLinecap="round" fill="none"/>
+        </g>
+
+        {/* Pencil (right arm) */}
+        <g className="pencil-anim">
+          <path d="M50 40 Q58 35 60 25" stroke="#7f77dd" strokeWidth="2.8" strokeLinecap="round" fill="none"/>
+          <g transform="translate(60, 25) rotate(-15)">
+            {/* Tip */}
+            <polygon points="-2,0 2,0 0,6" fill="#92400e" />
+            {/* Wood cone */}
+            <polygon points="-3,-4 3,-4 0,3" fill="#fde047" />
+            {/* Body */}
+            <rect x="-3" y="-20" width="6" height="16" fill="#fbbf24" stroke="#d97706" strokeWidth="0.5"/>
+            {/* Eraser metal */}
+            <rect x="-3" y="-23" width="6" height="3" fill="#9ca3af"/>
+            {/* Eraser */}
+            <path d="M-3,-23 L-3,-25 Q0,-27 3,-25 L3,-23 Z" fill="#fca5a5"/>
+          </g>
+        </g>
+
+        {/* 6 Tentacles  */}
+        <g className="prog-t1"><path d="M18 48 Q14 54 16 60 Q18 66 15 70" stroke="#7f77dd" strokeWidth="3.5" strokeLinecap="round" fill="none"/><circle cx="15" cy="70" r="2" fill="#534ab7"/></g>
+        <g className="prog-t2"><path d="M23 52 Q21 58 23 64 Q25 68 22 72" stroke="#7f77dd" strokeWidth="3.5" strokeLinecap="round" fill="none"/><circle cx="22" cy="72" r="2" fill="#534ab7"/></g>
+        <g className="prog-t3"><path d="M29 54 Q29 60 31 66 Q32 70 30 73" stroke="#7f77dd" strokeWidth="3.5" strokeLinecap="round" fill="none"/><circle cx="30" cy="73" r="2" fill="#534ab7"/></g>
+        <g className="prog-t4"><path d="M35 54 Q37 60 35 66 Q34 70 36 73" stroke="#7f77dd" strokeWidth="3.5" strokeLinecap="round" fill="none"/><circle cx="36" cy="73" r="2" fill="#534ab7"/></g>
+        <g className="prog-t5"><path d="M41 52 Q43 58 41 64 Q39 68 42 72" stroke="#7f77dd" strokeWidth="3.5" strokeLinecap="round" fill="none"/><circle cx="42" cy="72" r="2" fill="#534ab7"/></g>
+        <g className="prog-t6"><path d="M46 48 Q50 54 48 60 Q46 66 49 70" stroke="#7f77dd" strokeWidth="3.5" strokeLinecap="round" fill="none"/><circle cx="49" cy="70" r="2" fill="#534ab7"/></g>
+
+        {/* Body */}
+        <ellipse cx="34" cy="36" rx="18" ry="16" fill="#7f77dd"/>
+        <ellipse cx="28" cy="30" rx="6" ry="4" fill="#afa9ec" opacity="0.45"/>
+
+        {/* Eyes */}
+        <circle cx="28" cy="34" r="4" fill="white" className="prog-eye-l"/>
+        <circle cx="40" cy="34" r="4" fill="white" className="prog-eye-r"/>
+        <circle cx="29" cy="34" r="2" fill="#1a1a2e" className="prog-eye-l"/>
+        <circle cx="41" cy="34" r="2" fill="#1a1a2e" className="prog-eye-r"/>
+        <circle cx="30" cy="33" r="0.8" fill="white" className="prog-eye-l"/>
+        <circle cx="42" cy="33" r="0.8" fill="white" className="prog-eye-r"/>
+
+        {/* Smile */}
+        <path d="M29 40 Q34 44 39 40" stroke="white" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+
+        {/* Blush */}
+        <ellipse cx="24" cy="38" rx="3" ry="1.5" fill="#ed93b1" opacity="0.6"/>
+        <ellipse cx="44" cy="38" rx="3" ry="1.5" fill="#ed93b1" opacity="0.6"/>
+      </svg>
+    </div>
+  );
+}
+
+function OllieDone({ isDark }: { isDark: boolean }) {
+  return (
+    <div className="ollie-done-wrap">
+      <svg width="110" height="110" viewBox="0 0 80 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+
+        {/* Stars */}
+        <g className="star1"><text x="10" y="14" fontSize="11" fill="#fde68a">★</text></g>
+        <g className="star2"><text x="52" y="12" fontSize="9"  fill="#fef9c3">✦</text></g>
+
+        {/* Confetti orbits */}
+        <g className="conf1" style={{ transformOrigin: "34px 30px" }}>
+          <circle cx="34" cy="8" r="3" fill="#f97316"/>
+          <circle cx="14" cy="20" r="2" fill="#ec4899"/>
+          <circle cx="54" cy="20" r="2" fill="#06b6d4"/>
+        </g>
+        <g className="conf2" style={{ transformOrigin: "34px 30px" }}>
+          <rect x="32" y="4" width="4" height="4" rx="1" fill="#a78bfa" transform="rotate(30 34 6)"/>
+          <rect x="10" y="22" width="4" height="4" rx="1" fill="#34d399" transform="rotate(15 12 24)"/>
+          <rect x="54" y="24" width="4" height="4" rx="1" fill="#fbbf24" transform="rotate(45 56 26)"/>
+        </g>
+
+        {/* Party hat */}
+        <polygon points="34,8 24,30 44,30" fill="#f97316" stroke="#ea580c" strokeWidth="1"/>
+        <polygon points="33,10 28,24 38,24" fill="#fde68a" opacity="0.6"/>
+        <circle cx="34" cy="8" r="2.5" fill="#fde68a"/>
+        {/* hat band */}
+        <path d="M25 28 Q34 25 43 28" stroke="#ea580c" strokeWidth="1.5" fill="none"/>
+
+        {/* Party poppers (arms) */}
+        <path d="M18 42 Q8 30 5 16" stroke="#7f77dd" strokeWidth="2.8" strokeLinecap="round" fill="none"/>
+        <text x="-2" y="18" fontSize="14">🎉</text>
+
+        <path d="M50 42 Q62 30 65 16" stroke="#7f77dd" strokeWidth="2.8" strokeLinecap="round" fill="none"/>
+        <text x="60" y="18" fontSize="14">🎊</text>
+
+        {/* 6 Tentacles */}
+        <g className="done-t1"><path d="M18 48 Q14 54 16 60 Q18 66 15 70" stroke="#7f77dd" strokeWidth="3.5" strokeLinecap="round" fill="none"/><circle cx="15" cy="70" r="2" fill="#534ab7"/></g>
+        <g className="done-t2"><path d="M23 52 Q21 58 23 64 Q25 68 22 72" stroke="#7f77dd" strokeWidth="3.5" strokeLinecap="round" fill="none"/><circle cx="22" cy="72" r="2" fill="#534ab7"/></g>
+        <g className="done-t3"><path d="M29 54 Q29 60 31 66 Q32 70 30 73" stroke="#7f77dd" strokeWidth="3.5" strokeLinecap="round" fill="none"/><circle cx="30" cy="73" r="2" fill="#534ab7"/></g>
+        <g className="done-t4"><path d="M35 54 Q37 60 35 66 Q34 70 36 73" stroke="#7f77dd" strokeWidth="3.5" strokeLinecap="round" fill="none"/><circle cx="36" cy="73" r="2" fill="#534ab7"/></g>
+        <g className="done-t5"><path d="M41 52 Q43 58 41 64 Q39 68 42 72" stroke="#7f77dd" strokeWidth="3.5" strokeLinecap="round" fill="none"/><circle cx="42" cy="72" r="2" fill="#534ab7"/></g>
+        <g className="done-t6"><path d="M46 48 Q50 54 48 60 Q46 66 49 70" stroke="#7f77dd" strokeWidth="3.5" strokeLinecap="round" fill="none"/><circle cx="49" cy="70" r="2" fill="#534ab7"/></g>
+
+        {/* Body */}
+        <ellipse cx="34" cy="36" rx="18" ry="16" fill="#7f77dd"/>
+        <ellipse cx="28" cy="30" rx="6" ry="4" fill="#afa9ec" opacity="0.45"/>
+
+        {/* Eyes  */}
+        <circle cx="28" cy="34" r="4" fill="white" className="done-eye-l"/>
+        <circle cx="40" cy="34" r="4" fill="white" className="done-eye-r"/>
+        <circle cx="29" cy="34" r="2" fill="#1a1a2e" className="done-eye-l"/>
+        <circle cx="41" cy="34" r="2" fill="#1a1a2e" className="done-eye-r"/>
+        <circle cx="30" cy="33" r="0.8" fill="white" className="done-eye-l"/>
+        <circle cx="42" cy="33" r="0.8" fill="white" className="done-eye-r"/>
+
+        {/* Smile */}
+        <path d="M29 40 Q34 44 39 40" stroke="white" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+
+        {/* Blush  */}
+        <ellipse cx="24" cy="38" rx="3" ry="1.5" fill="#ed93b1" opacity="0.6"/>
+        <ellipse cx="44" cy="38" rx="3" ry="1.5" fill="#ed93b1" opacity="0.6"/>
+      </svg>
+    </div>
+  );
+}
+
 interface ColumnProps {
   id: keyof Board;
   title: string;
@@ -759,25 +1077,31 @@ interface ColumnProps {
   onReassign: (taskId: string, newAssigneeId: string | null) => void;
 }
 
-function Column({ id, title, tasks, color, input, assigneeId, members, isDark, setInput, setAssigneeId, createTask, setTaskToDelete, getMemberName, onReassign }: ColumnProps) {
+function Column({
+  id, title, tasks, input, assigneeId, members, isDark,
+  setInput, setAssigneeId, createTask, setTaskToDelete, getMemberName, onReassign
+}: ColumnProps) {
   const { setNodeRef } = useDroppable({ id, data: { column: id } });
+  const bgColor = id === "todo" ? "#ef4444" : id === "in_progress" ? "#eab308" : "#22c55e";
 
   return (
     <div
       ref={setNodeRef}
       style={{
         ...columnStyle,
-        background: isDark ? "rgba(255,255,255,0.12)" : "#ffffff",
-        border: isDark
-          ? "1px solid rgba(255,255,255,0.18)"
-          : "1px solid rgba(0,0,0,0.08)",
-        boxShadow: isDark
-          ? "0 8px 32px rgba(0, 0, 0, 0.25)"
-          : "0 8px 24px rgba(0,0,0,0.08)",
-        borderTop: `4px solid ${color}`,
+        background: bgColor,
+        border: "none",
+        boxShadow: "0 8px 32px rgba(0,0,0,0.20)",
       }}
     >
-      <h3 style={{ ...columnTitleStyle, color: isDark ? "white" : "#111827" }}>{title}</h3>
+      {/* Octopus + Title centered ── */}
+      <div style={columnHeaderStyle}>
+        {id === "todo"        && <OllieTodo isDark={isDark} />}
+        {id === "in_progress" && <OllieInProgress isDark={isDark} />}
+        {id === "done"        && <OllieDone isDark={isDark} />}
+
+        <h3 style={columnTitleStyle}>{title}</h3>
+      </div>
 
       {members.length > 0 && (
         <select
@@ -785,14 +1109,12 @@ function Column({ id, title, tasks, color, input, assigneeId, members, isDark, s
           onChange={e => setAssigneeId(e.target.value)}
           style={{
             ...assigneeSelectStyle,
-            background: isDark ? "rgba(255, 255, 255, 0.14)" : "#f9fafb",
-            color: isDark ? "white" : "#111827",
-            border: isDark
-              ? "1px solid rgba(255,255,255,0.18)"
-              : "1px solid rgba(0,0,0,0.08)",
+            background: "#ffffff",
+            color: "#111827",
+            border: "1px solid rgba(0,0,0,0.15)",
           }}
         >
-          <option value="">Assign to... </option>
+          <option value="">Assign to...</option>
           {members.map(m => (
             <option key={m.user_id} value={m.user_id}>
               {m.name || m.email} — {m.role}
@@ -803,13 +1125,12 @@ function Column({ id, title, tasks, color, input, assigneeId, members, isDark, s
 
       <div style={addTaskContainer}>
         <input
+          className="task-input"
           style={{
             ...inputStyle,
-            background: isDark ? "rgba(255,255,255,0.14)" : "#f9fafb",
-            color: isDark ? "white" : "#111827",
-            border: isDark
-              ? "1px solid rgba(255,255,255,0.18)"
-              : "1px solid rgba(0,0,0,0.08)",
+            background: "#ffffff",
+            color: "#111827",
+            border: "1px solid rgba(0,0,0,0.15)",
           }}
           value={input}
           placeholder="Add task..."
@@ -819,11 +1140,9 @@ function Column({ id, title, tasks, color, input, assigneeId, members, isDark, s
         <button
           style={{
             ...addButtonStyle,
-            background: isDark ? "rgba(255,255,255,0.14)" : "#f3f4f6",
-            color: isDark ? "white" : "#111827",
-            border: isDark
-              ? "1px solid rgba(255,255,255,0.18)"
-              : "1px solid rgba(0,0,0,0.08)",
+            background: "#ffffff",
+            color: "#111827",
+            border: "1px solid rgba(0,0,0,0.15)",
           }}
           onClick={createTask}
         >
@@ -848,13 +1167,10 @@ function Column({ id, title, tasks, color, input, assigneeId, members, isDark, s
   );
 }
 
+/* 
+   Task Card */
 function TaskCard({
-  task,
-  assigneeName,
-  members,
-  isDark,
-  onDelete,
-  onReassign,
+  task, assigneeName, members, isDark, onDelete, onReassign,
 }: {
   task: Task;
   assigneeName: string;
@@ -879,38 +1195,27 @@ function TaskCard({
       {...attributes}
       style={{
         ...cardStyle,
-        background: isDark ? "rgba(255, 255, 255, 0.18)" : "#ffffff",
-        border: isDark
-          ? "1px solid rgba(255, 255, 255, 0.2)"
-          : "1px solid rgba(0,0,0,0.08)",
-        boxShadow: isDark
-          ? "0 6px 20px rgba(0,0,0,0.18)"
-          : "0 4px 12px rgba(0,0,0,0.08)",
-        color: isDark ? "white" : "#111827",
+        background: "rgba(255,255,255,0.92)",
+        border: "none",
+        color: "#111827",
+        boxShadow: "0 4px 12px rgba(0,0,0,0.12)",
         transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
       }}
     >
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontWeight: 500, color: isDark ? "white" : "#111827" }}>{task.title}</div>
+        <div style={cardTitleStyle}>{task.title}</div>
 
-        <div
-          onPointerDown={e => e.stopPropagation()}
-          style={{ marginTop: 6 }}
-        >
+        <div onPointerDown={e => e.stopPropagation()} style={{ marginTop: 6 }}>
           {!showReassign ? (
             <button
               onClick={e => { e.stopPropagation(); setShowReassign(true); }}
               style={{
-                background: assigneeName
-                  ? (isDark ? "rgba(127,119,221,0.12)" : "rgba(127,119,221,0.10)")
-                  : (isDark ? "rgba(0,0,0,0.06)" : "#f3f4f6"),
-                border: "1px dashed " + (assigneeName ? (isDark ? "white" : "#6d28d9") : (isDark ? "#ccc" : "#d1d5db")),
+                background: assigneeName ? "rgba(127,119,221,0.10)" : "#f3f4f6",
+                border: "1px dashed " + (assigneeName ? "#6d28d9" : "#d1d5db"),
                 borderRadius: 6,
                 padding: "3px 8px",
-                fontSize: 11,
-                color: assigneeName
-                  ? (isDark ? "white" : "#6d28d9")
-                  : (isDark ? "#888" : "#6b7280"),
+                fontSize: 12,
+                color: assigneeName ? "#6d28d9" : "#6b7280",
                 cursor: "pointer",
                 display: "flex",
                 alignItems: "center",
@@ -931,12 +1236,10 @@ function TaskCard({
                 width: "100%",
                 padding: "4px 8px",
                 borderRadius: 6,
-                border: isDark ? "1px solid #afa9ec" : "1px solid #c4b5fd",
+                border: "1px solid #c4b5fd",
                 fontSize: 12,
-                color: isDark ? "white" : "#111827",
-                background: isDark ? "rgba(255,255,255,0.14)" : "#ffffff",
-                backdropFilter: "blur(10px)",
-                WebkitBackdropFilter: "blur(10px)",
+                color: "#111827",
+                background: "#ffffff",
                 outline: "none",
               }}
             >
@@ -952,10 +1255,7 @@ function TaskCard({
       </div>
 
       <button
-        style={{
-          ...deleteButtonStyle,
-          color: isDark ? "rgba(255,255,255,0.7)" : "#6b7280",
-        }}
+        style={deleteButtonStyle}
         onPointerDown={e => e.stopPropagation()}
         onClick={e => { e.stopPropagation(); onDelete(); }}
       >
@@ -965,6 +1265,7 @@ function TaskCard({
   );
 }
 
+/* Styles */
 const pageStyle: CSSProperties = {
   color: "white",
   padding: 40,
@@ -972,30 +1273,51 @@ const pageStyle: CSSProperties = {
   background: "#0b0f17",
 };
 
+const pageTitleStyle: CSSProperties = {
+  fontSize: 42,
+  fontWeight: 900,
+  letterSpacing: "-0.5px",
+  marginBottom: 10,
+  textAlign: "left",
+};
+
+const pageSubStyle: CSSProperties = {
+  fontSize: 17,
+  opacity: 0.85,
+  marginTop: 4,
+  lineHeight: 1.5,
+};
+
 const boardStyle: CSSProperties = {
   display: "flex",
   gap: 30,
-  marginTop: 24,
+  marginTop: 28,
   alignItems: "stretch",
 };
 
 const columnStyle: CSSProperties = {
   flex: 1,
-  padding: 20,
-  borderRadius: 20,
-  minHeight: 450,
-  background: "rgba(255, 255, 255, 0.12)",
-  backdropFilter: "blur(18px)",
-  WebkitBackdropFilter: "blur(18px)",
-  border: "1px solid rgba(255, 255, 255, 0.18)",
-  boxShadow: "0 8px 32px rgba(0, 0, 0, 0.25)",
+  padding: "20px 20px 24px",
+  borderRadius: 24,
+  minHeight: 480,
+};
+
+const columnHeaderStyle: CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  gap: 2,
+  marginBottom: 14,
 };
 
 const columnTitleStyle: CSSProperties = {
   color: "white",
-  fontWeight: 700,
-  letterSpacing: "0.5px",
-  marginBottom: 8,
+  fontWeight: 900,
+  fontSize: 22,
+  letterSpacing: "1.5px",
+  margin: 0,
+  textTransform: "uppercase",
+  textShadow: "0 2px 6px rgba(0,0,0,0.18)",
 };
 
 const stackContainer: CSSProperties = {
@@ -1006,20 +1328,21 @@ const stackContainer: CSSProperties = {
 };
 
 const cardStyle: CSSProperties = {
-  background: "rgba(255, 255, 255, 0.18)",
-  backdropFilter: "blur(14px)",
-  WebkitBackdropFilter: "blur(14px)",
-  border: "1px solid rgba(255, 255, 255, 0.2)",
-  padding: 14,
+  padding: 16,
   borderRadius: 14,
-  color: "white",
-  boxShadow: "0 6px 20px rgba(0,0,0,0.18)",
   cursor: "grab",
   touchAction: "none",
   display: "flex",
   justifyContent: "space-between",
   alignItems: "flex-start",
   gap: 8,
+};
+
+const cardTitleStyle: CSSProperties = {
+  fontWeight: 700,
+  fontSize: 15,
+  color: "#111827",
+  lineHeight: 1.35,
 };
 
 const addTaskContainer: CSSProperties = {
@@ -1030,46 +1353,34 @@ const addTaskContainer: CSSProperties = {
 
 const inputStyle: CSSProperties = {
   flex: 1,
-  padding: 8,
+  padding: "9px 12px",
   borderRadius: 10,
-  border: "1px solid rgba(255,255,255,0.18)",
   outline: "none",
-  color: "white",
-  background: "rgba(255,255,255,0.14)",
-  backdropFilter: "blur(10px)",
-  WebkitBackdropFilter: "blur(10px)",
+  fontSize: 14,
 };
 
 const addButtonStyle: CSSProperties = {
-  padding: "6px 10px",
+  padding: "6px 12px",
   borderRadius: 10,
-  border: "1px solid rgba(255,255,255,0.18)",
   cursor: "pointer",
-  background: "rgba(255,255,255,0.14)",
-  color: "white",
-  backdropFilter: "blur(10px)",
-  WebkitBackdropFilter: "blur(10px)",
+  fontSize: 20,
+  fontWeight: 700,
 };
 
 const assigneeSelectStyle: CSSProperties = {
   width: "100%",
-  marginTop: 10,
-  padding: "7px 10px",
+  marginTop: 4,
+  padding: "8px 10px",
   borderRadius: 10,
-  border: "1px solid rgba(255,255,255,0.18)",
   outline: "none",
-  fontSize: 13,
-  color: "white",
-  background: "rgba(255, 255, 255, 0.14)",
+  fontSize: 14,
   cursor: "pointer",
-  backdropFilter: "blur(10px)",
-  WebkitBackdropFilter: "blur(10px)",
 };
 
 const deleteButtonStyle: CSSProperties = {
   background: "transparent",
   border: "none",
-  color: "rgba(255,255,255,0.7)",
+  color: "#9ca3af",
   cursor: "pointer",
   fontSize: "16px",
   padding: "2px",
@@ -1079,58 +1390,63 @@ const deleteButtonStyle: CSSProperties = {
 const modalOverlayStyle: CSSProperties = {
   position: "fixed",
   inset: 0,
-  background: "rgba(0,0,0,0.45)",
+  background: "rgba(0,0,0,0.65)",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
   zIndex: 1000,
-  backdropFilter: "blur(6px)",
-  WebkitBackdropFilter: "blur(6px)",
+  backdropFilter: "blur(2px)",
+  WebkitBackdropFilter: "blur(2px)",
 };
 
 const modalStyle: CSSProperties = {
-  background: "rgba(255,255,255,0.16)",
-  backdropFilter: "blur(18px)",
-  WebkitBackdropFilter: "blur(18px)",
-  border: "1px solid rgba(255,255,255,0.18)",
-  borderRadius: 16,
+  background: "#1e293b",
+  border: "1px solid #334155",
+  borderRadius: 12,
   padding: 24,
   width: "90%",
   maxWidth: 400,
-  boxShadow: "0 10px 30px rgba(0,0,0,0.25)",
+  boxShadow: "0 20px 25px -5px rgba(0,0,0,0.5), 0 8px 10px -6px rgba(0,0,0,0.5)",
 };
 
 const modalTitleStyle: CSSProperties = {
   marginTop: 0,
-  marginBottom: 10,
+  marginBottom: 12,
   color: "white",
+  fontSize: 20,
+  fontWeight: 700,
 };
 
 const modalTextStyle: CSSProperties = {
-  color: "rgba(255,255,255,0.85)",
-  marginBottom: 20,
+  color: "#cbd5e1",
+  marginBottom: 24,
+  fontSize: 15,
 };
 
 const modalButtonRowStyle: CSSProperties = {
   display: "flex",
-  justifyContent: "flex-end",
+  justifyContent: "center",
   gap: 12,
 };
 
 const cancelButtonStyle: CSSProperties = {
   padding: "8px 16px",
-  borderRadius: 10,
-  border: "1px solid rgba(255,255,255,0.18)",
-  background: "rgba(255,255,255,0.12)",
-  color: "white",
+  borderRadius: "6px",
+  border: "none",
+  background: "#ffffff",
+  color: "#111827",
   cursor: "pointer",
+  fontSize: 14,
+  fontWeight: 600,
 };
 
 const confirmDeleteButtonStyle: CSSProperties = {
   padding: "8px 16px",
-  borderRadius: 10,
-  border: "1px solid rgba(255,255,255,0.12)",
-  background: "rgba(220,38,38,0.75)",
+  borderRadius: "6px",
+  border: "1px solid #b91c1c",
+  background: "#dc2626",
   color: "white",
   cursor: "pointer",
+  fontSize: 14,
+  fontWeight: 600,
 };
