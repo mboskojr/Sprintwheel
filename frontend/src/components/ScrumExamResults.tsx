@@ -64,7 +64,7 @@ function ScrumExamResults({
         </p>
       </div>
 
-      {questions.map((question) => {
+      {questions.map((question, index) => {
         const userAnswer = answers[question.id];
         const isCorrect = userAnswer === question.correctAnswer;
 
@@ -87,15 +87,11 @@ function ScrumExamResults({
             }}
           >
             <h3>
-              {question.id}. {question.prompt}
+              {index + 1}. {question.prompt}
             </h3>
 
             <p>
               <strong>Your answer:</strong> {userAnswer || "No answer selected"}
-            </p>
-
-            <p>
-              <strong>Correct answer:</strong> {question.correctAnswer}
             </p>
 
             <p>
