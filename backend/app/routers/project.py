@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import func
+from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
 from app.db.session import get_db
@@ -17,6 +18,8 @@ from app.schemas.project import (
     JoinProjectIn,
     UpdateRoleIn,
     UpdateRoleOut,
+    TransferOwnershipIn,
+    TransferOwnershipOut,
 )
 from app.models.task import Task
 from app.models.story import Story
@@ -50,6 +53,7 @@ def create_project(
             project_id=project.id,
             user_id=current_user.id,
             role="Product Owner",
+            is_active=True,
         )
     )
 
@@ -67,7 +71,10 @@ def list_projects(
     rows = (
         db.query(Project, ProjectMember.role)
         .join(ProjectMember, ProjectMember.project_id == Project.id)
-        .filter(ProjectMember.user_id == current_user.id)
+        .filter(
+            ProjectMember.user_id == current_user.id,
+            ProjectMember.is_active == True,
+        )
         .all()
     )
 
@@ -89,21 +96,9 @@ def get_project(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    pm = (
-        db.query(ProjectMember)
-        .filter(
-            ProjectMember.project_id == project_id,
-            ProjectMember.user_id == current_user.id,
-        )
-        .first()
+    _, project = require_active_project_member(
+        db, project_id, current_user.id, allow_archived=True
     )
-    if not pm:
-        raise HTTPException(status_code=404, detail="Project not found")
-
-    project = db.query(Project).filter(Project.id == project_id).first()
-    if not project:
-        raise HTTPException(status_code=404, detail="Project not found")
-
     return project
 
 
@@ -114,25 +109,13 @@ def update_project(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    pm = (
-        db.query(ProjectMember)
-        .filter(
-            ProjectMember.project_id == project_id,
-            ProjectMember.user_id == current_user.id,
-        )
-        .first()
-    )
-    if not pm:
-        raise HTTPException(status_code=404, detail="Project not found")
-
-    project = db.query(Project).filter(Project.id == project_id).first()
-    if not project:
-        raise HTTPException(status_code=404, detail="Project not found")
+    _, project = require_active_project_member(db, project_id, current_user.id)
 
     project.name = data.name
     project.sprint_duration = data.sprint_duration
     db.commit()
     db.refresh(project)
+
     return project
 
 
@@ -142,20 +125,7 @@ def update_project_velocity(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    pm = (
-        db.query(ProjectMember)
-        .filter(
-            ProjectMember.project_id == project_id,
-            ProjectMember.user_id == current_user.id,
-        )
-        .first()
-    )
-    if not pm:
-        raise HTTPException(status_code=404, detail="Project not found")
-
-    project = db.query(Project).filter(Project.id == project_id).first()
-    if not project:
-        raise HTTPException(status_code=404, detail="Project not found")
+    _, project = require_active_project_member(db, project_id, current_user.id)
 
     avg_velocity = (
         db.query(func.coalesce(func.avg(Sprint.sprint_velocity), 0.0))
@@ -175,24 +145,29 @@ def delete_project(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    pm = (
-        db.query(ProjectMember)
-        .filter(
-            ProjectMember.project_id == project_id,
-            ProjectMember.user_id == current_user.id,
-        )
-        .first()
+    raise HTTPException(
+        status_code=405,
+        detail="Direct project deletion is disabled. Leave or archive the project instead."
     )
-    if not pm:
-        raise HTTPException(status_code=404, detail="Project not found")
+    # hard deleting a project is unsafe
+    # pm = (
+    #     db.query(ProjectMember)
+    #     .filter(
+    #         ProjectMember.project_id == project_id,
+    #         ProjectMember.user_id == current_user.id,
+    #     )
+    #     .first()
+    # )
+    # if not pm:
+    #     raise HTTPException(status_code=404, detail="Project not found")
 
-    project = db.query(Project).filter(Project.id == project_id).first()
-    if not project:
-        raise HTTPException(status_code=404, detail="Project not found")
+    # project = db.query(Project).filter(Project.id == project_id).first()
+    # if not project:
+    #     raise HTTPException(status_code=404, detail="Project not found")
 
-    db.delete(project)
-    db.commit()
-    return {"status": "ok"}
+    # db.delete(project)
+    # db.commit()
+    # return {"status": "ok"}
 
 
 @router.post("/{project_id}/join")
@@ -214,16 +189,30 @@ def join_project(
         )
         .first()
     )
-    if existing:
+
+    if existing and existing.is_active:
         raise HTTPException(status_code=400, detail="Already joined this project")
 
-    db.add(
-        ProjectMember(
-            project_id=project_id,
-            user_id=current_user.id,
-            role=data.role.value,
+    if existing and not existing.is_active:
+        existing.is_active = True
+        existing.left_at = None
+        existing.role = data.role.value
+        db.flush()
+    else: 
+        db.add(
+            ProjectMember(
+                project_id=project_id,
+                user_id=current_user.id,
+                role=data.role.value,
+                is_active=True,
+            )
         )
-    )
+
+    if project.status == "archived":
+        project.status = "active"
+        project.archived_at = None
+        project.delete_after = None
+
     db.commit()
 
     notify_added_to_project(db, current_user.id, project.name, data.role.value)
@@ -242,20 +231,39 @@ def update_role(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    project = db.query(Project).filter(Project.id == project_id).first()
-    if not project:
-        raise HTTPException(status_code=404, detail="Project not found")
+    membership, _ = require_active_project_member(db, project_id, current_user.id)
 
-    membership = (
-        db.query(ProjectMember)
-        .filter(
-            ProjectMember.project_id == project_id,
-            ProjectMember.user_id == current_user.id,
+    if data.role.value == "Product Owner":
+        raise HTTPException(
+            status_code=400,
+            detail="Use the ownership transfer endpoint to assign Product Owner.",
         )
-        .first()
-    )
-    if not membership:
-        raise HTTPException(status_code=404, detail="Not a member of this project")
+    
+    if data.role.value == "Scrum Facilitator":
+        existing_scrum_master = (
+            db.query(ProjectMember)
+            .filter(
+                ProjectMember.project_id == project_id,
+                ProjectMember.is_active == True,
+                ProjectMember.role == "Scrum Facilitator",
+                ProjectMember.user_id != current_user.id,
+            )
+            .first()
+        )
+
+        if existing_scrum_master:
+            raise HTTPException(
+                status_code=400,
+                detail="This project already has a Scrum Facilitator.",
+            )
+        
+    if membership.role == data.role.value:
+        return UpdateRoleOut(
+            status="ok",
+            project_id=project_id,
+            user_id=current_user.id,
+            role=data.role,
+        )
 
     membership.role = data.role.value
     db.commit()
@@ -269,18 +277,34 @@ def update_role(
     )
 
 
-def require_project_member(db: Session, project_id: UUID, user_id: str):
-    pm = (
+def require_active_project_member(
+    db: Session,
+    project_id: UUID,
+    user_id: str,
+    allow_archived: bool = False,
+):
+    membership = (
         db.query(ProjectMember)
         .filter(
             ProjectMember.project_id == project_id,
             ProjectMember.user_id == user_id,
+            ProjectMember.is_active == True,
         )
         .first()
     )
 
-    if not pm:
+    if not membership:
         raise HTTPException(status_code=404, detail="Project not found")
+
+    project = db.query(Project).filter(Project.id == project_id).first()
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    if not allow_archived and project.status == "archived":
+        raise HTTPException(status_code=400, detail="Project is archived")
+
+    return membership, project
+
 
 @router.get("/{project_id}/board")
 def get_project_board(
@@ -288,10 +312,8 @@ def get_project_board(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    require_active_project_member(db, project_id, current_user.id)
 
-    require_project_member(db, project_id, current_user.id)
-
-    # get first story in project 
     story = (
         db.query(Story)
         .filter(Story.project_id == project_id)
@@ -330,18 +352,22 @@ def get_project_board(
         "done": board["done"]
     }
 
+
 @router.get("/{project_id}/members")
 def get_project_members(
     project_id: UUID,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    require_project_member(db, project_id, current_user.id)
+    require_active_project_member(db, project_id, current_user.id)
     
     rows = (
         db.query(ProjectMember, User)
         .join(User, User.id == ProjectMember.user_id)
-        .filter(ProjectMember.project_id == project_id)
+        .filter(
+            ProjectMember.project_id == project_id,
+            ProjectMember.is_active == True,
+        )
         .all()
     )
     
@@ -354,3 +380,118 @@ def get_project_members(
         }
         for pm, user in rows
     ]
+
+
+@router.patch("/{project_id}/transfer-ownership", response_model=TransferOwnershipOut)
+def transfer_ownership(
+    project_id: UUID,
+    data: TransferOwnershipIn,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    current_membership, project = require_active_project_member(
+        db, project_id, current_user.id
+    )
+
+    if current_membership.role != "Product Owner":
+        raise HTTPException(
+            status_code=403,
+            detail="Only the Product Owner can transfer ownership.",
+        )
+
+    if data.new_owner_user_id == current_user.id:
+        raise HTTPException(
+            status_code=400,
+            detail="You already own this project.",
+        )
+
+    target_membership = (
+        db.query(ProjectMember)
+        .filter(
+            ProjectMember.project_id == project_id,
+            ProjectMember.user_id == data.new_owner_user_id,
+            ProjectMember.is_active == True,
+        )
+        .first()
+    )
+
+    if not target_membership:
+        raise HTTPException(
+            status_code=404,
+            detail="New owner must be an active member of this project.",
+        )
+
+    current_membership.role = "Developer"
+    target_membership.role = "Product Owner"
+
+    db.commit()
+
+    return TransferOwnershipOut(
+        status="ok",
+        project_id=project_id,
+        previous_owner_user_id=current_user.id,
+        new_owner_user_id=data.new_owner_user_id,
+    )
+
+
+@router.post("/{project_id}/leave")
+def leave_project(
+    project_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    membership, project = require_active_project_member(
+        db, project_id, current_user.id, allow_archived=True
+    )
+
+    if membership.role == "Product Owner":
+        active_count = (
+            db.query(ProjectMember)
+            .filter(
+                ProjectMember.project_id == project_id,
+                ProjectMember.is_active == True,
+            )
+            .count()
+        )
+
+        if active_count > 1:
+            raise HTTPException(
+                status_code=400,
+                detail="Product Owner must transfer ownership before leaving.",
+            )
+
+    tasks = (
+        db.query(Task)
+        .join(Story, Story.id == Task.story_id)
+        .filter(
+            Story.project_id == project_id,
+            Task.assignee_id == current_user.id,
+            Task.status != "done",
+        )
+        .all()
+    )
+
+    for task in tasks:
+        task.assignee_id = None
+
+    membership.is_active = False
+    membership.left_at = datetime.now(timezone.utc)
+
+    remaining = (
+        db.query(ProjectMember)
+        .filter(
+            ProjectMember.project_id == project_id,
+            ProjectMember.is_active == True,
+        )
+        .count()
+    )
+
+    if remaining == 0:
+        now = datetime.now(timezone.utc)
+        project.status = "archived"
+        project.archived_at = now
+        project.delete_after = now + timedelta(days=30)
+
+    db.commit()
+
+    return {"status": "left_project"}
