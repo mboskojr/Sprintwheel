@@ -1,4 +1,5 @@
 from sqlalchemy import Column, String, Integer, Float, DateTime
+from sqlalchemy.orm import relationship
 from datetime import datetime, timedelta, timezone
 from sqlalchemy.dialects.postgresql import UUID
 import uuid
@@ -18,4 +19,10 @@ class Project(Base):
     status = Column(String, nullable=False, default="active")
     archived_at = Column(DateTime(timezone=True), nullable=True)
     delete_after = Column(DateTime(timezone=True), nullable=True)
-    
+
+    stories = relationship(
+        "Story",
+        back_populates="project",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )

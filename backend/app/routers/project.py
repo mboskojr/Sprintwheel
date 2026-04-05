@@ -24,6 +24,7 @@ from app.schemas.project import (
 from app.models.task import Task
 from app.models.story import Story
 from app.services.notification_service import notify_added_to_project, notify_project_created
+from app.services.project_cleanup import delete_expired_projects
 
 router = APIRouter(prefix="/projects", tags=["projects"])
 
@@ -79,15 +80,18 @@ def list_projects(
     )
 
     return [
-        ProjectListItemOut(
-            id=project.id,
-            name=project.name,
-            sprint_duration=project.sprint_duration,
-            project_velocity=project.project_velocity,
-            role=role,
-        )
-        for project, role in rows
-    ]
+    ProjectListItemOut(
+        id=project.id,
+        name=project.name,
+        sprint_duration=project.sprint_duration,
+        project_velocity=project.project_velocity,
+        role=role,
+        status=project.status,
+        archived_at=project.archived_at,
+        delete_after=project.delete_after,
+    )
+    for project, role in rows
+]
 
 
 @router.get("/{project_id}", response_model=ProjectOut)
@@ -474,8 +478,11 @@ def leave_project(
     for task in tasks:
         task.assignee_id = None
 
+    now = datetime.now(timezone.utc)
     membership.is_active = False
-    membership.left_at = datetime.now(timezone.utc)
+    membership.left_at = now
+
+    db.flush()   # important: pushes the membership update before counting
 
     remaining = (
         db.query(ProjectMember)
@@ -487,7 +494,6 @@ def leave_project(
     )
 
     if remaining == 0:
-        now = datetime.now(timezone.utc)
         project.status = "archived"
         project.archived_at = now
         project.delete_after = now + timedelta(days=30)
@@ -495,3 +501,16 @@ def leave_project(
     db.commit()
 
     return {"status": "left_project"}
+
+
+@router.post("/cleanup-expired")
+def cleanup_expired_projects(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    deleted_count = delete_expired_projects(db)
+
+    return {
+        "status": "ok",
+        "deleted_projects": deleted_count,
+    }
