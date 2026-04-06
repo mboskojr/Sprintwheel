@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 export const useSprintBurndownData = (sprintId: string) => {
     const [chartData, setChartData] = useState<any[]>([]);
     const [sprintNumber, setSprintNumber] = useState<number | null>(null);
+    const [velocity, setVelocity] = useState<number>(0);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -17,6 +18,8 @@ export const useSprintBurndownData = (sprintId: string) => {
                 const metRes = await fetch(`http://127.0.0.1:8000/sprints/${sprintId}`, { headers });
                 const metData = await metRes.json();
                 setSprintNumber(metData.sprint_number);
+
+                setVelocity(metData.sprint_velocity || 0);
 
                 const burnRes = await fetch(`http://127.0.0.1:8000/sprints/${sprintId}/burndown`, { headers });
                 const data = await burnRes.json();
@@ -43,5 +46,5 @@ export const useSprintBurndownData = (sprintId: string) => {
         fetchData();
     }, [sprintId]);
 
-    return { chartData, sprintNumber, loading };
+    return { chartData, sprintNumber, velocity, loading };
 };
