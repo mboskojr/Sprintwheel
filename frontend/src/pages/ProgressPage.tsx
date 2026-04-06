@@ -2,6 +2,7 @@ import{ useState, useEffect, type CSSProperties, type JSX } from "react";
 import SprintBurndownChart from "../components/SprintBurndownChart"; //FOR STATIC OLD ONE, PLS KEEP FOR NOW
 import SidebarLayout from "../components/SidebarLayout";
 import { useTheme } from "./ThemeContext";
+import { API_BASE } from "../api/base";
 
 
 import { useSprintBurndownData } from "../hooks/useBurndown";
@@ -35,7 +36,7 @@ export default function ProgressPage(): JSX.Element {
   useEffect(() => {
     if (!projectId) return;
 
-    fetch(`http://127.0.0.1:8000/sprints?project_id=${projectId}`, {
+    fetch(`${API_BASE}/sprints?project_id=${projectId}`, {
       headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
     })
       .then(res => res.json())

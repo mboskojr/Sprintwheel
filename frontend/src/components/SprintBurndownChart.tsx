@@ -1,5 +1,6 @@
-import React from "react";
-import {CartesianGrid, Legend, Line, LineChart, Tooltip, XAxis, YAxis, ResponsiveContainer, ReferenceLine } from "recharts";
+//import React from "react";
+//removed legend from below
+import {CartesianGrid, Line, LineChart, Tooltip, XAxis, YAxis, ResponsiveContainer, ReferenceLine } from "recharts";
 // import { RechartsDevtools } from "@recharts/devtools";
 
 const mockData = [
@@ -14,12 +15,12 @@ const mockData = [
 
 // TODO: WILL WANT TO AUTOCALC THIS
 const today = "Jan 4";
-
+/*
 interface BurndownPoint {
     date: string;
     remaining: number;
 }
-
+*/
 export default function SprintBurndownChart() {
     return (
         <ResponsiveContainer width="100%" height={350}>

@@ -1082,6 +1082,7 @@ function toLocalInputValue(date: Date) {
   return `${y}-${m}-${d}T${hh}:${mm}`;
 }
 
+/*
 function formatEventTime(dateInput: string) {
   const date = new Date(dateInput);
   return date.toLocaleTimeString([], {
@@ -1089,6 +1090,7 @@ function formatEventTime(dateInput: string) {
     minute: "2-digit",
   });
 }
+*/
 
 function formatEventTimeRange(startInput: string, endInput: string) {
   const start = new Date(startInput);

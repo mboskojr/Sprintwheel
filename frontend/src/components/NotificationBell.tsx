@@ -9,8 +9,10 @@ interface Notification {
   created_at: string;
 }
 
-const API_BASE = "http://localhost:8000";
+const API_BASE =
+  import.meta.env.VITE_API_URL?.trim() || "http://127.0.0.1:8000";
 
+console.log("API_BASE =", API_BASE);
 function getToken(): string | null {
   return localStorage.getItem("token");
 }

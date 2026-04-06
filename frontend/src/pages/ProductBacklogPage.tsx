@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import type { JSX, CSSProperties } from "react";
 import SidebarLayout from "../components/SidebarLayout";
 import { useTheme } from "./ThemeContext";
+import { API_BASE } from "../api/base";
 
 interface Story {
   id: string;
@@ -46,7 +47,7 @@ export default function ProductBacklogPage(): JSX.Element {
 
     setLoading(true);
 
-    fetch(`http://127.0.0.1:8000/stories/backlog?project_id=${projectId}`, {
+    fetch(`${API_BASE}/stories/backlog?project_id=${projectId}`, {
       headers: {
         Authorization: `Bearer ${localStorage.getItem("token")}`,
       },
@@ -70,7 +71,7 @@ export default function ProductBacklogPage(): JSX.Element {
   function createBacklogStory() {
     if (!projectId || !newTitle.trim()) return;
 
-    fetch("http://127.0.0.1:8000/stories/backlog", {
+    fetch(`${API_BASE}/stories/backlog`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -108,7 +109,7 @@ export default function ProductBacklogPage(): JSX.Element {
     updates: Partial<Pick<Story, "title" | "description" | "points" | "priority" | "isDone">>,
     previousStories: Story[]
   ) {
-    fetch(`http://127.0.0.1:8000/stories/${storyId}`, {
+    fetch(`${API_BASE}/stories/${storyId}`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
@@ -154,7 +155,7 @@ export default function ProductBacklogPage(): JSX.Element {
     setStories((prev) => prev.filter((story) => story.id !== storyId));
     setStoryToDelete(null);
 
-    fetch(`http://127.0.0.1:8000/stories/${storyId}`, {
+    fetch(`${API_BASE}/stories/${storyId}`, {
       method: "DELETE",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -188,7 +189,7 @@ export default function ProductBacklogPage(): JSX.Element {
   }
 
   function reorderStoriesOnBackend(updatedStories: Story[], previousStories: Story[]) {
-    fetch("http://127.0.0.1:8000/stories/backlog/reorder", {
+    fetch(`${API_BASE}/stories/backlog/reorder`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",

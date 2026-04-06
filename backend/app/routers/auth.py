@@ -1,7 +1,12 @@
 import uuid
+from app.core.config import GOOGLE_CLIENT_ID, FRONTEND_URL
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+
+from fastapi.responses import RedirectResponse
+import urllib.parse
+import requests
 
 from app.db.session import get_db
 from app.models.user import User
@@ -76,8 +81,7 @@ def forgot_password(data: ForgotPasswordIn, db: Session = Depends(get_db)):
 
     if user:
         token = create_password_reset_token(user.email)
-        frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
-        reset_link = f"{frontend_url}/reset-password?token={token}"
+        reset_link = f"{FRONTEND_URL}/reset-password?token={token}"
         send_password_reset_email(user.email, reset_link)
 
     return {
@@ -215,3 +219,66 @@ def google_login(data: GoogleLoginIn, db: Session = Depends(get_db)):
     token = create_access_token(user.id)
     return {"access_token": token, "token_type": "bearer"}
 
+@router.get("/google/login")
+def google_login_redirect():
+    params = {
+        "client_id": GOOGLE_CLIENT_ID,
+        "redirect_uri": "http://127.0.0.1:8000/auth/google/callback",
+        "response_type": "code",
+        "scope": "openid email profile",
+        "access_type": "offline",
+        "prompt": "select_account",
+    }
+
+    url = "https://accounts.google.com/o/oauth2/v2/auth?" + urllib.parse.urlencode(params)
+    return RedirectResponse(url)
+
+
+@router.get("/google/callback")
+def google_callback(code: str, db: Session = Depends(get_db)):
+    token_url = "https://oauth2.googleapis.com/token"
+
+    data = {
+        "code": code,
+        "client_id": GOOGLE_CLIENT_ID,
+        "client_secret": os.getenv("GOOGLE_CLIENT_SECRET"),
+        "redirect_uri": "http://127.0.0.1:8000/auth/google/callback",
+        "grant_type": "authorization_code",
+    }
+
+    token_res = requests.post(token_url, data=data)
+    token_json = token_res.json()
+
+    id_token_str = token_json.get("id_token")
+    if not id_token_str:
+        raise HTTPException(status_code=400, detail="Failed to get ID token")
+
+    info = id_token.verify_oauth2_token(
+        id_token_str,
+        google_requests.Request(),
+        GOOGLE_CLIENT_ID,
+    )
+
+    email = info.get("email")
+    name = info.get("name")
+
+    if not email:
+        raise HTTPException(status_code=400, detail="Google account missing email")
+
+    user = db.query(User).filter(User.email == email).first()
+
+    if not user:
+        user = User(
+            id=str(uuid.uuid4()),
+            name=name or "Google User",
+            email=email,
+            role="student",
+            hashed_password=hash_password(uuid.uuid4().hex),
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+
+    token = create_access_token(user.id)
+
+    return RedirectResponse(f"http://127.0.0.1:5173/google-success?token={token}")
