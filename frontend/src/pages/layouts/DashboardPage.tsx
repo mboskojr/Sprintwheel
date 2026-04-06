@@ -383,6 +383,16 @@ export default function DashboardPage(): JSX.Element {
       ? `/projects/${activeProjectId}/${resolvedRole}/to-do/planning`
       : "";
 
+  const progressPreviewPath =
+    activeProjectId && resolvedRole
+      ? `/projects/${activeProjectId}/${resolvedRole}/progress`
+      : "";
+  
+  const eduPreviewPath =
+    activeProjectId && resolvedRole
+      ? `/projects/${activeProjectId}/${resolvedRole}/education`
+      : "";
+
   return (
     <SidebarLayout>
      <main
@@ -698,20 +708,83 @@ export default function DashboardPage(): JSX.Element {
                   Learning materials, guidance, and platform support resources
                   for the team.
                 </p>
+                
                 <div
                   style={{
-                    ...styles.imageWrap,
+                    ...styles.todoPreviewCard,
+                    background: isDark ? styles.todoPreviewCard.background : "#ffffff",
                     border: isDark
-                      ? styles.imageWrap.border
+                      ? styles.todoPreviewCard.border
                       : "1px solid rgba(17,24,39,0.08)",
-                    background: isDark ? styles.imageWrap.background : "#f8fafc",
+                      boxShadow: isDark
+                        ? styles.todoPreviewCard.boxShadow
+                        : "0 12px 32px rgba(15,23,42,0.08)",
+                  }}
+                  onClick={() => {
+                    if (eduPreviewPath) navigate(eduPreviewPath);
                   }}
                 >
-                  <img
-                    src="/education-module-placeholder.png"
-                    alt="Education module preview"
-                    style={styles.image}
-                  />
+                  <div style={styles.todoPreviewTop}>
+                    <span
+                      style={{
+                        ...styles.todoPreviewEyebrow,
+                        color: isDark ? styles.todoPreviewEyebrow.color : "#6b7280",
+                      }}
+                    >
+                      Scrum Edu
+                    </span>
+                    <span
+                      style={{
+                        ...styles.todoPreviewArrow,
+                        color: isDark ? styles.todoPreviewArrow.color : "#6b7280",
+                      }}
+                    >
+                      ↗
+                    </span>
+                  </div>
+
+                  <div style={styles.todoPreviewBody}>
+                    <h3
+                      style={{
+                        ...styles.todoPreviewTitle,
+                        color: isDark ? "white" : "#111827",
+                      }}
+                    >
+                      Preview
+                    </h3>
+
+                    <p
+                      style={{
+                        ...styles.todoPreviewText,
+                        color: isDark ? styles.todoPreviewText.color :"#4b5563",
+                      }}
+                    >
+                      View your learning modules and open the full Scrum Edu page.
+                    </p>
+
+                    <div
+                      style={{
+                        ...styles.todoPreviewViewport,
+                        border: isDark
+                          ? styles.todoPreviewViewport.border
+                          : "1px solid rgba(17,24,39,0.08)",
+                        background: isDark
+                          ? styles.todoPreviewViewport.background
+                          : "#f8fafc",
+                      }}
+                    >
+                      {eduPreviewPath ? (
+                        <iframe
+                          src={eduPreviewPath}
+                          title="Scrum Edu preview"
+                          style={{
+                            ...styles.todoPreviewIframe,
+                            background: isDark ? "#0f172a" : "#ffffff",
+                          }}
+                        />
+                      ) : null}
+                    </div>
+                  </div>
                 </div>
               </div>
             </section>
@@ -792,20 +865,80 @@ export default function DashboardPage(): JSX.Element {
                   High-level visibility into progress trends, delivery health,
                   and momentum.
                 </p>
+
                 <div
                   style={{
-                    ...styles.imageWrap,
+                    ...styles.todoPreviewCard,
+                    background: isDark ? styles.todoPreviewCard.background : "#ffffff",
                     border: isDark
-                      ? styles.imageWrap.border
+                      ? styles.todoPreviewCard.border
                       : "1px solid rgba(17,24,39,0.08)",
-                    background: isDark ? styles.imageWrap.background : "#f8fafc",
+                      boxShadow: isDark
+                        ? styles.todoPreviewCard.boxShadow
+                        : "0 12px 32px rgba(15,23,42,0.08)",
                   }}
-                >
-                  <img
-                    src="/progress-insights-placeholder.png"
-                    alt="Progress insights preview"
-                    style={styles.image}
-                  />
+                  onClick={() => {
+                    if (progressPreviewPath) navigate(progressPreviewPath);
+                  }}
+                  >
+                    <div style={styles.todoPreviewTop}>
+                      <span
+                      style={{
+                        ...styles.todoPreviewEyebrow,
+                        color: isDark ? styles.todoPreviewEyebrow.color : "#6b7280",
+                      }}
+                      >
+                        Sprint Burndown Chart
+                      </span>
+                      <span
+                        style={{
+                          ...styles.todoPreviewArrow,
+                          color: isDark ? styles.todoPreviewArrow.color : "#6b7280",
+                        }}
+                      >
+                        ↗
+                      </span>
+                    </div>
+                    <div style={styles.todoPreviewBody}>
+                      <h3
+                        style={{
+                          ...styles.todoPreviewTitle,
+                          color: isDark ? "white" : "#111827",
+                        }}
+                      >
+                        Preview
+                      </h3>
+
+                      <p
+                        style={{
+                          ...styles.todoPreviewText,
+                          color: isDark ? styles.todoPreviewText.color : "#4b5563",
+                        }}
+                      >
+                        View your velocity and sprint burndown chart and open the full progress page.
+                      </p>
+
+                      <div
+                        style={{
+                          ...styles.todoPreviewViewport,
+                          border: isDark
+                            ? styles.todoPreviewViewport.border
+                            : "1px solid rgba(17,24,39,0.08)",
+                          background: isDark ? styles.todoPreviewViewport.background : "#f8fafc",
+                          }}
+                      >
+                        {progressPreviewPath ? (
+                          <iframe
+                            src={progressPreviewPath}
+                            title="Progress page preview"
+                            style={{
+                              ...styles.todoPreviewIframe,
+                              background: isDark ? "#0f172a" : "#ffffff",
+                            }}
+                          />
+                        ) : null}
+                    </div>
+                  </div>
                 </div>
               </div>
             </section>
