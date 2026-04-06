@@ -42,10 +42,9 @@ def create_project(
     db.add(project)
     db.flush()
 
-    #default board story 
     story = Story(
-    project_id=project.id,
-    title="Main Board"
+        project_id=project.id,
+        title="Main Board"
     )
     db.add(story)
 
@@ -58,9 +57,10 @@ def create_project(
         )
     )
 
+    notify_project_created(db, current_user.id, project.name)
+
     db.commit()
     db.refresh(project)
-    notify_project_created(db, current_user.id, project.name)
     return project
 
 
@@ -211,15 +211,14 @@ def join_project(
                 is_active=True,
             )
         )
-
     if project.status == "archived":
         project.status = "active"
         project.archived_at = None
         project.delete_after = None
 
-    db.commit()
-
     notify_added_to_project(db, current_user.id, project.name, data.role.value)
+
+    db.commit()
 
     return {
         "status": "ok",

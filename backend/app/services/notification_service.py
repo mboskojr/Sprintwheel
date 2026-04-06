@@ -4,7 +4,7 @@ from app.models.notification import Notification
 def create_notification(db: Session, user_id, message: str):
     notif = Notification(user_id=user_id, message=message)
     db.add(notif)
-    db.commit()
+    return notif
 
 def notify_added_to_project(db: Session, user_id, project_name: str, role: str):
     create_notification(db, user_id, f"You've been added to {project_name} as {role}.")
@@ -31,7 +31,19 @@ def notify_task_status_changed(db: Session, user_id, task_title: str, new_status
     status_labels = {
         "todo": "To Do",
         "in_progress": "In Progress", 
-        "done": "Done ✅"
+        "done": "Done!"
     }
     label = status_labels.get(new_status, new_status)
     create_notification(db, user_id, f"Task '{task_title}' moved to {label}.")
+
+def notify_task_deleted(db: Session, user_id, task_title: str, project_name: str):
+    create_notification(db, user_id, f"Task '{task_title}' in '{project_name}' was deleted.")
+
+def notify_event_reminder(db: Session, user_id, event_title: str, start_at: str):
+    create_notification(db, user_id, f"Reminder: '{event_title}' starts in 30 minutes ({start_at}).")
+
+def notify_task_reassigned_to_you(db: Session, user_id, task_title: str, project_name: str):
+    create_notification(db, user_id, f"You were assigned to '{task_title}' in {project_name}.")
+
+def notify_task_unassigned_from_you(db: Session, user_id, task_title: str, project_name: str):
+    create_notification(db, user_id, f"You were unassigned from '{task_title}' in {project_name}.")

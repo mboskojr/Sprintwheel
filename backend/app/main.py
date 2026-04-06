@@ -10,8 +10,18 @@ from app.routers.project_events import router as project_events_router
 from app.routers.information_radiator import router as information_radiator_router
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers.notifications import router as notifications_router
+from contextlib import asynccontextmanager
+from fastapi import FastAPI
+from app.services.notification_scheduler import create_scheduler
 
-app = FastAPI(title="SprintWheel API")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    scheduler = create_scheduler()
+    scheduler.start()
+    yield
+    scheduler.shutdown()
+
+app = FastAPI(title="SprintWheel API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
