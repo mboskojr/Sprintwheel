@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { CSSProperties, ReactNode, JSX } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { listProjects, type Project } from "../api/projects";
+import { listProjects, leaveProject, type Project } from "../api/projects";
 import NotificationBell from "./NotificationBell";
 import { useTheme } from "../pages/ThemeContext";
 
@@ -21,6 +21,7 @@ const styles: Record<string, CSSProperties> = {
     overflowX: "hidden",
     height: "100vh",
     flexShrink: 0,
+    boxSizing: "border-box",
   },
   sidebarTop: {
     display: "flex",
@@ -120,13 +121,13 @@ const styles: Record<string, CSSProperties> = {
     whiteSpace: "nowrap",
   },
   sidebarBottom: {
-    marginTop: 24,
-    display: "flex",
-    flexDirection: "column",
-    gap: 10,
-    paddingTop: 18,
-    flex: 1,
-  },
+  marginTop: 24,
+  display: "flex",
+  flexDirection: "column",
+  gap: 10,
+  paddingTop: 18,
+  paddingBottom: 24,
+},
   selectorBox: {
     borderRadius: 12,
     padding: "12px 14px",
@@ -376,6 +377,7 @@ export default function SidebarLayout({ children }: { children: ReactNode }): JS
   const [projects, setProjects] = useState<Project[]>([]);
   const [user, setUser] = useState<StoredUser | null>(null);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [leaving, setLeaving] = useState(false);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -384,7 +386,7 @@ export default function SidebarLayout({ children }: { children: ReactNode }): JS
 
   useEffect(() => {
     listProjects().then(setProjects).catch(() => setProjects([]));
-  }, []);
+  }, [projectId]);
 
   useEffect(() => {
     const raw = localStorage.getItem("user");
@@ -427,6 +429,48 @@ export default function SidebarLayout({ children }: { children: ReactNode }): JS
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     navigate("/login");
+  }
+
+  async function handleLeaveProject() {
+    if (!projectId) return;
+
+    const confirmed = window.confirm(
+      "Are you sure you want to leave this project?"
+    );
+    if (!confirmed) return;
+
+    try {
+      setLeaving(true);
+
+      await leaveProject(projectId);
+
+      const updatedProjects = await listProjects();
+
+      setProjects(updatedProjects);
+
+      if (updatedProjects.length > 0) {
+        const fallbackProject = updatedProjects[0];
+
+        const resolvedRole =
+          role ??
+          (user?.role === "Product Owner"
+            ? "product-owner"
+            : user?.role === "Scrum Facilitator"
+              ? "scrum-facilitator"
+              : "developer");
+
+        navigate(getLandingPathForRole(fallbackProject.id, resolvedRole as RoleKey), {
+          replace: true,
+        });
+      } else {
+        navigate("/new-project", { replace: true });
+      }
+    } catch (err: any) {
+      console.error(err);
+      alert(err?.message || "Failed to leave project.");
+    } finally {
+      setLeaving(false);
+    }
   }
 
   return (
@@ -601,6 +645,33 @@ export default function SidebarLayout({ children }: { children: ReactNode }): JS
                 onClick={() => navigate(`/projects/${projectId}/role-options`)}
               >
                 🔁 Change Role
+              </button>
+            )}
+
+            {projectId && (
+              <button
+                type="button"
+                style={{
+                  ...styles.bottomButton,
+                  background: role === "product-owner" ? colors.surfaceStrong : "#ef4444",
+                  border: `1px solid ${colors.borderStrong}`,
+                  color: role === "product-owner" ? colors.text : "white",
+                  opacity: role === "product-owner" ? 0.7 : 1,
+                  cursor: role === "product-owner" ? "not-allowed" : "pointer",
+                }}
+                onClick={role === "product-owner" ? undefined : handleLeaveProject}
+                disabled={leaving || role === "product-owner"}
+                title={
+                  role === "product-owner"
+                    ? "Transfer ownership before leaving the project"
+                    : undefined
+                }
+              >
+                {role === "product-owner"
+                  ? "Transfer Ownership to Leave"
+                  : leaving
+                    ? "Leaving..."
+                    : "🚪 Leave Project"}
               </button>
             )}
 

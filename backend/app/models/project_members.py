@@ -1,5 +1,6 @@
 import uuid
-from sqlalchemy import Column, String, ForeignKey, UniqueConstraint
+from sqlalchemy import Column, String, ForeignKey, UniqueConstraint, Boolean, DateTime
+from datetime import datetime
 from sqlalchemy.dialects.postgresql import UUID
 from app.db.session import Base
 
@@ -22,6 +23,9 @@ class ProjectMember(Base):
     )
 
     role = Column(String, nullable=False, default="Developer")
+
+    is_active = Column(Boolean, nullable=False, default=True)
+    left_at = Column(DateTime(timezone=True), nullable=True)
     
     __table_args__ = (
         UniqueConstraint("project_id", "user_id", name="uq_project_members_project_user"),

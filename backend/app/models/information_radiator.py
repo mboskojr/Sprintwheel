@@ -9,7 +9,7 @@ class InformationRadiatorBoard(Base):
     __tablename__ = "information_radiator_boards"
 
     id = Column(String, primary_key=True, default=lambda: str(uuid4()))
-    project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id"), nullable=False, index=True)
+    project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True)
     name = Column(String, nullable=False, default="Project Radiator")
 
 
@@ -17,7 +17,7 @@ class InformationRadiatorNote(Base):
     __tablename__ = "information_radiator_notes"
 
     id = Column(String, primary_key=True, default=lambda: str(uuid4()))
-    board_id = Column(String, ForeignKey("information_radiator_boards.id"), nullable=False, index=True)
+    board_id = Column(String, ForeignKey("information_radiator_boards.id", ondelete="CASCADE"), nullable=False, index=True)
     author_user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
 
     content = Column(Text, nullable=False)

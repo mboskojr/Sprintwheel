@@ -310,6 +310,18 @@ const styles: Record<string, CSSProperties> = {
   },
 };
 
+function getLandingPathForRole(projectId: string, role: string): string {
+  switch (role) {
+    case "product-owner":
+      return `/projects/${projectId}/${role}/product-owner-dashboard`;
+    case "scrum-facilitator":
+      return `/projects/${projectId}/${role}/scrum-facilitator-dashboard`;
+    case "developer":
+    default:
+      return `/projects/${projectId}/${role}/developer-dashboard`;
+  }
+}
+
 export default function DashboardPage(): JSX.Element {
   const navigate = useNavigate();
   const { projectId, role } = useParams();
@@ -322,7 +334,8 @@ export default function DashboardPage(): JSX.Element {
   });
 
   const [projects, setProjects] = useState<Project[]>([]);
-  const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
+  // deleting this to solve leave project glitch: when project is left, the next active one cannot be left
+  //const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
   const [loadingProjects, setLoadingProjects] = useState(false);
   const [projectError, setProjectError] = useState("");
   const [revealed, setRevealed] = useState(() => {
@@ -358,11 +371,6 @@ export default function DashboardPage(): JSX.Element {
     listProjects()
       .then((data) => {
         setProjects(data);
-        if (projectId) {
-          setActiveProjectId(projectId);
-        } else if (data.length > 0) {
-          setActiveProjectId(data[0].id);
-        }
       })
       .catch((e: any) => {
         setProjectError(e?.message ?? "Unable to load projects.");
@@ -373,14 +381,45 @@ export default function DashboardPage(): JSX.Element {
   }, [user, projectId]);
 
   const activeProject = useMemo(() => {
-    return projects.find((project) => project.id === activeProjectId) ?? null;
-  }, [projects, activeProjectId]);
+    if (projectId) {
+      return projects.find((project) => project.id === projectId) ?? null;
+    }
 
-  const resolvedRole = role ?? user?.role ?? "developer";
+    return projects[0] ?? null;
+  }, [projects, projectId]);
+
+  const resolvedRole =
+  role ??
+  (user?.role === "Product Owner"
+    ? "product-owner"
+    : user?.role === "Scrum Facilitator"
+      ? "scrum-facilitator"
+      : user?.role === "Developer"
+        ? "developer"
+        : "developer");
+
+  useEffect(() => {
+    if (loadingProjects) return;
+
+    if (projects.length === 0) return;
+
+    const routeProjectStillExists = projectId
+      ? projects.some((project) => project.id === projectId)
+      : false;
+
+    if (!projectId || !routeProjectStillExists) {
+      const fallbackProject = projects[0];
+      navigate(getLandingPathForRole(fallbackProject.id, resolvedRole), {
+        replace: true,
+      });
+    }
+  }, [projects, projectId, resolvedRole, loadingProjects, navigate]);
+
+  const effectiveProjectId = projectId ?? activeProject?.id ?? "";
 
   const todoPreviewPath =
-    activeProjectId && resolvedRole
-      ? `/projects/${activeProjectId}/${resolvedRole}/to-do/planning`
+    effectiveProjectId && resolvedRole
+      ? `/projects/${effectiveProjectId}/${resolvedRole}/to-do/planning`
       : "";
 
   const progressPreviewPath =

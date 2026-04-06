@@ -1,4 +1,6 @@
 from pydantic import BaseModel, Field, ConfigDict
+from datetime import datetime
+from typing import Optional
 from uuid import UUID
 from enum import Enum
 
@@ -26,6 +28,9 @@ class ProjectOut(BaseModel):
     name: str
     sprint_duration: int
     project_velocity: float
+    status: str
+    archived_at: Optional[datetime] = None
+    delete_after: Optional[datetime] = None
 
 
 class ProjectListItemOut(BaseModel):
@@ -34,6 +39,9 @@ class ProjectListItemOut(BaseModel):
     sprint_duration: int
     project_velocity: float
     role: ProjectRole
+    status: str
+    archived_at: Optional[datetime] = None
+    delete_after: Optional[datetime] = None
 
 
 class JoinProjectIn(BaseModel):
@@ -54,3 +62,12 @@ class UpdateRoleOut(BaseModel):
     project_id: UUID
     user_id: str
     role: ProjectRole
+
+class TransferOwnershipIn(BaseModel):
+    new_owner_user_id: str
+
+class TransferOwnershipOut(BaseModel):
+    status: str
+    project_id: UUID
+    previous_owner_user_id: str
+    new_owner_user_id: str
