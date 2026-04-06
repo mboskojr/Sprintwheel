@@ -17,8 +17,8 @@ class ProjectEvent(Base):
 
     type = Column(String, nullable=False, default="custom")
 
-    start_at = Column(DateTime, nullable=False, index=True)
-    end_at = Column(DateTime, nullable=False, index=True)
+    start_at = Column(DateTime(timezone=True), nullable=False, index=True)
+    end_at = Column(DateTime(timezone=True), nullable=False, index=True)
 
     timezone = Column(String, nullable=True)
     rrule = Column(String, nullable=True)

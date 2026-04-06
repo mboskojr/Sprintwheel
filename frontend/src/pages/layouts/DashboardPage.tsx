@@ -423,14 +423,14 @@ export default function DashboardPage(): JSX.Element {
       : "";
 
   const progressPreviewPath =
-    activeProjectId && resolvedRole
-      ? `/projects/${activeProjectId}/${resolvedRole}/progress`
-      : "";
-  
+      effectiveProjectId && resolvedRole
+        ? `/projects/${effectiveProjectId}/${resolvedRole}/progress`
+        : "";
+    
   const eduPreviewPath =
-    activeProjectId && resolvedRole
-      ? `/projects/${activeProjectId}/${resolvedRole}/education`
-      : "";
+      effectiveProjectId && resolvedRole
+        ? `/projects/${effectiveProjectId}/${resolvedRole}/education`
+        : "";
 
   return (
     <SidebarLayout>

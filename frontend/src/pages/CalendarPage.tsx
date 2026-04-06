@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { CSSProperties, JSX } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
+import { DateTime } from "luxon";
 import SidebarLayout from "../components/SidebarLayout";
 import { useTheme } from "./ThemeContext";
 import {
@@ -26,16 +27,16 @@ type RecurrenceUnit = "day" | "week" | "month" | "year";
 type EventOccurrence = {
   instanceId: string;
   sourceEvent: ProjectEvent;
-  occurrenceStart: string;
-  occurrenceEnd: string;
+  occurrenceStart: string; // UTC ISO
+  occurrenceEnd: string;   // UTC ISO
 };
 
 type EventFormState = {
   id?: string;
   title: string;
   type: EventType;
-  start_at: string;
-  end_at: string;
+  start_at: string; // datetime-local wall clock
+  end_at: string;   // datetime-local wall clock
   description: string;
   location: string;
   timezone: string;
@@ -197,7 +198,8 @@ export default function CalendarPage(): JSX.Element {
     const map = new Map<string, EventOccurrence[]>();
 
     for (const occurrence of visibleOccurrences) {
-      const key = formatLocalDateKey(new Date(occurrence.occurrenceStart));
+      const zone = occurrence.sourceEvent.timezone || localTimezone;
+      const key = formatUtcIsoToDateKeyInZone(occurrence.occurrenceStart, zone);
       const arr = map.get(key) ?? [];
       arr.push(occurrence);
       map.set(key, arr);
@@ -206,8 +208,8 @@ export default function CalendarPage(): JSX.Element {
     for (const [, arr] of map) {
       arr.sort(
         (a, b) =>
-          new Date(a.occurrenceStart).getTime() -
-          new Date(b.occurrenceStart).getTime()
+          DateTime.fromISO(a.occurrenceStart, { zone: "utc" }).toMillis() -
+          DateTime.fromISO(b.occurrenceStart, { zone: "utc" }).toMillis()
       );
     }
 
@@ -219,8 +221,8 @@ export default function CalendarPage(): JSX.Element {
     const key = formatLocalDateKey(selectedDay);
     return (eventsByDate.get(key) ?? []).slice().sort(
       (a, b) =>
-        new Date(a.occurrenceStart).getTime() -
-        new Date(b.occurrenceStart).getTime()
+        DateTime.fromISO(a.occurrenceStart, { zone: "utc" }).toMillis() -
+        DateTime.fromISO(b.occurrenceStart, { zone: "utc" }).toMillis()
     );
   }, [selectedDay, eventsByDate]);
 
@@ -243,17 +245,22 @@ export default function CalendarPage(): JSX.Element {
 
   function openEditModal(event: ProjectEvent) {
     const recurrence = parseRRule(event.rrule ?? null);
+    const zone = event.timezone || localTimezone;
 
-    setSelectedDate(new Date(event.start_at));
+    const zonedStart = DateTime.fromISO(event.start_at, { zone: "utc" }).setZone(zone);
+
+    setSelectedDate(zonedStart.toJSDate());
     setForm({
       id: event.id,
       title: event.title,
       type: event.type,
-      start_at: toLocalInputValue(new Date(event.start_at)),
-      end_at: toLocalInputValue(new Date(event.end_at)),
+      start_at: zonedStart.toFormat("yyyy-MM-dd'T'HH:mm"),
+      end_at: DateTime.fromISO(event.end_at, { zone: "utc" })
+        .setZone(zone)
+        .toFormat("yyyy-MM-dd'T'HH:mm"),
       description: event.description ?? "",
       location: event.location ?? "",
-      timezone: event.timezone ?? localTimezone,
+      timezone: zone,
       rrule: event.rrule ?? "",
       recurrencePreset: recurrence.preset,
       recurrenceInterval: recurrence.interval,
@@ -356,7 +363,15 @@ export default function CalendarPage(): JSX.Element {
       return;
     }
 
-    if (new Date(form.end_at).getTime() <= new Date(form.start_at).getTime()) {
+    const startLocal = DateTime.fromISO(form.start_at, { zone: form.timezone });
+    const endLocal = DateTime.fromISO(form.end_at, { zone: form.timezone });
+
+    if (!startLocal.isValid || !endLocal.isValid) {
+      alert("Please enter valid start and end times.");
+      return;
+    }
+
+    if (endLocal <= startLocal) {
       alert("End time must be after start time.");
       return;
     }
@@ -371,11 +386,14 @@ export default function CalendarPage(): JSX.Element {
 
       const rrule = buildRRuleFromForm(form);
 
+      const startIso = startLocal.toUTC().toISO();
+      const endIso = endLocal.toUTC().toISO();
+
       const payload = {
         title: form.title.trim(),
         type: form.type,
-        start_at: form.start_at,
-        end_at: form.end_at,
+        start_at: startIso,
+        end_at: endIso,
         description: form.description.trim() || null,
         location: form.location.trim() || null,
         timezone: form.timezone,
@@ -428,588 +446,595 @@ export default function CalendarPage(): JSX.Element {
 
   return (
     <SidebarLayout>
-    <div
-  style={{
-    ...styles.shell,
-    background: isDark ? "#0b0f17" : "#f8fafc",
-    color: isDark ? "white" : "#111827",
-  }}
->
-      <motion.div
-        initial={{ opacity: 0, y: 14 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.22 }}
-        style={styles.page}
+      <div
+        style={{
+          ...styles.shell,
+          background: isDark ? "#0b0f17" : "#f8fafc",
+          color: isDark ? "white" : "#111827",
+        }}
       >
-        <div style={styles.headerRow}>
-          <div>
-            <div style={styles.eyebrow}>Project Workspace</div>
-            <h1 style={styles.title}>Calendar</h1>
-            <div style={styles.subtitle}>
-              View, create, edit, and manage project events.
+        <motion.div
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.22 }}
+          style={styles.page}
+        >
+          <div style={styles.headerRow}>
+            <div>
+              <div style={styles.eyebrow}>Project Workspace</div>
+              <h1 style={styles.title}>Calendar</h1>
+              <div style={styles.subtitle}>
+                View, create, edit, and manage project events.
+              </div>
+            </div>
+
+            <div style={styles.headerActions}>
+              <button
+                style={styles.secondaryButton}
+                onClick={() => {
+                  let route = "developer-dashboard";
+
+                  if (role === "product-owner") route = "product-owner-dashboard";
+                  else if (role === "scrum-facilitator") route = "scrum-facilitator-dashboard";
+
+                  navigate(`/projects/${projectId}/${role}/${route}`);
+                }}
+              >
+                Back to Project
+              </button>
+              <button
+                style={styles.primaryButton}
+                onClick={() => openCreateModal(new Date())}
+              >
+                + New Event
+              </button>
             </div>
           </div>
 
-          <div style={styles.headerActions}>
-            <button
-              style={styles.secondaryButton}
-              onClick={() => {
-                let route = "developer-dashboard";
-
-                if (role === "product-owner") route = "product-owner-dashboard";
-                else if (role === "scrum-facilitator") route = "scrum-facilitator-dashboard";
-
-                navigate(`/projects/${projectId}/${role}/${route}`);
-            }}
-            >
-              Back to Project
-            </button>
-            <button
-              style={styles.primaryButton}
-              onClick={() => openCreateModal(new Date())}
-            >
-              + New Event
-            </button>
-          </div>
-        </div>
-
-        <div style={styles.toolbar}>
+          <div style={styles.toolbar}>
             <div style={styles.monthControls}>
-                <button
+              <button
                 style={styles.iconButton}
                 onClick={() => setCurrentMonth(addMonths(currentMonth, -1))}
-                >
+              >
                 ←
-                </button>
+              </button>
 
-                <div style={styles.monthLabel}>
+              <div style={styles.monthLabel}>
                 {currentMonth.toLocaleString(undefined, {
-                    month: "long",
-                    year: "numeric",
+                  month: "long",
+                  year: "numeric",
                 })}
-                </div>
+              </div>
 
-                <button
+              <button
                 style={styles.iconButton}
                 onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-                >
+              >
                 →
-                </button>
+              </button>
             </div>
 
             <div style={styles.calendarNavControls}>
-                <button
+              <button
                 style={styles.secondaryButton}
                 onClick={() => setCurrentMonth(startOfMonth(new Date()))}
-                >
+              >
                 Today
-                </button>
+              </button>
 
-                <select
+              <select
                 style={styles.navSelect}
                 value={currentMonth.getMonth()}
                 onChange={(e) =>
-                    setCurrentMonth(
+                  setCurrentMonth(
                     new Date(
-                        currentMonth.getFullYear(),
-                        Number(e.target.value),
-                        1
+                      currentMonth.getFullYear(),
+                      Number(e.target.value),
+                      1
                     )
-                    )
+                  )
                 }
-                >
+              >
                 {monthOptions.map((month) => (
-                    <option key={month.value} value={month.value}>
+                  <option key={month.value} value={month.value}>
                     {month.label}
-                    </option>
+                  </option>
                 ))}
-                </select>
+              </select>
 
-                <select
+              <select
                 style={styles.navSelect}
                 value={currentMonth.getFullYear()}
                 onChange={(e) =>
-                    setCurrentMonth(
+                  setCurrentMonth(
                     new Date(
-                        Number(e.target.value),
-                        currentMonth.getMonth(),
-                        1
+                      Number(e.target.value),
+                      currentMonth.getMonth(),
+                      1
                     )
-                    )
+                  )
                 }
-                >
+              >
                 {yearOptions.map((year) => (
-                    <option key={year} value={year}>
+                  <option key={year} value={year}>
                     {year}
-                    </option>
+                  </option>
                 ))}
-                </select>
+              </select>
             </div>
-        </div>
+          </div>
 
-        {loading ? (
-          <div style={styles.card}>
-            <div style={styles.infoText}>Loading calendar...</div>
-          </div>
-        ) : error ? (
-          <div style={styles.card}>
-            <div style={styles.errorText}>{error}</div>
-          </div>
-        ) : (
-          <div style={styles.calendarCard}>
-            <div style={styles.weekHeader}>
-              {weekdayLabels.map((label) => (
-                <div key={label} style={styles.weekHeaderCell}>
-                  {label}
+          {loading ? (
+            <div style={styles.card}>
+              <div style={styles.infoText}>Loading calendar...</div>
+            </div>
+          ) : error ? (
+            <div style={styles.card}>
+              <div style={styles.errorText}>{error}</div>
+            </div>
+          ) : (
+            <div style={styles.calendarCard}>
+              <div style={styles.weekHeader}>
+                {weekdayLabels.map((label) => (
+                  <div key={label} style={styles.weekHeaderCell}>
+                    {label}
+                  </div>
+                ))}
+              </div>
+
+              <div style={styles.grid}>
+                {calendarDays.map((day) => {
+                  const key = formatLocalDateKey(day.date);
+                  const dayEvents = eventsByDate.get(key) ?? [];
+                  const isCurrentMonth = day.isCurrentMonth;
+                  const isTodayValue = isToday(day.date);
+
+                  return (
+                    <div
+                      key={key}
+                      style={{
+                        ...styles.dayCell,
+                        ...(isCurrentMonth ? null : styles.dayCellMuted),
+                      }}
+                      onClick={() => openDayModal(day.date)}
+                      onDoubleClick={() => openCreateModal(day.date)}
+                    >
+                      <div style={styles.dayTopRow}>
+                        <button
+                          style={{
+                            ...styles.dayNumber,
+                            ...(isTodayValue ? styles.todayBadge : null),
+                            ...(isCurrentMonth ? null : styles.dayNumberMuted),
+                          }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openDayModal(day.date);
+                          }}
+                        >
+                          {day.date.getDate()}
+                        </button>
+                      </div>
+
+                      <div style={styles.eventsList}>
+                        {dayEvents.map((occurrence) => {
+                          const event = occurrence.sourceEvent;
+                          const zone = event.timezone || localTimezone;
+                          const zoneShort = shortTimezoneLabel(
+                            occurrence.occurrenceStart,
+                            zone
+                          );
+
+                          return (
+                            <button
+                              key={occurrence.instanceId}
+                              style={{
+                                ...styles.eventChip,
+                                background: typeColors[event.type] + "22",
+                                borderColor: typeColors[event.type],
+                              }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openEditModal(event);
+                              }}
+                              title={`${event.title} • ${formatEventTimeRange(
+                                occurrence.occurrenceStart,
+                                occurrence.occurrenceEnd,
+                                zone
+                              )} • ${zone}`}
+                            >
+                              <span
+                                style={{
+                                  ...styles.eventDot,
+                                  background: typeColors[event.type],
+                                }}
+                              />
+                              <span style={styles.eventChipContent}>
+                                <span style={styles.eventTitleText}>{event.title}</span>
+                                <span style={styles.eventMetaText}>
+                                  {formatEventDateTimeLine(
+                                    occurrence.occurrenceStart,
+                                    occurrence.occurrenceEnd,
+                                    zone
+                                  )}{" "}
+                                  ({zoneShort})
+                                </span>
+                              </span>
+                            </button>
+                          );
+                        })}
+
+                        {dayEvents.length === 0 && <div style={styles.emptyDayText}>No events</div>}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          <div style={styles.legendCard}>
+            <div style={styles.legendTitle}>Event Types</div>
+            <div style={styles.legendWrap}>
+              {(Object.keys(typeColors) as EventType[]).map((type) => (
+                <div key={type} style={styles.legendItem}>
+                  <span
+                    style={{
+                      ...styles.legendDot,
+                      background: typeColors[type],
+                    }}
+                  />
+                  <span>{labelForType(type)}</span>
                 </div>
               ))}
             </div>
+          </div>
+        </motion.div>
 
-            <div style={styles.grid}>
-              {calendarDays.map((day) => {
-                const key = formatLocalDateKey(day.date);
-                const dayEvents = eventsByDate.get(key) ?? [];
-                const isCurrentMonth = day.isCurrentMonth;
-                const isTodayValue = isToday(day.date);
-
-                return (
-                  <div
-                    key={key}
-                    style={{
-                      ...styles.dayCell,
-                      ...(isCurrentMonth ? null : styles.dayCellMuted),
-                    }}
-                    onClick={() => openDayModal(day.date)}
-                    onDoubleClick={() => openCreateModal(day.date)}
-                  >
-                    <div style={styles.dayTopRow}>
-                      <button
-                        style={{
-                          ...styles.dayNumber,
-                          ...(isTodayValue ? styles.todayBadge : null),
-                          ...(isCurrentMonth ? null : styles.dayNumberMuted),
-                        }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openDayModal(day.date);
-                        }}
-                      >
-                        {day.date.getDate()}
-                      </button>
-                    </div>
-
-                    <div style={styles.eventsList}>
-                      {dayEvents.map((occurrence) => {
-                        const event = occurrence.sourceEvent;
-                        const zoneShort = shortTimezoneLabel(
-                          occurrence.occurrenceStart,
-                          event.timezone || localTimezone
-                        );
-
-                        return (
-                          <button
-                            key={occurrence.instanceId}
-                            style={{
-                              ...styles.eventChip,
-                              background: typeColors[event.type] + "22",
-                              borderColor: typeColors[event.type],
-                            }}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              openEditModal(event);
-                            }}
-                            title={`${event.title} • ${formatEventTimeRange(
-                              occurrence.occurrenceStart,
-                              occurrence.occurrenceEnd
-                            )} • ${event.timezone || localTimezone}`}
-                          >
-                            <span
-                              style={{
-                                ...styles.eventDot,
-                                background: typeColors[event.type],
-                              }}
-                            />
-                            <span style={styles.eventChipContent}>
-                              <span style={styles.eventTitleText}>{event.title}</span>
-                              <span style={styles.eventMetaText}>
-                                {formatEventDateTimeLine(
-                                  occurrence.occurrenceStart,
-                                  occurrence.occurrenceEnd
-                                )} ({zoneShort})
-                              </span>
-                            </span>
-                          </button>
-                        );
-                      })}
-
-                      {dayEvents.length === 0 && <div style={styles.emptyDayText}>No events</div>}
-                    </div>
+        {dayModalOpen && (
+          <div style={styles.modalOverlay} onClick={closeDayModal}>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96, y: 8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ duration: 0.18 }}
+              style={styles.dayModalCard}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div style={styles.modalHeader}>
+                <div>
+                  <div style={styles.modalTitle}>Day Events</div>
+                  <div style={styles.modalSubtitle}>
+                    {selectedDay
+                      ? selectedDay.toLocaleDateString(undefined, {
+                          weekday: "long",
+                          month: "long",
+                          day: "numeric",
+                          year: "numeric",
+                        })
+                      : ""}
                   </div>
-                );
-              })}
-            </div>
+                </div>
+
+                <button style={styles.closeButton} onClick={closeDayModal}>
+                  ✕
+                </button>
+              </div>
+
+              <div style={styles.dayModalList}>
+                {selectedDayEvents.length === 0 ? (
+                  <div style={styles.dayModalEmpty}>No events</div>
+                ) : (
+                  selectedDayEvents.map((occurrence) => {
+                    const event = occurrence.sourceEvent;
+                    const zone = event.timezone || localTimezone;
+                    const zoneShort = shortTimezoneLabel(
+                      occurrence.occurrenceStart,
+                      zone
+                    );
+
+                    return (
+                      <button
+                        key={occurrence.instanceId}
+                        style={{
+                          ...styles.dayModalEvent,
+                          borderLeftColor: typeColors[event.type],
+                        }}
+                        onClick={() => openEditModal(event)}
+                      >
+                        <div style={styles.dayModalEventTitle}>{event.title}</div>
+                        <div style={styles.dayModalEventMeta}>
+                          {formatEventDateTimeLine(
+                            occurrence.occurrenceStart,
+                            occurrence.occurrenceEnd,
+                            zone
+                          )}{" "}
+                          ({zoneShort})
+                        </div>
+                      </button>
+                    );
+                  })
+                )}
+              </div>
+            </motion.div>
           </div>
         )}
 
-        <div style={styles.legendCard}>
-          <div style={styles.legendTitle}>Event Types</div>
-          <div style={styles.legendWrap}>
-            {(Object.keys(typeColors) as EventType[]).map((type) => (
-              <div key={type} style={styles.legendItem}>
-                <span
-                  style={{
-                    ...styles.legendDot,
-                    background: typeColors[type],
-                  }}
-                />
-                <span>{labelForType(type)}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </motion.div>
-
-      {dayModalOpen && (
-        <div style={styles.modalOverlay} onClick={closeDayModal}>
-          <motion.div
-            initial={{ opacity: 0, scale: 0.96, y: 8 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 0.18 }}
-            style={styles.dayModalCard}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div style={styles.modalHeader}>
-              <div>
-                <div style={styles.modalTitle}>Day Events</div>
-                <div style={styles.modalSubtitle}>
-                  {selectedDay
-                    ? selectedDay.toLocaleDateString(undefined, {
-                        weekday: "long",
-                        month: "long",
-                        day: "numeric",
-                        year: "numeric",
-                      })
-                    : ""}
-                </div>
-              </div>
-
-              <button style={styles.closeButton} onClick={closeDayModal}>
-                ✕
-              </button>
-            </div>
-
-            <div style={styles.dayModalList}>
-              {selectedDayEvents.length === 0 ? (
-                <div style={styles.dayModalEmpty}>No events</div>
-              ) : (
-                selectedDayEvents.map((occurrence) => {
-                  const event = occurrence.sourceEvent;
-                  const zoneShort = shortTimezoneLabel(
-                    occurrence.occurrenceStart,
-                    event.timezone || localTimezone
-                  );
-
-                  return (
-                    <button
-                      key={occurrence.instanceId}
-                      style={{
-                        ...styles.dayModalEvent,
-                        borderLeftColor: typeColors[event.type],
-                      }}
-                      onClick={() => openEditModal(event)}
-                    >
-                      <div style={styles.dayModalEventTitle}>{event.title}</div>
-                      <div style={styles.dayModalEventMeta}>
-                        {formatEventDateTimeLine(
-                          occurrence.occurrenceStart,
-                          occurrence.occurrenceEnd
-                        )} ({zoneShort})
-                      </div>
-                    </button>
-                  );
-                })
-              )}
-            </div>
-          </motion.div>
-        </div>
-      )}
-
-      {modalOpen && (
-        <div style={styles.modalOverlay} onClick={closeModal}>
-          <motion.div
-            initial={{ opacity: 0, scale: 0.96, y: 8 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 0.18 }}
-            style={styles.modalCard}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div style={styles.modalHeader}>
-              <div>
-                <div style={styles.modalTitle}>
-                  {form.id ? "Edit Event" : "Create Event"}
-                </div>
-                <div style={styles.modalSubtitle}>
-                  {selectedDate
-                    ? selectedDate.toLocaleDateString(undefined, {
-                        weekday: "long",
-                        month: "long",
-                        day: "numeric",
-                        year: "numeric",
-                      })
-                    : "Project event"}
-                </div>
-              </div>
-
-              <button style={styles.closeButton} onClick={closeModal}>
-                ✕
-              </button>
-            </div>
-
-            <div style={styles.formGrid}>
-              <div style={styles.fieldFull}>
-                <label style={styles.label}>Title</label>
-                <input
-                  style={styles.input}
-                  value={form.title}
-                  onChange={(e) =>
-                    setForm((prev) => ({ ...prev, title: e.target.value }))
-                  }
-                  placeholder="Enter event title"
-                />
-              </div>
-
-              <div>
-                <label style={styles.label}>Type</label>
-                <select
-                  style={styles.input}
-                  value={form.type}
-                  onChange={(e) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      type: e.target.value as EventType,
-                    }))
-                  }
-                >
-                  <option value="daily_scrum">Daily Scrum</option>
-                  <option value="sprint_planning">Sprint Planning</option>
-                  <option value="review">Review</option>
-                  <option value="retrospective">Retrospective</option>
-                  <option value="refinement">Refinement</option>
-                  <option value="deadline">Deadline</option>
-                  <option value="milestone">Milestone</option>
-                  <option value="custom">Custom</option>
-                </select>
-              </div>
-
-              <div>
-                <label style={styles.label}>Timezone</label>
-                <select
-                  style={styles.input}
-                  value={form.timezone}
-                  onChange={(e) =>
-                    setForm((prev) => ({ ...prev, timezone: e.target.value }))
-                  }
-                >
-                  {timezones.map((tz) => (
-                    <option key={tz} value={tz}>
-                      {timezoneOptionLabel(tz)}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label style={styles.label}>Start</label>
-                <input
-                  style={styles.input}
-                  type="datetime-local"
-                  value={form.start_at}
-                  onChange={(e) =>
-                    setForm((prev) => ({ ...prev, start_at: e.target.value }))
-                  }
-                />
-              </div>
-
-              <div>
-                <label style={styles.label}>End</label>
-                <input
-                  style={styles.input}
-                  type="datetime-local"
-                  value={form.end_at}
-                  onChange={(e) =>
-                    setForm((prev) => ({ ...prev, end_at: e.target.value }))
-                  }
-                />
-              </div>
-
-              <div style={styles.fieldFull}>
-                <label style={styles.label}>Repeats</label>
-                <div style={styles.repeatButtonRow}>
-                  {recurrenceOptions.map((option) => {
-                    const active = form.recurrencePreset === option.key;
-                    return (
-                      <button
-                        key={option.key}
-                        type="button"
-                        style={{
-                          ...styles.repeatButton,
-                          ...(active ? styles.repeatButtonActive : null),
-                        }}
-                        onClick={() => updateRecurrencePreset(option.key)}
-                      >
-                        {option.label}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {form.recurrencePreset === "custom" && (
-                <>
-                  <div>
-                    <label style={styles.label}>Repeat Every</label>
-                    <input
-                      style={styles.input}
-                      type="number"
-                      min={1}
-                      value={form.recurrenceInterval}
-                      onChange={(e) =>
-                        setForm((prev) => ({
-                          ...prev,
-                          recurrenceInterval: Math.max(1, Number(e.target.value) || 1),
-                        }))
-                      }
-                    />
+        {modalOpen && (
+          <div style={styles.modalOverlay} onClick={closeModal}>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96, y: 8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ duration: 0.18 }}
+              style={styles.modalCard}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div style={styles.modalHeader}>
+                <div>
+                  <div style={styles.modalTitle}>
+                    {form.id ? "Edit Event" : "Create Event"}
                   </div>
-
-                  <div>
-                    <label style={styles.label}>Unit</label>
-                    <select
-                      style={styles.input}
-                      value={form.recurrenceUnit}
-                      onChange={(e) =>
-                        setForm((prev) => ({
-                          ...prev,
-                          recurrenceUnit: e.target.value as RecurrenceUnit,
-                        }))
-                      }
-                    >
-                      <option value="day">Days</option>
-                      <option value="week">Weeks</option>
-                      <option value="month">Months</option>
-                      <option value="year">Years</option>
-                    </select>
+                  <div style={styles.modalSubtitle}>
+                    {selectedDate
+                      ? selectedDate.toLocaleDateString(undefined, {
+                          weekday: "long",
+                          month: "long",
+                          day: "numeric",
+                          year: "numeric",
+                        })
+                      : "Project event"}
                   </div>
-                </>
-              )}
+                </div>
 
-              <div style={styles.fieldFull}>
-                <label style={styles.label}>Location</label>
-                <input
-                  style={styles.input}
-                  value={form.location}
-                  onChange={(e) =>
-                    setForm((prev) => ({ ...prev, location: e.target.value }))
-                  }
-                  placeholder="Optional location"
-                />
-              </div>
-
-              <div style={styles.fieldFull}>
-                <label style={styles.label}>Description</label>
-                <textarea
-                  style={styles.textarea}
-                  value={form.description}
-                  onChange={(e) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      description: e.target.value,
-                    }))
-                  }
-                  placeholder="Add event details"
-                />
-              </div>
-            </div>
-
-            <div style={styles.modalActions}>
-              {form.id && !isRepeatingForm(form) && (
-                <button
-                  style={styles.deleteButton}
-                  onClick={handleDeleteSeries}
-                  disabled={saving}
-                >
-                  Delete Event
+                <button style={styles.closeButton} onClick={closeModal}>
+                  ✕
                 </button>
-              )}
+              </div>
 
-              {form.id && isRepeatingForm(form) && (
-                <div style={styles.deleteChoiceWrap}>
-                  <button
-                    style={styles.deleteChoiceButton}
-                    onClick={handleDeleteSingleOccurrence}
-                    disabled={saving}
+              <div style={styles.formGrid}>
+                <div style={styles.fieldFull}>
+                  <label style={styles.label}>Title</label>
+                  <input
+                    style={styles.input}
+                    value={form.title}
+                    onChange={(e) =>
+                      setForm((prev) => ({ ...prev, title: e.target.value }))
+                    }
+                    placeholder="Enter event title"
+                  />
+                </div>
+
+                <div>
+                  <label style={styles.label}>Type</label>
+                  <select
+                    style={styles.input}
+                    value={form.type}
+                    onChange={(e) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        type: e.target.value as EventType,
+                      }))
+                    }
                   >
-                    Delete Just This Event
-                  </button>
+                    <option value="daily_scrum">Daily Scrum</option>
+                    <option value="sprint_planning">Sprint Planning</option>
+                    <option value="review">Review</option>
+                    <option value="retrospective">Retrospective</option>
+                    <option value="refinement">Refinement</option>
+                    <option value="deadline">Deadline</option>
+                    <option value="milestone">Milestone</option>
+                    <option value="custom">Custom</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label style={styles.label}>Timezone</label>
+                  <select
+                    style={styles.input}
+                    value={form.timezone}
+                    onChange={(e) =>
+                      setForm((prev) => ({ ...prev, timezone: e.target.value }))
+                    }
+                  >
+                    {timezones.map((tz) => (
+                      <option key={tz} value={tz}>
+                        {timezoneOptionLabel(tz)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label style={styles.label}>Start</label>
+                  <input
+                    style={styles.input}
+                    type="datetime-local"
+                    value={form.start_at}
+                    onChange={(e) =>
+                      setForm((prev) => ({ ...prev, start_at: e.target.value }))
+                    }
+                  />
+                </div>
+
+                <div>
+                  <label style={styles.label}>End</label>
+                  <input
+                    style={styles.input}
+                    type="datetime-local"
+                    value={form.end_at}
+                    onChange={(e) =>
+                      setForm((prev) => ({ ...prev, end_at: e.target.value }))
+                    }
+                  />
+                </div>
+
+                <div style={styles.fieldFull}>
+                  <label style={styles.label}>Repeats</label>
+                  <div style={styles.repeatButtonRow}>
+                    {recurrenceOptions.map((option) => {
+                      const active = form.recurrencePreset === option.key;
+                      return (
+                        <button
+                          key={option.key}
+                          type="button"
+                          style={{
+                            ...styles.repeatButton,
+                            ...(active ? styles.repeatButtonActive : null),
+                          }}
+                          onClick={() => updateRecurrencePreset(option.key)}
+                        >
+                          {option.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {form.recurrencePreset === "custom" && (
+                  <>
+                    <div>
+                      <label style={styles.label}>Repeat Every</label>
+                      <input
+                        style={styles.input}
+                        type="number"
+                        min={1}
+                        value={form.recurrenceInterval}
+                        onChange={(e) =>
+                          setForm((prev) => ({
+                            ...prev,
+                            recurrenceInterval: Math.max(1, Number(e.target.value) || 1),
+                          }))
+                        }
+                      />
+                    </div>
+
+                    <div>
+                      <label style={styles.label}>Unit</label>
+                      <select
+                        style={styles.input}
+                        value={form.recurrenceUnit}
+                        onChange={(e) =>
+                          setForm((prev) => ({
+                            ...prev,
+                            recurrenceUnit: e.target.value as RecurrenceUnit,
+                          }))
+                        }
+                      >
+                        <option value="day">Days</option>
+                        <option value="week">Weeks</option>
+                        <option value="month">Months</option>
+                        <option value="year">Years</option>
+                      </select>
+                    </div>
+                  </>
+                )}
+
+                <div style={styles.fieldFull}>
+                  <label style={styles.label}>Location</label>
+                  <input
+                    style={styles.input}
+                    value={form.location}
+                    onChange={(e) =>
+                      setForm((prev) => ({ ...prev, location: e.target.value }))
+                    }
+                    placeholder="Optional location"
+                  />
+                </div>
+
+                <div style={styles.fieldFull}>
+                  <label style={styles.label}>Description</label>
+                  <textarea
+                    style={styles.textarea}
+                    value={form.description}
+                    onChange={(e) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        description: e.target.value,
+                      }))
+                    }
+                    placeholder="Add event details"
+                  />
+                </div>
+              </div>
+
+              <div style={styles.modalActions}>
+                {form.id && !isRepeatingForm(form) && (
                   <button
                     style={styles.deleteButton}
                     onClick={handleDeleteSeries}
                     disabled={saving}
                   >
-                    Delete Repeat Events
+                    Delete Event
+                  </button>
+                )}
+
+                {form.id && isRepeatingForm(form) && (
+                  <div style={styles.deleteChoiceWrap}>
+                    <button
+                      style={styles.deleteChoiceButton}
+                      onClick={handleDeleteSingleOccurrence}
+                      disabled={saving}
+                    >
+                      Delete Just This Event
+                    </button>
+                    <button
+                      style={styles.deleteButton}
+                      onClick={handleDeleteSeries}
+                      disabled={saving}
+                    >
+                      Delete Repeat Events
+                    </button>
+                  </div>
+                )}
+
+                <div style={styles.modalActionsRight}>
+                  <button
+                    style={styles.secondaryButton}
+                    onClick={closeModal}
+                    disabled={saving}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    style={styles.primaryButton}
+                    onClick={handleSave}
+                    disabled={saving}
+                  >
+                    {saving ? "Saving..." : form.id ? "Update Event" : "Create Event"}
                   </button>
                 </div>
-              )}
+              </div>
 
-              <div style={styles.modalActionsRight}>
-                <button
-                  style={styles.secondaryButton}
-                  onClick={closeModal}
-                  disabled={saving}
-                >
-                  Cancel
-                </button>
-                <button
-                  style={styles.primaryButton}
-                  onClick={handleSave}
-                  disabled={saving}
-                >
-                  {saving ? "Saving..." : form.id ? "Update Event" : "Create Event"}
-                </button>
+              <div style={styles.previewCard}>
+                <div style={styles.previewTitle}>Event Preview</div>
+                <div style={styles.previewRow}>
+                  <span style={styles.previewLabel}>Time:</span>
+                  <span>
+                    {form.start_at && form.end_at
+                      ? formatFormTimeRange(form.start_at, form.end_at, form.timezone)
+                      : "—"}
+                  </span>
+                </div>
+                <div style={styles.previewRow}>
+                  <span style={styles.previewLabel}>Timezone:</span>
+                  <span>{form.timezone ? timezoneOptionLabel(form.timezone) : "—"}</span>
+                </div>
+                <div style={styles.previewRow}>
+                  <span style={styles.previewLabel}>Type:</span>
+                  <span>{labelForType(form.type)}</span>
+                </div>
+                <div style={styles.previewRow}>
+                  <span style={styles.previewLabel}>Repeats:</span>
+                  <span>{describeRecurrence(form)}</span>
+                </div>
+                <div style={styles.previewRow}>
+                  <span style={styles.previewLabel}>Location:</span>
+                  <span>{form.location || "—"}</span>
+                </div>
               </div>
-            </div>
-
-            <div style={styles.previewCard}>
-              <div style={styles.previewTitle}>Event Preview</div>
-              <div style={styles.previewRow}>
-                <span style={styles.previewLabel}>Time:</span>
-                <span>
-                  {form.start_at && form.end_at
-                    ? formatEventTimeRange(form.start_at, form.end_at)
-                    : "—"}
-                </span>
-              </div>
-              <div style={styles.previewRow}>
-                <span style={styles.previewLabel}>Timezone:</span>
-                <span>{form.timezone ? timezoneOptionLabel(form.timezone) : "—"}</span>
-              </div>
-              <div style={styles.previewRow}>
-                <span style={styles.previewLabel}>Type:</span>
-                <span>{labelForType(form.type)}</span>
-              </div>
-              <div style={styles.previewRow}>
-                <span style={styles.previewLabel}>Repeats:</span>
-                <span>{describeRecurrence(form)}</span>
-              </div>
-              <div style={styles.previewRow}>
-                <span style={styles.previewLabel}>Location:</span>
-                <span>{form.location || "—"}</span>
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      )}
-    </div>
+            </motion.div>
+          </div>
+        )}
+      </div>
     </SidebarLayout>
   );
 }
@@ -1073,6 +1098,12 @@ function formatLocalDateKey(date: Date) {
   return `${y}-${m}-${d}`;
 }
 
+function formatUtcIsoToDateKeyInZone(dateInput: string, timeZone: string) {
+  return DateTime.fromISO(dateInput, { zone: "utc" })
+    .setZone(timeZone)
+    .toFormat("yyyy-MM-dd");
+}
+
 function toLocalInputValue(date: Date) {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, "0");
@@ -1082,58 +1113,51 @@ function toLocalInputValue(date: Date) {
   return `${y}-${m}-${d}T${hh}:${mm}`;
 }
 
-function formatEventTime(dateInput: string) {
-  const date = new Date(dateInput);
-  return date.toLocaleTimeString([], {
-    hour: "numeric",
-    minute: "2-digit",
-  });
-}
+function formatEventTimeRange(startInput: string, endInput: string, timeZone?: string) {
+  const zone = timeZone || localTimezone;
 
-function formatEventTimeRange(startInput: string, endInput: string) {
-  const start = new Date(startInput);
-  const end = new Date(endInput);
+  const start = DateTime.fromISO(startInput, { zone: "utc" }).setZone(zone);
+  const end = DateTime.fromISO(endInput, { zone: "utc" }).setZone(zone);
 
-  const sameDay =
-    start.getFullYear() === end.getFullYear() &&
-    start.getMonth() === end.getMonth() &&
-    start.getDate() === end.getDate();
+  const sameDay = start.hasSame(end, "day");
 
   if (sameDay) {
-    return `${start.toLocaleDateString([], {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    })} • ${start.toLocaleTimeString([], {
-      hour: "numeric",
-      minute: "2-digit",
-    })} - ${end.toLocaleTimeString([], {
-      hour: "numeric",
-      minute: "2-digit",
-    })}`;
+    return `${start.toFormat("MMM d, yyyy")} • ${start.toFormat("h:mm a")} - ${end.toFormat("h:mm a")}`;
   }
 
-  return `${start.toLocaleString()} - ${end.toLocaleString()}`;
+  return `${start.toFormat("MMM d, yyyy h:mm a")} - ${end.toFormat("MMM d, yyyy h:mm a")}`;
 }
 
-function formatEventDateTimeLine(startInput: string, endInput: string) {
-  const start = new Date(startInput);
-  const end = new Date(endInput);
+function formatFormTimeRange(startInput: string, endInput: string, timeZone?: string) {
+  const zone = timeZone || localTimezone;
 
-  const datePart = start.toLocaleDateString([], {
-    month: "short",
-    day: "numeric",
-  });
+  const start = DateTime.fromISO(startInput, { zone });
+  const end = DateTime.fromISO(endInput, { zone });
 
-  const startTime = start.toLocaleTimeString([], {
-    hour: "numeric",
-    minute: "2-digit",
-  });
+  if (!start.isValid || !end.isValid) return "—";
 
-  const endTime = end.toLocaleTimeString([], {
-    hour: "numeric",
-    minute: "2-digit",
-  });
+  const sameDay = start.hasSame(end, "day");
+
+  if (sameDay) {
+    return `${start.toFormat("MMM d, yyyy")} • ${start.toFormat("h:mm a")} - ${end.toFormat("h:mm a")}`;
+  }
+
+  return `${start.toFormat("MMM d, yyyy h:mm a")} - ${end.toFormat("MMM d, yyyy h:mm a")}`;
+}
+
+function formatEventDateTimeLine(
+  startInput: string,
+  endInput: string,
+  timeZone?: string
+) {
+  const zone = timeZone || localTimezone;
+
+  const start = DateTime.fromISO(startInput, { zone: "utc" }).setZone(zone);
+  const end = DateTime.fromISO(endInput, { zone: "utc" }).setZone(zone);
+
+  const datePart = start.toFormat("MMM d");
+  const startTime = start.toFormat("h:mm a");
+  const endTime = end.toFormat("h:mm a");
 
   return `${datePart} • ${startTime} - ${endTime}`;
 }
@@ -1336,8 +1360,12 @@ function expandEventsForRange(
   rangeEnd: Date
 ): EventOccurrence[] {
   const expanded: EventOccurrence[] = [];
+  const rangeStartUtc = DateTime.fromJSDate(rangeStart).toUTC();
+  const rangeEndUtc = DateTime.fromJSDate(rangeEnd).toUTC();
 
   for (const event of events) {
+    const zone = event.timezone || localTimezone;
+
     if (!event.rrule) {
       expanded.push({
         instanceId: `${event.id}-${event.start_at}`,
@@ -1352,22 +1380,24 @@ function expandEventsForRange(
     const interval = Math.max(1, parsed.interval);
     const unit = parsed.unit;
 
-    const baseStart = new Date(event.start_at);
-    const baseEnd = new Date(event.end_at);
-    const duration = baseEnd.getTime() - baseStart.getTime();
+    const baseStart = DateTime.fromISO(event.start_at, { zone: "utc" }).setZone(zone);
+    const baseEnd = DateTime.fromISO(event.end_at, { zone: "utc" }).setZone(zone);
+    const durationMs = baseEnd.toMillis() - baseStart.toMillis();
 
-    let cursor = new Date(baseStart);
+    let cursor = baseStart;
     let guard = 0;
 
-    while (cursor <= rangeEnd && guard < 500) {
-      const occurrenceEnd = new Date(cursor.getTime() + duration);
+    while (cursor.toUTC() <= rangeEndUtc && guard < 500) {
+      const occurrenceEnd = DateTime.fromMillis(cursor.toMillis() + durationMs, {
+        zone,
+      });
 
-      if (occurrenceEnd >= rangeStart && cursor <= rangeEnd) {
+      if (occurrenceEnd.toUTC() >= rangeStartUtc && cursor.toUTC() <= rangeEndUtc) {
         expanded.push({
-          instanceId: `${event.id}-${cursor.toISOString()}`,
+          instanceId: `${event.id}-${cursor.toUTC().toISO()}`,
           sourceEvent: event,
-          occurrenceStart: cursor.toISOString(),
-          occurrenceEnd: occurrenceEnd.toISOString(),
+          occurrenceStart: cursor.toUTC().toISO()!,
+          occurrenceEnd: occurrenceEnd.toUTC().toISO()!,
         });
       }
 
@@ -1379,26 +1409,11 @@ function expandEventsForRange(
   return expanded;
 }
 
-function addInterval(date: Date, interval: number, unit: RecurrenceUnit) {
-  const next = new Date(date);
-
-  if (unit === "day") {
-    next.setDate(next.getDate() + interval);
-    return next;
-  }
-
-  if (unit === "week") {
-    next.setDate(next.getDate() + interval * 7);
-    return next;
-  }
-
-  if (unit === "month") {
-    next.setMonth(next.getMonth() + interval);
-    return next;
-  }
-
-  next.setFullYear(next.getFullYear() + interval);
-  return next;
+function addInterval(date: DateTime, interval: number, unit: RecurrenceUnit) {
+  if (unit === "day") return date.plus({ days: interval });
+  if (unit === "week") return date.plus({ weeks: interval });
+  if (unit === "month") return date.plus({ months: interval });
+  return date.plus({ years: interval });
 }
 
 const styles: Record<string, CSSProperties> = {

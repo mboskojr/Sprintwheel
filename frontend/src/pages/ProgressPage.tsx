@@ -64,7 +64,7 @@ export default function ProgressPage(): JSX.Element {
       .catch((err) => console.error("Error resolving sprint:", err));
   }, [projectId]);
 
-    const { chartData, sprintNumber, velocity, loading } = useSprintBurndownData(sprintId);    
+    const { chartData, sprintNumber, velocity, expectedVelocity, loading } = useSprintBurndownData(sprintId);    
 
 
   return (
@@ -93,7 +93,7 @@ export default function ProgressPage(): JSX.Element {
         <div style={{ display: "flex", gap: "20px", marginBottom: "30px" }}>
           <div style={velocityCardStyle}>
             <h3 style={{ margin: 0, fontSize: "20px", opacity: 0.8}}>
-              Velocity
+              Current Velocity
             </h3>
             <p 
               style={{ 
@@ -110,6 +110,32 @@ export default function ProgressPage(): JSX.Element {
                   fontWeight: 400, 
                   marginLeft: "8px",
                   //color: "white" 
+                }}
+              >
+                pts
+              </span>
+            </p>
+          </div>
+
+          <div style={velocityCardStyle}>
+            <h3 style={{ margin: 0, fontSize: "20px", opacity: 0.8 }}>
+              Expected Velocity
+            </h3>
+            <p 
+              style={{ 
+                margin: "10px 0 0 0", 
+                fontSize: "42px", 
+                fontWeight: 800, 
+                color: "#94A3B8" 
+              }}
+            >
+              {loading ? "--" : expectedVelocity}
+              <span 
+                style={{ 
+                  fontSize: "18px", 
+                  fontWeight: 400, 
+                  marginLeft: "8px",
+                  //color: "white"
                 }}
               >
                 pts
