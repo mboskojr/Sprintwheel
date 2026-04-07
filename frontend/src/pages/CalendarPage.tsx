@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import type { CSSProperties, JSX } from "react";
+import type { JSX } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { DateTime } from "luxon";
@@ -27,16 +27,16 @@ type RecurrenceUnit = "day" | "week" | "month" | "year";
 type EventOccurrence = {
   instanceId: string;
   sourceEvent: ProjectEvent;
-  occurrenceStart: string; // UTC ISO
-  occurrenceEnd: string;   // UTC ISO
+  occurrenceStart: string;
+  occurrenceEnd: string;
 };
 
 type EventFormState = {
   id?: string;
   title: string;
   type: EventType;
-  start_at: string; // datetime-local wall clock
-  end_at: string;   // datetime-local wall clock
+  start_at: string;
+  end_at: string;
   description: string;
   location: string;
   timezone: string;
@@ -108,10 +108,7 @@ const yearOptions = Array.from({ length: 21 }, (_, i) => {
   return currentYear - 10 + i;
 });
 
-const recurrenceOptions: Array<{
-  key: RecurrencePreset;
-  label: string;
-}> = [
+const recurrenceOptions: Array<{ key: RecurrencePreset; label: string }> = [
   { key: "one_time", label: "One-time" },
   { key: "daily", label: "Daily" },
   { key: "weekly", label: "Weekly" },
@@ -120,15 +117,15 @@ const recurrenceOptions: Array<{
   { key: "custom", label: "Custom" },
 ];
 
-const typeColors: Record<EventType, string> = {
-  daily_scrum: "#3b82f6",
-  sprint_planning: "#8b5cf6",
-  review: "#10b981",
-  retrospective: "#f59e0b",
-  refinement: "#ec4899",
-  deadline: "#ef4444",
-  milestone: "#22c55e",
-  custom: "#94a3b8",
+const typeColors: Record<EventType, { bg: string; border: string; text: string; dot: string; label: string }> = {
+  daily_scrum:     { bg: "#dbeafe", border: "#93c5fd", text: "#1d4ed8", dot: "#3b82f6",  label: "Daily Scrum" },
+  sprint_planning: { bg: "#ede9fe", border: "#c4b5fd", text: "#5b21b6", dot: "#8b5cf6",  label: "Sprint Planning" },
+  review:          { bg: "#d1fae5", border: "#6ee7b7", text: "#065f46", dot: "#10b981",  label: "Review" },
+  retrospective:   { bg: "#fef3c7", border: "#fcd34d", text: "#92400e", dot: "#f59e0b",  label: "Retrospective" },
+  refinement:      { bg: "#fce7f3", border: "#f9a8d4", text: "#9d174d", dot: "#ec4899",  label: "Refinement" },
+  deadline:        { bg: "#fee2e2", border: "#fca5a5", text: "#991b1b", dot: "#ef4444",  label: "Deadline" },
+  milestone:       { bg: "#dcfce7", border: "#86efac", text: "#14532d", dot: "#22c55e",  label: "Milestone" },
+  custom:          { bg: "#f1f5f9", border: "#cbd5e1", text: "#475569", dot: "#94a3b8",  label: "Custom" },
 };
 
 export default function CalendarPage(): JSX.Element {
@@ -137,6 +134,7 @@ export default function CalendarPage(): JSX.Element {
 
   const { theme } = useTheme();
   const isDark = theme === "dark";
+
   const [events, setEvents] = useState<ProjectEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>("");
@@ -152,24 +150,12 @@ export default function CalendarPage(): JSX.Element {
 
   useEffect(() => {
     if (!projectId) return;
-
     const load = async () => {
       try {
         setLoading(true);
         setError("");
-
-        const monthStart = new Date(
-          currentMonth.getFullYear(),
-          currentMonth.getMonth(),
-          1
-        );
-
-        const monthEnd = new Date(
-          currentMonth.getFullYear(),
-          currentMonth.getMonth() + 1,
-          1
-        );
-
+        const monthStart = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
+        const monthEnd = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1);
         const data = await listProjectEvents(projectId, monthStart, monthEnd, false);
         setEvents(data);
       } catch (err: any) {
@@ -178,7 +164,6 @@ export default function CalendarPage(): JSX.Element {
         setLoading(false);
       }
     };
-
     load();
   }, [projectId, currentMonth]);
 
@@ -190,13 +175,13 @@ export default function CalendarPage(): JSX.Element {
     return { start, end };
   }, [currentMonth]);
 
-  const visibleOccurrences = useMemo(() => {
-    return expandEventsForRange(events, visibleRange.start, visibleRange.end);
-  }, [events, visibleRange]);
+  const visibleOccurrences = useMemo(
+    () => expandEventsForRange(events, visibleRange.start, visibleRange.end),
+    [events, visibleRange]
+  );
 
   const eventsByDate = useMemo(() => {
     const map = new Map<string, EventOccurrence[]>();
-
     for (const occurrence of visibleOccurrences) {
       const zone = occurrence.sourceEvent.timezone || localTimezone;
       const key = formatUtcIsoToDateKeyInZone(occurrence.occurrenceStart, zone);
@@ -204,7 +189,6 @@ export default function CalendarPage(): JSX.Element {
       arr.push(occurrence);
       map.set(key, arr);
     }
-
     for (const [, arr] of map) {
       arr.sort(
         (a, b) =>
@@ -212,7 +196,6 @@ export default function CalendarPage(): JSX.Element {
           DateTime.fromISO(b.occurrenceStart, { zone: "utc" }).toMillis()
       );
     }
-
     return map;
   }, [visibleOccurrences]);
 
@@ -229,35 +212,24 @@ export default function CalendarPage(): JSX.Element {
   function openCreateModal(date: Date) {
     const start = new Date(date);
     start.setHours(9, 0, 0, 0);
-
     const end = new Date(date);
     end.setHours(10, 0, 0, 0);
-
     setSelectedDate(date);
-    setForm({
-      ...emptyForm,
-      start_at: toLocalInputValue(start),
-      end_at: toLocalInputValue(end),
-      timezone: localTimezone,
-    });
+    setForm({ ...emptyForm, start_at: toLocalInputValue(start), end_at: toLocalInputValue(end), timezone: localTimezone });
     setModalOpen(true);
   }
 
   function openEditModal(event: ProjectEvent) {
     const recurrence = parseRRule(event.rrule ?? null);
     const zone = event.timezone || localTimezone;
-
     const zonedStart = DateTime.fromISO(event.start_at, { zone: "utc" }).setZone(zone);
-
     setSelectedDate(zonedStart.toJSDate());
     setForm({
       id: event.id,
       title: event.title,
       type: event.type,
       start_at: zonedStart.toFormat("yyyy-MM-dd'T'HH:mm"),
-      end_at: DateTime.fromISO(event.end_at, { zone: "utc" })
-        .setZone(zone)
-        .toFormat("yyyy-MM-dd'T'HH:mm"),
+      end_at: DateTime.fromISO(event.end_at, { zone: "utc" }).setZone(zone).toFormat("yyyy-MM-dd'T'HH:mm"),
       description: event.description ?? "",
       location: event.location ?? "",
       timezone: zone,
@@ -287,119 +259,39 @@ export default function CalendarPage(): JSX.Element {
   }
 
   function updateRecurrencePreset(preset: RecurrencePreset) {
+    const unitMap: Record<string, RecurrenceUnit> = { daily: "day", weekly: "week", monthly: "month", yearly: "year" };
     if (preset === "one_time") {
-      setForm((prev) => ({
-        ...prev,
-        recurrencePreset: preset,
-        recurrenceInterval: 1,
-        recurrenceUnit: "week",
-        rrule: "",
-      }));
-      return;
+      setForm((p) => ({ ...p, recurrencePreset: preset, recurrenceInterval: 1, recurrenceUnit: "week", rrule: "" }));
+    } else if (unitMap[preset]) {
+      setForm((p) => ({ ...p, recurrencePreset: preset, recurrenceInterval: 1, recurrenceUnit: unitMap[preset] }));
+    } else {
+      setForm((p) => ({ ...p, recurrencePreset: preset, recurrenceInterval: Math.max(1, p.recurrenceInterval || 1) }));
     }
-
-    if (preset === "daily") {
-      setForm((prev) => ({
-        ...prev,
-        recurrencePreset: preset,
-        recurrenceInterval: 1,
-        recurrenceUnit: "day",
-      }));
-      return;
-    }
-
-    if (preset === "weekly") {
-      setForm((prev) => ({
-        ...prev,
-        recurrencePreset: preset,
-        recurrenceInterval: 1,
-        recurrenceUnit: "week",
-      }));
-      return;
-    }
-
-    if (preset === "monthly") {
-      setForm((prev) => ({
-        ...prev,
-        recurrencePreset: preset,
-        recurrenceInterval: 1,
-        recurrenceUnit: "month",
-      }));
-      return;
-    }
-
-    if (preset === "yearly") {
-      setForm((prev) => ({
-        ...prev,
-        recurrencePreset: preset,
-        recurrenceInterval: 1,
-        recurrenceUnit: "year",
-      }));
-      return;
-    }
-
-    setForm((prev) => ({
-      ...prev,
-      recurrencePreset: preset,
-      recurrenceInterval: Math.max(1, prev.recurrenceInterval || 1),
-    }));
   }
 
   async function handleSave() {
     if (!projectId) return;
-
-    if (!form.title.trim()) {
-      alert("Please enter an event title.");
-      return;
-    }
-
-    if (!form.start_at || !form.end_at) {
-      alert("Please enter both a start and end time.");
-      return;
-    }
-
-    if (!form.timezone.trim()) {
-      alert("Please select a timezone.");
-      return;
-    }
-
+    if (!form.title.trim()) { alert("Please enter an event title."); return; }
+    if (!form.start_at || !form.end_at) { alert("Please enter both a start and end time."); return; }
+    if (!form.timezone.trim()) { alert("Please select a timezone."); return; }
     const startLocal = DateTime.fromISO(form.start_at, { zone: form.timezone });
     const endLocal = DateTime.fromISO(form.end_at, { zone: form.timezone });
-
-    if (!startLocal.isValid || !endLocal.isValid) {
-      alert("Please enter valid start and end times.");
-      return;
-    }
-
-    if (endLocal <= startLocal) {
-      alert("End time must be after start time.");
-      return;
-    }
-
-    if (form.recurrencePreset === "custom" && form.recurrenceInterval < 1) {
-      alert("Custom repeat interval must be at least 1.");
-      return;
-    }
-
+    if (!startLocal.isValid || !endLocal.isValid) { alert("Please enter valid start and end times."); return; }
+    if (endLocal <= startLocal) { alert("End time must be after start time."); return; }
+    if (form.recurrencePreset === "custom" && form.recurrenceInterval < 1) { alert("Custom repeat interval must be at least 1."); return; }
     try {
       setSaving(true);
-
       const rrule = buildRRuleFromForm(form);
-
-      const startIso = startLocal.toUTC().toISO();
-      const endIso = endLocal.toUTC().toISO();
-
       const payload = {
         title: form.title.trim(),
         type: form.type,
-        start_at: startIso,
-        end_at: endIso,
+        start_at: startLocal.toUTC().toISO(),
+        end_at: endLocal.toUTC().toISO(),
         description: form.description.trim() || null,
         location: form.location.trim() || null,
         timezone: form.timezone,
         rrule,
       };
-
       if (form.id) {
         const updated = await updateProjectEvent(projectId, form.id, payload);
         setEvents((prev) => prev.map((e) => (e.id === updated.id ? updated : e)));
@@ -407,7 +299,6 @@ export default function CalendarPage(): JSX.Element {
         const created = await createProjectEvent(projectId, payload);
         setEvents((prev) => [...prev, created]);
       }
-
       closeModal();
     } catch (err: any) {
       alert(err?.message || "Failed to save event.");
@@ -418,14 +309,8 @@ export default function CalendarPage(): JSX.Element {
 
   async function handleDeleteSeries() {
     if (!projectId || !form.id) return;
-
-    const confirmed = window.confirm(
-      isRepeatingForm(form)
-        ? "Delete this repeating event series?"
-        : "Delete this event?"
-    );
+    const confirmed = window.confirm(isRepeatingForm(form) ? "Delete this repeating event series?" : "Delete this event?");
     if (!confirmed) return;
-
     try {
       setSaving(true);
       await deleteProjectEvent(projectId, form.id);
@@ -439,51 +324,121 @@ export default function CalendarPage(): JSX.Element {
   }
 
   function handleDeleteSingleOccurrence() {
-    alert(
-      "Deleting only one occurrence of a repeating event is not supported by the current backend yet. You can delete the full repeating series."
-    );
+    alert("Deleting only one occurrence of a repeating event is not supported by the current backend yet. You can delete the full repeating series.");
   }
+
+  const bg            = isDark ? "#0f172a" : "#f8fafc";
+  const surface       = isDark ? "#1e293b" : "#ffffff";
+  const surfaceRaised = isDark ? "#253347" : "#f1f5f9";
+  const border        = isDark ? "rgba(255,255,255,0.1)" : "#e2e8f0";
+  const borderLight   = isDark ? "rgba(255,255,255,0.06)" : "#f0f4f8";
+  const textPrimary   = isDark ? "#f1f5f9" : "#0f172a";
+  const textSecondary = isDark ? "#94a3b8" : "#64748b";
+  const headerBg      = isDark ? "#162032" : "#f8fafc";
+  const cellBg        = isDark ? "#1a2639" : "#ffffff";
+  const cellMuted     = cellBg;
+  const cellWeekend   = cellBg;
+  const inputBg       = isDark ? "#162032" : "#ffffff";
+  const calendarIconColor = isDark ? "#ffffff" : "#0f172a";
 
   return (
     <SidebarLayout>
-      <div
-        style={{
-          ...styles.shell,
-          background: isDark ? "#0b0f17" : "#f8fafc",
-          color: isDark ? "white" : "#111827",
-        }}
-      >
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap');
+        .cal-root * { font-family: 'DM Sans', system-ui, sans-serif; box-sizing: border-box; }
+
+        .cal-day { transition: background 0.1s; }
+        .cal-day:hover { background: ${isDark ? "rgba(255,255,255,0.04)" : "#eef2ff"} !important; }
+
+        .cal-chip { transition: filter 0.12s, transform 0.12s; cursor: pointer; }
+        .cal-chip:hover { filter: brightness(0.92); transform: translateY(-1px); }
+
+        .cal-btn-primary { transition: opacity 0.12s, transform 0.12s; }
+        .cal-btn-primary:hover:not(:disabled) { opacity: 0.87; transform: translateY(-1px); }
+
+        .cal-btn-secondary { transition: background 0.12s; }
+        .cal-btn-secondary:hover:not(:disabled) { background: ${isDark ? "rgba(255,255,255,0.12)" : "#e2e8f0"} !important; }
+
+        .cal-icon-btn { transition: background 0.12s; }
+        .cal-icon-btn:hover { background: ${isDark ? "rgba(255,255,255,0.12)" : "#e2e8f0"} !important; }
+
+        .cal-day-event-btn { transition: filter 0.12s; cursor: pointer; }
+        .cal-day-event-btn:hover { filter: brightness(0.95); }
+
+        .cal-repeat-btn { transition: all 0.12s; }
+
+        .cal-scroll::-webkit-scrollbar { width: 4px; }
+        .cal-scroll::-webkit-scrollbar-track { background: transparent; }
+        .cal-scroll::-webkit-scrollbar-thumb { background: ${isDark ? "rgba(255,255,255,0.18)" : "#cbd5e1"}; border-radius: 4px; }
+
+        .cal-input:focus { outline: none !important; border-color: #3b82f6 !important; box-shadow: 0 0 0 3px rgba(59,130,246,0.18) !important; }
+
+        .cal-select option { background: ${isDark ? "#1e293b" : "#ffffff"}; color: ${textPrimary}; }
+
+        .cal-datetime-wrap {
+          position: relative;
+        }
+
+        .cal-datetime {
+          color-scheme: ${isDark ? "dark" : "light"};
+          padding-right: 42px !important;
+        }
+
+        .cal-datetime::-webkit-calendar-picker-indicator {
+          opacity: 0;
+          position: absolute;
+          right: 0;
+          width: 42px;
+          height: 100%;
+          cursor: pointer;
+        }
+
+        .cal-datetime-icon {
+          position: absolute;
+          right: 12px;
+          top: 50%;
+          transform: translateY(-50%);
+          width: 16px;
+          height: 16px;
+          color: ${calendarIconColor};
+          pointer-events: none;
+          opacity: 0.95;
+        }
+      `}</style>
+
+      <div className="cal-root" style={{ minHeight: "100vh", width: "100%", background: bg, color: textPrimary, padding: "28px 24px" }}>
         <motion.div
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.22 }}
-          style={styles.page}
+          transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+          style={{ width: "100%", maxWidth: 1440, margin: "0 auto" }}
         >
-          <div style={styles.headerRow}>
-            <div>
-              <div style={styles.eyebrow}>Project Workspace</div>
-              <h1 style={styles.title}>Calendar</h1>
-              <div style={styles.subtitle}>
-                View, create, edit, and manage project events.
-              </div>
-            </div>
 
-            <div style={styles.headerActions}>
+          {/* ── Page Header ── */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, marginBottom: 26, flexWrap: "wrap" }}>
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: textSecondary, marginBottom: 5 }}>
+                Project Workspace
+              </div>
+              <h1 style={{ margin: 0, fontSize: 30, fontWeight: 700, letterSpacing: "-0.5px", color: textPrimary }}>Calendar</h1>
+              <p style={{ margin: "5px 0 0", fontSize: 14, color: textSecondary }}>View, create, edit, and manage project events.</p>
+            </div>
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
               <button
-                style={styles.secondaryButton}
+                className="cal-btn-secondary"
+                style={{ background: surfaceRaised, color: textPrimary, border: `1px solid ${border}`, borderRadius: 10, padding: "9px 16px", fontWeight: 600, fontSize: 14, cursor: "pointer", fontFamily: "inherit" }}
                 onClick={() => {
                   let route = "developer-dashboard";
-
                   if (role === "product-owner") route = "product-owner-dashboard";
                   else if (role === "scrum-facilitator") route = "scrum-facilitator-dashboard";
-
                   navigate(`/projects/${projectId}/${role}/${route}`);
                 }}
               >
-                Back to Project
+                ← Back to Project
               </button>
               <button
-                style={styles.primaryButton}
+                className="cal-btn-primary"
+                style={{ background: "linear-gradient(135deg,#3b82f6,#2563eb)", color: "#fff", border: "none", borderRadius: 10, padding: "9px 18px", fontWeight: 600, fontSize: 14, cursor: "pointer", fontFamily: "inherit" }}
                 onClick={() => openCreateModal(new Date())}
               >
                 + New Event
@@ -491,180 +446,163 @@ export default function CalendarPage(): JSX.Element {
             </div>
           </div>
 
-          <div style={styles.toolbar}>
-            <div style={styles.monthControls}>
+          {/* ── Toolbar ── */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 18, flexWrap: "wrap" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <button
-                style={styles.iconButton}
+                className="cal-icon-btn"
+                style={{ width: 36, height: 36, borderRadius: 9, border: `1px solid ${border}`, background: surfaceRaised, color: textPrimary, cursor: "pointer", fontSize: 20, display: "inline-flex", alignItems: "center", justifyContent: "center", fontFamily: "inherit" }}
                 onClick={() => setCurrentMonth(addMonths(currentMonth, -1))}
-              >
-                ←
-              </button>
-
-              <div style={styles.monthLabel}>
-                {currentMonth.toLocaleString(undefined, {
-                  month: "long",
-                  year: "numeric",
-                })}
-              </div>
-
+              >‹</button>
+              <span style={{ minWidth: 190, textAlign: "center", fontSize: 17, fontWeight: 700, letterSpacing: "-0.3px", color: textPrimary }}>
+                {currentMonth.toLocaleString(undefined, { month: "long", year: "numeric" })}
+              </span>
               <button
-                style={styles.iconButton}
+                className="cal-icon-btn"
+                style={{ width: 36, height: 36, borderRadius: 9, border: `1px solid ${border}`, background: surfaceRaised, color: textPrimary, cursor: "pointer", fontSize: 20, display: "inline-flex", alignItems: "center", justifyContent: "center", fontFamily: "inherit" }}
                 onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-              >
-                →
-              </button>
+              >›</button>
             </div>
-
-            <div style={styles.calendarNavControls}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
               <button
-                style={styles.secondaryButton}
+                className="cal-btn-secondary"
+                style={{ background: surfaceRaised, color: textPrimary, border: `1px solid ${border}`, borderRadius: 10, padding: "8px 15px", fontWeight: 600, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}
                 onClick={() => setCurrentMonth(startOfMonth(new Date()))}
               >
                 Today
               </button>
-
               <select
-                style={styles.navSelect}
+                className="cal-select"
+                style={{ background: surfaceRaised, color: textPrimary, border: `1px solid ${border}`, borderRadius: 10, padding: "8px 12px", fontWeight: 600, fontSize: 13, cursor: "pointer", outline: "none", fontFamily: "inherit" }}
                 value={currentMonth.getMonth()}
-                onChange={(e) =>
-                  setCurrentMonth(
-                    new Date(
-                      currentMonth.getFullYear(),
-                      Number(e.target.value),
-                      1
-                    )
-                  )
-                }
+                onChange={(e) => setCurrentMonth(new Date(currentMonth.getFullYear(), Number(e.target.value), 1))}
               >
-                {monthOptions.map((month) => (
-                  <option key={month.value} value={month.value}>
-                    {month.label}
-                  </option>
-                ))}
+                {monthOptions.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
               </select>
-
               <select
-                style={styles.navSelect}
+                className="cal-select"
+                style={{ background: surfaceRaised, color: textPrimary, border: `1px solid ${border}`, borderRadius: 10, padding: "8px 12px", fontWeight: 600, fontSize: 13, cursor: "pointer", outline: "none", fontFamily: "inherit" }}
                 value={currentMonth.getFullYear()}
-                onChange={(e) =>
-                  setCurrentMonth(
-                    new Date(
-                      Number(e.target.value),
-                      currentMonth.getMonth(),
-                      1
-                    )
-                  )
-                }
+                onChange={(e) => setCurrentMonth(new Date(Number(e.target.value), currentMonth.getMonth(), 1))}
               >
-                {yearOptions.map((year) => (
-                  <option key={year} value={year}>
-                    {year}
-                  </option>
-                ))}
+                {yearOptions.map((y) => <option key={y} value={y}>{y}</option>)}
               </select>
             </div>
           </div>
 
+          {/* ── Calendar Grid ── */}
           {loading ? (
-            <div style={styles.card}>
-              <div style={styles.infoText}>Loading calendar...</div>
+            <div style={{ background: surface, border: `1px solid ${border}`, borderRadius: 18, padding: "44px 24px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <span style={{ color: textSecondary, fontSize: 15 }}>Loading calendar…</span>
             </div>
           ) : error ? (
-            <div style={styles.card}>
-              <div style={styles.errorText}>{error}</div>
+            <div style={{ background: surface, border: `1px solid ${border}`, borderRadius: 18, padding: "44px 24px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <span style={{ color: "#dc2626", fontWeight: 600 }}>⚠ {error}</span>
             </div>
           ) : (
-            <div style={styles.calendarCard}>
-              <div style={styles.weekHeader}>
-                {weekdayLabels.map((label) => (
-                  <div key={label} style={styles.weekHeaderCell}>
-                    {label}
+            <div style={{ background: surface, border: `1px solid ${border}`, borderRadius: 18, overflow: "hidden", boxShadow: isDark ? "0 8px 32px rgba(0,0,0,0.4)" : "0 2px 16px rgba(0,0,0,0.06)" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", background: headerBg, borderBottom: `1px solid ${border}` }}>
+                {weekdayLabels.map((d) => (
+                  <div key={d} style={{ padding: "12px 10px", textAlign: "center", fontSize: 12, fontWeight: 700, letterSpacing: "0.07em", textTransform: "uppercase", color: textSecondary }}>
+                    {d}
                   </div>
                 ))}
               </div>
 
-              <div style={styles.grid}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)" }}>
                 {calendarDays.map((day) => {
                   const key = formatLocalDateKey(day.date);
                   const dayEvents = eventsByDate.get(key) ?? [];
                   const isCurrentMonth = day.isCurrentMonth;
-                  const isTodayValue = isToday(day.date);
+                  const isTodayVal = isToday(day.date);
 
                   return (
                     <div
                       key={key}
+                      className="cal-day"
                       style={{
-                        ...styles.dayCell,
-                        ...(isCurrentMonth ? null : styles.dayCellMuted),
+                        minHeight: 155,
+                        maxHeight: 155,
+                        padding: "9px 9px 7px",
+                        borderRight: `1px solid ${borderLight}`,
+                        borderBottom: `1px solid ${borderLight}`,
+                        background: isCurrentMonth ? cellBg : cellMuted,
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 5,
+                        cursor: "pointer",
                       }}
                       onClick={() => openDayModal(day.date)}
                       onDoubleClick={() => openCreateModal(day.date)}
                     >
-                      <div style={styles.dayTopRow}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexShrink: 0 }}>
                         <button
                           style={{
-                            ...styles.dayNumber,
-                            ...(isTodayValue ? styles.todayBadge : null),
-                            ...(isCurrentMonth ? null : styles.dayNumberMuted),
+                            width: 27,
+                            height: 27,
+                            borderRadius: 7,
+                            border: "none",
+                            background: isTodayVal ? "#3b82f6" : "transparent",
+                            color: isTodayVal ? "#fff" : isCurrentMonth ? textPrimary : textSecondary,
+                            fontWeight: isTodayVal ? 700 : isCurrentMonth ? 600 : 400,
+                            fontSize: 13,
+                            cursor: "pointer",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            padding: 0,
+                            opacity: isCurrentMonth ? 1 : 0.4,
+                            fontFamily: "inherit",
                           }}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            openDayModal(day.date);
-                          }}
+                          onClick={(e) => { e.stopPropagation(); openDayModal(day.date); }}
                         >
                           {day.date.getDate()}
                         </button>
+                        {dayEvents.length > 0 && (
+                          <span style={{ fontSize: 10, fontWeight: 600, color: textSecondary, lineHeight: 1 }}>
+                            {dayEvents.length}
+                          </span>
+                        )}
                       </div>
 
-                      <div style={styles.eventsList}>
-                        {dayEvents.map((occurrence) => {
-                          const event = occurrence.sourceEvent;
-                          const zone = event.timezone || localTimezone;
-                          const zoneShort = shortTimezoneLabel(
-                            occurrence.occurrenceStart,
-                            zone
-                          );
-
+                      <div className="cal-scroll" style={{ display: "flex", flexDirection: "column", gap: 3, overflowY: "auto", flex: 1, minHeight: 0 }}>
+                        {dayEvents.map((occ) => {
+                          const ev = occ.sourceEvent;
+                          const zone = ev.timezone || localTimezone;
+                          const zs = shortTimezoneLabel(occ.occurrenceStart, zone);
+                          const c = typeColors[ev.type];
                           return (
                             <button
-                              key={occurrence.instanceId}
+                              key={occ.instanceId}
+                              className="cal-chip"
                               style={{
-                                ...styles.eventChip,
-                                background: typeColors[event.type] + "22",
-                                borderColor: typeColors[event.type],
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 5,
+                                width: "100%",
+                                padding: "4px 7px",
+                                borderRadius: 6,
+                                border: `1px solid ${c.border}`,
+                                background: c.bg,
+                                color: c.text,
+                                textAlign: "left",
+                                flexShrink: 0,
                               }}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                openEditModal(event);
-                              }}
-                              title={`${event.title} • ${formatEventTimeRange(
-                                occurrence.occurrenceStart,
-                                occurrence.occurrenceEnd,
-                                zone
-                              )} • ${zone}`}
+                              onClick={(e) => { e.stopPropagation(); openEditModal(ev); }}
+                              title={`${ev.title} • ${formatEventTimeRange(occ.occurrenceStart, occ.occurrenceEnd, zone)} • ${zone}`}
                             >
-                              <span
-                                style={{
-                                  ...styles.eventDot,
-                                  background: typeColors[event.type],
-                                }}
-                              />
-                              <span style={styles.eventChipContent}>
-                                <span style={styles.eventTitleText}>{event.title}</span>
-                                <span style={styles.eventMetaText}>
-                                  {formatEventDateTimeLine(
-                                    occurrence.occurrenceStart,
-                                    occurrence.occurrenceEnd,
-                                    zone
-                                  )}{" "}
-                                  ({zoneShort})
+                              <span style={{ width: 6, height: 6, borderRadius: "50%", background: c.dot, flexShrink: 0 }} />
+                              <span style={{ display: "flex", flexDirection: "column", minWidth: 0, flex: 1 }}>
+                                <span style={{ fontSize: 12, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", lineHeight: 1.35 }}>
+                                  {ev.title}
+                                </span>
+                                <span style={{ fontSize: 10, fontWeight: 500, lineHeight: 1.3, opacity: 0.75, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                  {formatEventTimeLine(occ.occurrenceStart, zone)} {zs}
                                 </span>
                               </span>
                             </button>
                           );
                         })}
-
-                        {dayEvents.length === 0 && <div style={styles.emptyDayText}>No events</div>}
                       </div>
                     </div>
                   );
@@ -673,18 +611,13 @@ export default function CalendarPage(): JSX.Element {
             </div>
           )}
 
-          <div style={styles.legendCard}>
-            <div style={styles.legendTitle}>Event Types</div>
-            <div style={styles.legendWrap}>
+          <div style={{ marginTop: 14, background: surface, border: `1px solid ${border}`, borderRadius: 14, padding: "12px 18px", display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap" }}>
+            <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: textSecondary, flexShrink: 0 }}>Event Types</span>
+            <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
               {(Object.keys(typeColors) as EventType[]).map((type) => (
-                <div key={type} style={styles.legendItem}>
-                  <span
-                    style={{
-                      ...styles.legendDot,
-                      background: typeColors[type],
-                    }}
-                  />
-                  <span>{labelForType(type)}</span>
+                <div key={type} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <span style={{ width: 8, height: 8, borderRadius: "50%", background: typeColors[type].dot, flexShrink: 0 }} />
+                  <span style={{ fontSize: 13, color: textPrimary, fontWeight: 500 }}>{typeColors[type].label}</span>
                 </div>
               ))}
             </div>
@@ -692,128 +625,132 @@ export default function CalendarPage(): JSX.Element {
         </motion.div>
 
         {dayModalOpen && (
-          <div style={styles.modalOverlay} onClick={closeDayModal}>
+          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20, zIndex: 50, backdropFilter: "blur(3px)" }} onClick={closeDayModal}>
             <motion.div
-              initial={{ opacity: 0, scale: 0.96, y: 8 }}
+              initial={{ opacity: 0, scale: 0.96, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              transition={{ duration: 0.18 }}
-              style={styles.dayModalCard}
+              transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+              style={{ width: "100%", maxWidth: 520, background: isDark ? "#1e293b" : "#ffffff", border: `1px solid ${border}`, borderRadius: 20, boxShadow: isDark ? "0 20px 60px rgba(0,0,0,0.5)" : "0 12px 40px rgba(0,0,0,0.14)", padding: 24, maxHeight: "88vh", display: "flex", flexDirection: "column" }}
               onClick={(e) => e.stopPropagation()}
             >
-              <div style={styles.modalHeader}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 18 }}>
                 <div>
-                  <div style={styles.modalTitle}>Day Events</div>
-                  <div style={styles.modalSubtitle}>
-                    {selectedDay
-                      ? selectedDay.toLocaleDateString(undefined, {
-                          weekday: "long",
-                          month: "long",
-                          day: "numeric",
-                          year: "numeric",
-                        })
-                      : ""}
+                  <div style={{ fontSize: 18, fontWeight: 700, letterSpacing: "-0.3px", color: textPrimary }}>
+                    {selectedDay?.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
+                  </div>
+                  <div style={{ marginTop: 3, fontSize: 13, color: textSecondary }}>
+                    {selectedDayEvents.length} event{selectedDayEvents.length !== 1 ? "s" : ""} scheduled
                   </div>
                 </div>
-
-                <button style={styles.closeButton} onClick={closeDayModal}>
-                  ✕
-                </button>
+                <button
+                  className="cal-icon-btn"
+                  style={{ width: 34, height: 34, borderRadius: 8, border: `1px solid ${border}`, background: surfaceRaised, color: textSecondary, cursor: "pointer", fontSize: 14, display: "inline-flex", alignItems: "center", justifyContent: "center", fontFamily: "inherit", flexShrink: 0 }}
+                  onClick={closeDayModal}
+                >✕</button>
               </div>
 
-              <div style={styles.dayModalList}>
+              <div className="cal-scroll" style={{ display: "flex", flexDirection: "column", gap: 8, overflowY: "auto", flex: 1 }}>
                 {selectedDayEvents.length === 0 ? (
-                  <div style={styles.dayModalEmpty}>No events</div>
+                  <div style={{ padding: "28px 0", textAlign: "center", color: textSecondary, fontSize: 14 }}>
+                    No events scheduled
+                  </div>
                 ) : (
-                  selectedDayEvents.map((occurrence) => {
-                    const event = occurrence.sourceEvent;
-                    const zone = event.timezone || localTimezone;
-                    const zoneShort = shortTimezoneLabel(
-                      occurrence.occurrenceStart,
-                      zone
-                    );
-
+                  selectedDayEvents.map((occ) => {
+                    const ev = occ.sourceEvent;
+                    const zone = ev.timezone || localTimezone;
+                    const zs = shortTimezoneLabel(occ.occurrenceStart, zone);
+                    const c = typeColors[ev.type];
                     return (
                       <button
-                        key={occurrence.instanceId}
+                        key={occ.instanceId}
+                        className="cal-day-event-btn"
                         style={{
-                          ...styles.dayModalEvent,
-                          borderLeftColor: typeColors[event.type],
+                          width: "100%",
+                          textAlign: "left",
+                          background: c.bg,
+                          color: c.text,
+                          border: `1px solid ${c.border}`,
+                          borderLeft: `4px solid ${c.dot}`,
+                          borderRadius: 12,
+                          padding: "11px 13px",
+                          cursor: "pointer",
                         }}
-                        onClick={() => openEditModal(event)}
+                        onClick={() => { closeDayModal(); openEditModal(ev); }}
                       >
-                        <div style={styles.dayModalEventTitle}>{event.title}</div>
-                        <div style={styles.dayModalEventMeta}>
-                          {formatEventDateTimeLine(
-                            occurrence.occurrenceStart,
-                            occurrence.occurrenceEnd,
-                            zone
-                          )}{" "}
-                          ({zoneShort})
+                        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 3, opacity: 0.65 }}>
+                          {c.label}
                         </div>
+                        <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 2, letterSpacing: "-0.2px" }}>{ev.title}</div>
+                        <div style={{ fontSize: 13, fontWeight: 500, opacity: 0.8 }}>
+                          {formatEventDateTimeLine(occ.occurrenceStart, occ.occurrenceEnd, zone)} ({zs})
+                        </div>
+                        {ev.location && (
+                          <div style={{ marginTop: 3, fontSize: 12, opacity: 0.6 }}>📍 {ev.location}</div>
+                        )}
                       </button>
                     );
                   })
                 )}
+              </div>
+
+              <div style={{ marginTop: 16, display: "flex", justifyContent: "flex-end", gap: 8, flexShrink: 0 }}>
+                <button
+                  className="cal-btn-secondary"
+                  style={{ background: surfaceRaised, color: textPrimary, border: `1px solid ${border}`, borderRadius: 10, padding: "9px 16px", fontWeight: 600, fontSize: 14, cursor: "pointer", fontFamily: "inherit" }}
+                  onClick={closeDayModal}
+                >Close</button>
+                <button
+                  className="cal-btn-primary"
+                  style={{ background: "linear-gradient(135deg,#3b82f6,#2563eb)", color: "#fff", border: "none", borderRadius: 10, padding: "9px 18px", fontWeight: 600, fontSize: 14, cursor: "pointer", fontFamily: "inherit" }}
+                  onClick={() => { closeDayModal(); openCreateModal(selectedDay ?? new Date()); }}
+                >+ Add Event</button>
               </div>
             </motion.div>
           </div>
         )}
 
         {modalOpen && (
-          <div style={styles.modalOverlay} onClick={closeModal}>
+          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20, zIndex: 50, backdropFilter: "blur(3px)" }} onClick={closeModal}>
             <motion.div
-              initial={{ opacity: 0, scale: 0.96, y: 8 }}
+              initial={{ opacity: 0, scale: 0.96, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              transition={{ duration: 0.18 }}
-              style={styles.modalCard}
+              transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+              style={{ width: "100%", maxWidth: 700, background: isDark ? "#1e293b" : "#ffffff", border: `1px solid ${border}`, borderRadius: 20, boxShadow: isDark ? "0 20px 60px rgba(0,0,0,0.5)" : "0 12px 40px rgba(0,0,0,0.14)", padding: 26, maxHeight: "90vh", overflowY: "auto" }}
               onClick={(e) => e.stopPropagation()}
             >
-              <div style={styles.modalHeader}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 22 }}>
                 <div>
-                  <div style={styles.modalTitle}>
-                    {form.id ? "Edit Event" : "Create Event"}
-                  </div>
-                  <div style={styles.modalSubtitle}>
-                    {selectedDate
-                      ? selectedDate.toLocaleDateString(undefined, {
-                          weekday: "long",
-                          month: "long",
-                          day: "numeric",
-                          year: "numeric",
-                        })
-                      : "Project event"}
+                  <div style={{ fontSize: 21, fontWeight: 700, letterSpacing: "-0.4px", color: textPrimary }}>{form.id ? "Edit Event" : "New Event"}</div>
+                  <div style={{ marginTop: 3, fontSize: 13, color: textSecondary }}>
+                    {selectedDate?.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric", year: "numeric" }) ?? "Project event"}
                   </div>
                 </div>
-
-                <button style={styles.closeButton} onClick={closeModal}>
-                  ✕
-                </button>
+                <button
+                  className="cal-icon-btn"
+                  style={{ width: 34, height: 34, borderRadius: 8, border: `1px solid ${border}`, background: surfaceRaised, color: textSecondary, cursor: "pointer", fontSize: 14, display: "inline-flex", alignItems: "center", justifyContent: "center", fontFamily: "inherit", flexShrink: 0 }}
+                  onClick={closeModal}
+                >✕</button>
               </div>
 
-              <div style={styles.formGrid}>
-                <div style={styles.fieldFull}>
-                  <label style={styles.label}>Title</label>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0,1fr))", gap: 14 }}>
+                <div style={{ gridColumn: "1/-1" }}>
+                  <label style={{ display: "block", marginBottom: 6, fontSize: 12, fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", color: textSecondary }}>Title</label>
                   <input
-                    style={styles.input}
+                    className="cal-input"
+                    style={{ width: "100%", background: inputBg, color: textPrimary, border: `1px solid ${border}`, borderRadius: 10, padding: "10px 12px", fontSize: 14, fontFamily: "inherit" }}
                     value={form.title}
-                    onChange={(e) =>
-                      setForm((prev) => ({ ...prev, title: e.target.value }))
-                    }
+                    onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))}
                     placeholder="Enter event title"
                   />
                 </div>
 
                 <div>
-                  <label style={styles.label}>Type</label>
+                  <label style={{ display: "block", marginBottom: 6, fontSize: 12, fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", color: textSecondary }}>Type</label>
                   <select
-                    style={styles.input}
+                    className="cal-select cal-input"
+                    style={{ width: "100%", background: inputBg, color: textPrimary, border: `1px solid ${border}`, borderRadius: 10, padding: "10px 12px", fontSize: 14, fontFamily: "inherit", cursor: "pointer", outline: "none" }}
                     value={form.type}
-                    onChange={(e) =>
-                      setForm((prev) => ({
-                        ...prev,
-                        type: e.target.value as EventType,
-                      }))
-                    }
+                    onChange={(e) => setForm((p) => ({ ...p, type: e.target.value as EventType }))}
                   >
                     <option value="daily_scrum">Daily Scrum</option>
                     <option value="sprint_planning">Sprint Planning</option>
@@ -827,62 +764,95 @@ export default function CalendarPage(): JSX.Element {
                 </div>
 
                 <div>
-                  <label style={styles.label}>Timezone</label>
+                  <label style={{ display: "block", marginBottom: 6, fontSize: 12, fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", color: textSecondary }}>Timezone</label>
                   <select
-                    style={styles.input}
+                    className="cal-select cal-input"
+                    style={{ width: "100%", background: inputBg, color: textPrimary, border: `1px solid ${border}`, borderRadius: 10, padding: "10px 12px", fontSize: 14, fontFamily: "inherit", cursor: "pointer", outline: "none" }}
                     value={form.timezone}
-                    onChange={(e) =>
-                      setForm((prev) => ({ ...prev, timezone: e.target.value }))
-                    }
+                    onChange={(e) => setForm((p) => ({ ...p, timezone: e.target.value }))}
                   >
-                    {timezones.map((tz) => (
-                      <option key={tz} value={tz}>
-                        {timezoneOptionLabel(tz)}
-                      </option>
-                    ))}
+                    {timezones.map((tz) => <option key={tz} value={tz}>{timezoneOptionLabel(tz)}</option>)}
                   </select>
                 </div>
 
                 <div>
-                  <label style={styles.label}>Start</label>
-                  <input
-                    style={styles.input}
-                    type="datetime-local"
-                    value={form.start_at}
-                    onChange={(e) =>
-                      setForm((prev) => ({ ...prev, start_at: e.target.value }))
-                    }
-                  />
+                  <label style={{ display: "block", marginBottom: 6, fontSize: 12, fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", color: textSecondary }}>Start</label>
+                  <div className="cal-datetime-wrap">
+                    <input
+                      className="cal-input cal-datetime"
+                      type="datetime-local"
+                      style={{ width: "100%", background: inputBg, color: textPrimary, border: `1px solid ${border}`, borderRadius: 10, padding: "10px 12px", fontSize: 14, fontFamily: "inherit" }}
+                      value={form.start_at}
+                      onChange={(e) => setForm((p) => ({ ...p, start_at: e.target.value }))}
+                    />
+                    <svg
+                      className="cal-datetime-icon"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M8 2V5M16 2V5M3 9H21M5 5H19C20.1046 5 21 5.89543 21 7V19C21 20.1046 20.1046 21 19 21H5C3.89543 21 3 20.1046 3 19V7C3 5.89543 3.89543 5 5 5Z"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </div>
                 </div>
 
                 <div>
-                  <label style={styles.label}>End</label>
-                  <input
-                    style={styles.input}
-                    type="datetime-local"
-                    value={form.end_at}
-                    onChange={(e) =>
-                      setForm((prev) => ({ ...prev, end_at: e.target.value }))
-                    }
-                  />
+                  <label style={{ display: "block", marginBottom: 6, fontSize: 12, fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", color: textSecondary }}>End</label>
+                  <div className="cal-datetime-wrap">
+                    <input
+                      className="cal-input cal-datetime"
+                      type="datetime-local"
+                      style={{ width: "100%", background: inputBg, color: textPrimary, border: `1px solid ${border}`, borderRadius: 10, padding: "10px 12px", fontSize: 14, fontFamily: "inherit" }}
+                      value={form.end_at}
+                      onChange={(e) => setForm((p) => ({ ...p, end_at: e.target.value }))}
+                    />
+                    <svg
+                      className="cal-datetime-icon"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M8 2V5M16 2V5M3 9H21M5 5H19C20.1046 5 21 5.89543 21 7V19C21 20.1046 20.1046 21 19 21H5C3.89543 21 3 20.1046 3 19V7C3 5.89543 3.89543 5 5 5Z"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </div>
                 </div>
 
-                <div style={styles.fieldFull}>
-                  <label style={styles.label}>Repeats</label>
-                  <div style={styles.repeatButtonRow}>
-                    {recurrenceOptions.map((option) => {
-                      const active = form.recurrencePreset === option.key;
+                <div style={{ gridColumn: "1/-1" }}>
+                  <label style={{ display: "block", marginBottom: 8, fontSize: 12, fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", color: textSecondary }}>Repeats</label>
+                  <div style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>
+                    {recurrenceOptions.map((opt) => {
+                      const active = form.recurrencePreset === opt.key;
                       return (
                         <button
-                          key={option.key}
+                          key={opt.key}
                           type="button"
+                          className="cal-repeat-btn"
                           style={{
-                            ...styles.repeatButton,
-                            ...(active ? styles.repeatButtonActive : null),
+                            background: active ? "#3b82f6" : surfaceRaised,
+                            color: active ? "#fff" : textPrimary,
+                            border: active ? "1px solid #3b82f6" : `1px solid ${border}`,
+                            borderRadius: 999,
+                            padding: "7px 15px",
+                            cursor: "pointer",
+                            fontWeight: active ? 700 : 500,
+                            fontSize: 13,
+                            fontFamily: "inherit",
                           }}
-                          onClick={() => updateRecurrencePreset(option.key)}
+                          onClick={() => updateRecurrencePreset(opt.key)}
                         >
-                          {option.label}
+                          {opt.label}
                         </button>
                       );
                     })}
@@ -892,32 +862,23 @@ export default function CalendarPage(): JSX.Element {
                 {form.recurrencePreset === "custom" && (
                   <>
                     <div>
-                      <label style={styles.label}>Repeat Every</label>
+                      <label style={{ display: "block", marginBottom: 6, fontSize: 12, fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", color: textSecondary }}>Repeat Every</label>
                       <input
-                        style={styles.input}
+                        className="cal-input"
                         type="number"
                         min={1}
+                        style={{ width: "100%", background: inputBg, color: textPrimary, border: `1px solid ${border}`, borderRadius: 10, padding: "10px 12px", fontSize: 14, fontFamily: "inherit" }}
                         value={form.recurrenceInterval}
-                        onChange={(e) =>
-                          setForm((prev) => ({
-                            ...prev,
-                            recurrenceInterval: Math.max(1, Number(e.target.value) || 1),
-                          }))
-                        }
+                        onChange={(e) => setForm((p) => ({ ...p, recurrenceInterval: Math.max(1, Number(e.target.value) || 1) }))}
                       />
                     </div>
-
                     <div>
-                      <label style={styles.label}>Unit</label>
+                      <label style={{ display: "block", marginBottom: 6, fontSize: 12, fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", color: textSecondary }}>Unit</label>
                       <select
-                        style={styles.input}
+                        className="cal-select cal-input"
+                        style={{ width: "100%", background: inputBg, color: textPrimary, border: `1px solid ${border}`, borderRadius: 10, padding: "10px 12px", fontSize: 14, fontFamily: "inherit", cursor: "pointer", outline: "none" }}
                         value={form.recurrenceUnit}
-                        onChange={(e) =>
-                          setForm((prev) => ({
-                            ...prev,
-                            recurrenceUnit: e.target.value as RecurrenceUnit,
-                          }))
-                        }
+                        onChange={(e) => setForm((p) => ({ ...p, recurrenceUnit: e.target.value as RecurrenceUnit }))}
                       >
                         <option value="day">Days</option>
                         <option value="week">Weeks</option>
@@ -928,107 +889,116 @@ export default function CalendarPage(): JSX.Element {
                   </>
                 )}
 
-                <div style={styles.fieldFull}>
-                  <label style={styles.label}>Location</label>
+                <div style={{ gridColumn: "1/-1" }}>
+                  <label style={{ display: "block", marginBottom: 6, fontSize: 12, fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", color: textSecondary }}>Location</label>
                   <input
-                    style={styles.input}
+                    className="cal-input"
+                    style={{ width: "100%", background: inputBg, color: textPrimary, border: `1px solid ${border}`, borderRadius: 10, padding: "10px 12px", fontSize: 14, fontFamily: "inherit" }}
                     value={form.location}
-                    onChange={(e) =>
-                      setForm((prev) => ({ ...prev, location: e.target.value }))
-                    }
+                    onChange={(e) => setForm((p) => ({ ...p, location: e.target.value }))}
                     placeholder="Optional location"
                   />
                 </div>
 
-                <div style={styles.fieldFull}>
-                  <label style={styles.label}>Description</label>
+                <div style={{ gridColumn: "1/-1" }}>
+                  <label style={{ display: "block", marginBottom: 6, fontSize: 12, fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", color: textSecondary }}>Description</label>
                   <textarea
-                    style={styles.textarea}
+                    className="cal-input cal-scroll"
+                    style={{ width: "100%", background: inputBg, color: textPrimary, border: `1px solid ${border}`, borderRadius: 10, padding: "10px 12px", fontSize: 14, fontFamily: "inherit", minHeight: 90, resize: "vertical" }}
                     value={form.description}
-                    onChange={(e) =>
-                      setForm((prev) => ({
-                        ...prev,
-                        description: e.target.value,
-                      }))
-                    }
+                    onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
                     placeholder="Add event details"
                   />
                 </div>
               </div>
 
-              <div style={styles.modalActions}>
-                {form.id && !isRepeatingForm(form) && (
-                  <button
-                    style={styles.deleteButton}
-                    onClick={handleDeleteSeries}
-                    disabled={saving}
-                  >
-                    Delete Event
-                  </button>
-                )}
+              <div style={{ marginTop: 16, background: surfaceRaised, border: `1px solid ${border}`, borderRadius: 12, padding: "12px 14px" }}>
+                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.07em", textTransform: "uppercase", color: textSecondary, marginBottom: 9 }}>Preview</div>
+                <div style={{ display: "grid", gridTemplateColumns: "80px 1fr", gap: "5px 10px", fontSize: 13 }}>
+                  {([
+                    ["Time", form.start_at && form.end_at ? formatFormTimeRange(form.start_at, form.end_at, form.timezone) : "—"],
+                    ["Timezone", form.timezone ? timezoneOptionLabel(form.timezone) : "—"],
+                    ["Type", typeColors[form.type]?.label ?? labelForType(form.type)],
+                    ["Repeats", describeRecurrence(form)],
+                    ["Location", form.location || "—"],
+                  ] as [string, string][]).map(([label, value], i) => (
+                    <>
+                      <span key={`l${i}`} style={{ color: textSecondary, fontWeight: 500 }}>{label}</span>
+                      <span key={`v${i}`} style={{ color: textPrimary }}>{value}</span>
+                    </>
+                  ))}
+                </div>
+              </div>
 
-                {form.id && isRepeatingForm(form) && (
-                  <div style={styles.deleteChoiceWrap}>
+              <div style={{ marginTop: 18, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  {form.id && !isRepeatingForm(form) && (
                     <button
-                      style={styles.deleteChoiceButton}
-                      onClick={handleDeleteSingleOccurrence}
-                      disabled={saving}
-                    >
-                      Delete Just This Event
-                    </button>
-                    <button
-                      style={styles.deleteButton}
+                      style={{
+                        background: "#dc2626",
+                        color: "#ffffff",
+                        border: "1px solid #ef4444",
+                        borderRadius: 10,
+                        padding: "9px 16px",
+                        fontWeight: 700,
+                        fontSize: 14,
+                        cursor: "pointer",
+                        fontFamily: "inherit",
+                        boxShadow: isDark ? "0 0 0 1px rgba(255,255,255,0.04) inset" : "none",
+                      }}
                       onClick={handleDeleteSeries}
                       disabled={saving}
                     >
-                      Delete Repeat Events
+                      Delete Event
                     </button>
-                  </div>
-                )}
-
-                <div style={styles.modalActionsRight}>
+                  )}
+                  {form.id && isRepeatingForm(form) && (
+                    <>
+                      <button
+                        style={{ background: "transparent", color: "#ef4444", border: "1px solid #ef4444", borderRadius: 10, padding: "9px 16px", fontWeight: 600, fontSize: 14, cursor: "pointer", fontFamily: "inherit" }}
+                        onClick={handleDeleteSingleOccurrence}
+                        disabled={saving}
+                      >
+                        Delete This Only
+                      </button>
+                      <button
+                        style={{
+                          background: "#dc2626",
+                          color: "#ffffff",
+                          border: "1px solid #ef4444",
+                          borderRadius: 10,
+                          padding: "9px 16px",
+                          fontWeight: 700,
+                          fontSize: 14,
+                          cursor: "pointer",
+                          fontFamily: "inherit",
+                          boxShadow: isDark ? "0 0 0 1px rgba(255,255,255,0.04) inset" : "none",
+                        }}
+                        onClick={handleDeleteSeries}
+                        disabled={saving}
+                      >
+                        Delete Series
+                      </button>
+                    </>
+                  )}
+                </div>
+                <div style={{ display: "flex", gap: 8 }}>
                   <button
-                    style={styles.secondaryButton}
+                    className="cal-btn-secondary"
+                    style={{ background: surfaceRaised, color: textPrimary, border: `1px solid ${border}`, borderRadius: 10, padding: "9px 16px", fontWeight: 600, fontSize: 14, cursor: "pointer", fontFamily: "inherit" }}
                     onClick={closeModal}
                     disabled={saving}
                   >
                     Cancel
                   </button>
                   <button
-                    style={styles.primaryButton}
+                    className="cal-btn-primary"
+                    style={{ background: "linear-gradient(135deg,#3b82f6,#2563eb)", color: "#fff", border: "none", borderRadius: 10, padding: "9px 18px", fontWeight: 600, fontSize: 14, cursor: "pointer", fontFamily: "inherit" }}
                     onClick={handleSave}
                     disabled={saving}
                   >
-                    {saving ? "Saving..." : form.id ? "Update Event" : "Create Event"}
+                    {saving ? "Saving…" : form.id ? "Update Event" : "Create Event"}
                   </button>
-                </div>
-              </div>
-
-              <div style={styles.previewCard}>
-                <div style={styles.previewTitle}>Event Preview</div>
-                <div style={styles.previewRow}>
-                  <span style={styles.previewLabel}>Time:</span>
-                  <span>
-                    {form.start_at && form.end_at
-                      ? formatFormTimeRange(form.start_at, form.end_at, form.timezone)
-                      : "—"}
-                  </span>
-                </div>
-                <div style={styles.previewRow}>
-                  <span style={styles.previewLabel}>Timezone:</span>
-                  <span>{form.timezone ? timezoneOptionLabel(form.timezone) : "—"}</span>
-                </div>
-                <div style={styles.previewRow}>
-                  <span style={styles.previewLabel}>Type:</span>
-                  <span>{labelForType(form.type)}</span>
-                </div>
-                <div style={styles.previewRow}>
-                  <span style={styles.previewLabel}>Repeats:</span>
-                  <span>{describeRecurrence(form)}</span>
-                </div>
-                <div style={styles.previewRow}>
-                  <span style={styles.previewLabel}>Location:</span>
-                  <span>{form.location || "—"}</span>
                 </div>
               </div>
             </motion.div>
@@ -1039,863 +1009,163 @@ export default function CalendarPage(): JSX.Element {
   );
 }
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
 function buildCalendarGrid(monthDate: Date) {
   const start = startOfWeek(startOfMonth(monthDate));
   const end = endOfWeek(endOfMonth(monthDate));
   const days: { date: Date; isCurrentMonth: boolean }[] = [];
-
   const cursor = new Date(start);
   while (cursor <= end) {
-    days.push({
-      date: new Date(cursor),
-      isCurrentMonth: cursor.getMonth() === monthDate.getMonth(),
-    });
+    days.push({ date: new Date(cursor), isCurrentMonth: cursor.getMonth() === monthDate.getMonth() });
     cursor.setDate(cursor.getDate() + 1);
   }
-
   return days;
 }
 
-function startOfMonth(date: Date) {
-  return new Date(date.getFullYear(), date.getMonth(), 1);
+function startOfMonth(date: Date) { return new Date(date.getFullYear(), date.getMonth(), 1); }
+function endOfMonth(date: Date) { return new Date(date.getFullYear(), date.getMonth() + 1, 0); }
+function startOfWeek(date: Date) { const d = new Date(date); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - d.getDay()); return d; }
+function endOfWeek(date: Date) { const d = new Date(date); d.setHours(23, 59, 59, 999); d.setDate(d.getDate() + (6 - d.getDay())); return d; }
+function addMonths(date: Date, n: number) { return new Date(date.getFullYear(), date.getMonth() + n, 1); }
+function isToday(date: Date) { const n = new Date(); return date.getFullYear() === n.getFullYear() && date.getMonth() === n.getMonth() && date.getDate() === n.getDate(); }
+function formatLocalDateKey(date: Date) { return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`; }
+function formatUtcIsoToDateKeyInZone(s: string, tz: string) { return DateTime.fromISO(s, { zone: "utc" }).setZone(tz).toFormat("yyyy-MM-dd"); }
+function toLocalInputValue(date: Date) { return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}T${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`; }
+
+function formatEventTimeRange(s: string, e: string, tz?: string) {
+  const z = tz || localTimezone;
+  const a = DateTime.fromISO(s, { zone: "utc" }).setZone(z);
+  const b = DateTime.fromISO(e, { zone: "utc" }).setZone(z);
+  return a.hasSame(b, "day")
+    ? `${a.toFormat("MMM d, yyyy")} • ${a.toFormat("h:mm a")} – ${b.toFormat("h:mm a")}`
+    : `${a.toFormat("MMM d, yyyy h:mm a")} – ${b.toFormat("MMM d, yyyy h:mm a")}`;
 }
 
-function endOfMonth(date: Date) {
-  return new Date(date.getFullYear(), date.getMonth() + 1, 0);
+function formatFormTimeRange(s: string, e: string, tz?: string) {
+  const z = tz || localTimezone;
+  const a = DateTime.fromISO(s, { zone: z });
+  const b = DateTime.fromISO(e, { zone: z });
+  if (!a.isValid || !b.isValid) return "—";
+  return a.hasSame(b, "day")
+    ? `${a.toFormat("MMM d, yyyy")} • ${a.toFormat("h:mm a")} – ${b.toFormat("h:mm a")}`
+    : `${a.toFormat("MMM d, yyyy h:mm a")} – ${b.toFormat("MMM d, yyyy h:mm a")}`;
 }
 
-function startOfWeek(date: Date) {
-  const d = new Date(date);
-  d.setHours(0, 0, 0, 0);
-  d.setDate(d.getDate() - d.getDay());
-  return d;
+function formatEventDateTimeLine(s: string, e: string, tz?: string) {
+  const z = tz || localTimezone;
+  const a = DateTime.fromISO(s, { zone: "utc" }).setZone(z);
+  const b = DateTime.fromISO(e, { zone: "utc" }).setZone(z);
+  return `${a.toFormat("MMM d")} • ${a.toFormat("h:mm a")} – ${b.toFormat("h:mm a")}`;
 }
 
-function endOfWeek(date: Date) {
-  const d = new Date(date);
-  d.setHours(23, 59, 59, 999);
-  d.setDate(d.getDate() + (6 - d.getDay()));
-  return d;
+function formatEventTimeLine(s: string, tz?: string) {
+  return DateTime.fromISO(s, { zone: "utc" }).setZone(tz || localTimezone).toFormat("h:mm a");
 }
 
-function addMonths(date: Date, count: number) {
-  return new Date(date.getFullYear(), date.getMonth() + count, 1);
-}
-
-function isToday(date: Date) {
-  const now = new Date();
-  return (
-    date.getFullYear() === now.getFullYear() &&
-    date.getMonth() === now.getMonth() &&
-    date.getDate() === now.getDate()
-  );
-}
-
-function formatLocalDateKey(date: Date) {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
-}
-
-function formatUtcIsoToDateKeyInZone(dateInput: string, timeZone: string) {
-  return DateTime.fromISO(dateInput, { zone: "utc" })
-    .setZone(timeZone)
-    .toFormat("yyyy-MM-dd");
-}
-
-function toLocalInputValue(date: Date) {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  const hh = String(date.getHours()).padStart(2, "0");
-  const mm = String(date.getMinutes()).padStart(2, "0");
-  return `${y}-${m}-${d}T${hh}:${mm}`;
-}
-
-function formatEventTimeRange(startInput: string, endInput: string, timeZone?: string) {
-  const zone = timeZone || localTimezone;
-
-  const start = DateTime.fromISO(startInput, { zone: "utc" }).setZone(zone);
-  const end = DateTime.fromISO(endInput, { zone: "utc" }).setZone(zone);
-
-  const sameDay = start.hasSame(end, "day");
-
-  if (sameDay) {
-    return `${start.toFormat("MMM d, yyyy")} • ${start.toFormat("h:mm a")} - ${end.toFormat("h:mm a")}`;
-  }
-
-  return `${start.toFormat("MMM d, yyyy h:mm a")} - ${end.toFormat("MMM d, yyyy h:mm a")}`;
-}
-
-function formatFormTimeRange(startInput: string, endInput: string, timeZone?: string) {
-  const zone = timeZone || localTimezone;
-
-  const start = DateTime.fromISO(startInput, { zone });
-  const end = DateTime.fromISO(endInput, { zone });
-
-  if (!start.isValid || !end.isValid) return "—";
-
-  const sameDay = start.hasSame(end, "day");
-
-  if (sameDay) {
-    return `${start.toFormat("MMM d, yyyy")} • ${start.toFormat("h:mm a")} - ${end.toFormat("h:mm a")}`;
-  }
-
-  return `${start.toFormat("MMM d, yyyy h:mm a")} - ${end.toFormat("MMM d, yyyy h:mm a")}`;
-}
-
-function formatEventDateTimeLine(
-  startInput: string,
-  endInput: string,
-  timeZone?: string
-) {
-  const zone = timeZone || localTimezone;
-
-  const start = DateTime.fromISO(startInput, { zone: "utc" }).setZone(zone);
-  const end = DateTime.fromISO(endInput, { zone: "utc" }).setZone(zone);
-
-  const datePart = start.toFormat("MMM d");
-  const startTime = start.toFormat("h:mm a");
-  const endTime = end.toFormat("h:mm a");
-
-  return `${datePart} • ${startTime} - ${endTime}`;
-}
-
-function shortTimezoneLabel(dateInput: string, timeZone: string) {
+function shortTimezoneLabel(d: string, tz: string) {
   try {
-    const parts = new Intl.DateTimeFormat(undefined, {
-      timeZone,
-      timeZoneName: "short",
-      hour: "numeric",
-    }).formatToParts(new Date(dateInput));
-
-    return (
-      parts.find((part) => part.type === "timeZoneName")?.value || timeZone
-    );
-  } catch {
-    return timeZone;
-  }
+    const parts = new Intl.DateTimeFormat(undefined, { timeZone: tz, timeZoneName: "short", hour: "numeric" }).formatToParts(new Date(d));
+    return parts.find((p) => p.type === "timeZoneName")?.value || tz;
+  } catch { return tz; }
 }
 
-function longTimezoneLabel(timeZone: string) {
+function longTimezoneLabel(tz: string) {
   try {
-    const parts = new Intl.DateTimeFormat(undefined, {
-      timeZone,
-      timeZoneName: "long",
-      hour: "numeric",
-    }).formatToParts(new Date());
-
-    return (
-      parts.find((part) => part.type === "timeZoneName")?.value || timeZone
-    );
-  } catch {
-    return timeZone;
-  }
+    const parts = new Intl.DateTimeFormat(undefined, { timeZone: tz, timeZoneName: "long", hour: "numeric" }).formatToParts(new Date());
+    return parts.find((p) => p.type === "timeZoneName")?.value || tz;
+  } catch { return tz; }
 }
 
-function timezoneOptionLabel(timeZone: string) {
-  const shortLabel = shortTimezoneLabel(new Date().toISOString(), timeZone);
-  const longLabel = longTimezoneLabel(timeZone);
-  return `${timeZone} (${longLabel}, ${shortLabel})`;
+function timezoneOptionLabel(tz: string) {
+  return `${tz} (${longTimezoneLabel(tz)}, ${shortTimezoneLabel(new Date().toISOString(), tz)})`;
 }
 
-function labelForType(type: EventType) {
-  switch (type) {
-    case "daily_scrum":
-      return "Daily Scrum";
-    case "sprint_planning":
-      return "Sprint Planning";
-    case "review":
-      return "Review";
-    case "retrospective":
-      return "Retrospective";
-    case "refinement":
-      return "Refinement";
-    case "deadline":
-      return "Deadline";
-    case "milestone":
-      return "Milestone";
-    default:
-      return "Custom";
-  }
+function labelForType(type: EventType): string {
+  return typeColors[type]?.label ?? "Custom";
 }
 
 function buildRRuleFromForm(form: EventFormState): string | null {
   switch (form.recurrencePreset) {
-    case "one_time":
-      return null;
-    case "daily":
-      return "FREQ=DAILY;INTERVAL=1";
-    case "weekly":
-      return "FREQ=WEEKLY;INTERVAL=1";
-    case "monthly":
-      return "FREQ=MONTHLY;INTERVAL=1";
-    case "yearly":
-      return "FREQ=YEARLY;INTERVAL=1";
-    case "custom":
-      return `FREQ=${unitToRRuleFreq(form.recurrenceUnit)};INTERVAL=${Math.max(
-        1,
-        form.recurrenceInterval
-      )}`;
-    default:
-      return null;
+    case "one_time": return null;
+    case "daily": return "FREQ=DAILY;INTERVAL=1";
+    case "weekly": return "FREQ=WEEKLY;INTERVAL=1";
+    case "monthly": return "FREQ=MONTHLY;INTERVAL=1";
+    case "yearly": return "FREQ=YEARLY;INTERVAL=1";
+    case "custom": return `FREQ=${unitToFreq(form.recurrenceUnit)};INTERVAL=${Math.max(1, form.recurrenceInterval)}`;
+    default: return null;
   }
 }
 
-function unitToRRuleFreq(unit: RecurrenceUnit) {
-  switch (unit) {
-    case "day":
-      return "DAILY";
-    case "week":
-      return "WEEKLY";
-    case "month":
-      return "MONTHLY";
-    case "year":
-      return "YEARLY";
-    default:
-      return "WEEKLY";
-  }
+function unitToFreq(u: RecurrenceUnit) {
+  return { day: "DAILY", week: "WEEKLY", month: "MONTHLY", year: "YEARLY" }[u] ?? "WEEKLY";
 }
 
-function parseRRule(rrule: string | null): {
-  preset: RecurrencePreset;
-  interval: number;
-  unit: RecurrenceUnit;
-} {
-  if (!rrule) {
-    return {
-      preset: "one_time",
-      interval: 1,
-      unit: "week",
-    };
-  }
-
-  const parts = rrule.split(";").reduce<Record<string, string>>((acc, part) => {
-    const [key, value] = part.split("=");
-    if (key && value) acc[key.toUpperCase()] = value.toUpperCase();
-    return acc;
+function parseRRule(rrule: string | null): { preset: RecurrencePreset; interval: number; unit: RecurrenceUnit } {
+  if (!rrule) return { preset: "one_time", interval: 1, unit: "week" };
+  const parts = rrule.split(";").reduce<Record<string, string>>((a, p) => {
+    const [k, v] = p.split("=");
+    if (k && v) a[k.toUpperCase()] = v.toUpperCase();
+    return a;
   }, {});
-
   const freq = parts.FREQ;
   const interval = Math.max(1, Number(parts.INTERVAL || "1"));
-
-  if (freq === "DAILY" && interval === 1) {
-    return { preset: "daily", interval: 1, unit: "day" };
-  }
-
-  if (freq === "WEEKLY" && interval === 1) {
-    return { preset: "weekly", interval: 1, unit: "week" };
-  }
-
-  if (freq === "MONTHLY" && interval === 1) {
-    return { preset: "monthly", interval: 1, unit: "month" };
-  }
-
-  if (freq === "YEARLY" && interval === 1) {
-    return { preset: "yearly", interval: 1, unit: "year" };
-  }
-
-  if (freq === "DAILY") {
-    return { preset: "custom", interval, unit: "day" };
-  }
-
-  if (freq === "WEEKLY") {
-    return { preset: "custom", interval, unit: "week" };
-  }
-
-  if (freq === "MONTHLY") {
-    return { preset: "custom", interval, unit: "month" };
-  }
-
-  if (freq === "YEARLY") {
-    return { preset: "custom", interval, unit: "year" };
-  }
-
-  return { preset: "one_time", interval: 1, unit: "week" };
+  const unitMap: Record<string, RecurrenceUnit> = { DAILY: "day", WEEKLY: "week", MONTHLY: "month", YEARLY: "year" };
+  if (freq === "DAILY" && interval === 1) return { preset: "daily", interval: 1, unit: "day" };
+  if (freq === "WEEKLY" && interval === 1) return { preset: "weekly", interval: 1, unit: "week" };
+  if (freq === "MONTHLY" && interval === 1) return { preset: "monthly", interval: 1, unit: "month" };
+  if (freq === "YEARLY" && interval === 1) return { preset: "yearly", interval: 1, unit: "year" };
+  return { preset: "custom", interval, unit: unitMap[freq] ?? "week" };
 }
 
-function isRepeatingForm(form: EventFormState) {
-  return form.recurrencePreset !== "one_time";
-}
+function isRepeatingForm(form: EventFormState) { return form.recurrencePreset !== "one_time"; }
 
-function describeRecurrence(form: EventFormState) {
+function describeRecurrence(form: EventFormState): string {
   switch (form.recurrencePreset) {
-    case "one_time":
-      return "One-time";
-    case "daily":
-      return "Daily";
-    case "weekly":
-      return "Weekly";
-    case "monthly":
-      return "Monthly";
-    case "yearly":
-      return "Yearly";
-    case "custom":
-      return `Every ${form.recurrenceInterval} ${pluralizeUnit(
-        form.recurrenceUnit,
-        form.recurrenceInterval
-      )}`;
-    default:
-      return "One-time";
+    case "one_time": return "One-time";
+    case "daily": return "Daily";
+    case "weekly": return "Weekly";
+    case "monthly": return "Monthly";
+    case "yearly": return "Yearly";
+    case "custom": return `Every ${form.recurrenceInterval} ${form.recurrenceUnit}${form.recurrenceInterval !== 1 ? "s" : ""}`;
+    default: return "One-time";
   }
 }
 
-function pluralizeUnit(unit: RecurrenceUnit, interval: number) {
-  const base =
-    unit === "day"
-      ? "day"
-      : unit === "week"
-      ? "week"
-      : unit === "month"
-      ? "month"
-      : "year";
-
-  return interval === 1 ? base : `${base}s`;
-}
-
-function expandEventsForRange(
-  events: ProjectEvent[],
-  rangeStart: Date,
-  rangeEnd: Date
-): EventOccurrence[] {
+function expandEventsForRange(events: ProjectEvent[], rangeStart: Date, rangeEnd: Date): EventOccurrence[] {
   const expanded: EventOccurrence[] = [];
-  const rangeStartUtc = DateTime.fromJSDate(rangeStart).toUTC();
-  const rangeEndUtc = DateTime.fromJSDate(rangeEnd).toUTC();
+  const rsUtc = DateTime.fromJSDate(rangeStart).toUTC();
+  const reUtc = DateTime.fromJSDate(rangeEnd).toUTC();
 
   for (const event of events) {
     const zone = event.timezone || localTimezone;
-
     if (!event.rrule) {
-      expanded.push({
-        instanceId: `${event.id}-${event.start_at}`,
-        sourceEvent: event,
-        occurrenceStart: event.start_at,
-        occurrenceEnd: event.end_at,
-      });
+      expanded.push({ instanceId: `${event.id}-${event.start_at}`, sourceEvent: event, occurrenceStart: event.start_at, occurrenceEnd: event.end_at });
       continue;
     }
-
     const parsed = parseRRule(event.rrule);
     const interval = Math.max(1, parsed.interval);
     const unit = parsed.unit;
-
     const baseStart = DateTime.fromISO(event.start_at, { zone: "utc" }).setZone(zone);
     const baseEnd = DateTime.fromISO(event.end_at, { zone: "utc" }).setZone(zone);
-    const durationMs = baseEnd.toMillis() - baseStart.toMillis();
-
+    const durMs = baseEnd.toMillis() - baseStart.toMillis();
     let cursor = baseStart;
     let guard = 0;
-
-    while (cursor.toUTC() <= rangeEndUtc && guard < 500) {
-      const occurrenceEnd = DateTime.fromMillis(cursor.toMillis() + durationMs, {
-        zone,
-      });
-
-      if (occurrenceEnd.toUTC() >= rangeStartUtc && cursor.toUTC() <= rangeEndUtc) {
-        expanded.push({
-          instanceId: `${event.id}-${cursor.toUTC().toISO()}`,
-          sourceEvent: event,
-          occurrenceStart: cursor.toUTC().toISO()!,
-          occurrenceEnd: occurrenceEnd.toUTC().toISO()!,
-        });
+    while (cursor.toUTC() <= reUtc && guard < 500) {
+      const occEnd = DateTime.fromMillis(cursor.toMillis() + durMs, { zone });
+      if (occEnd.toUTC() >= rsUtc && cursor.toUTC() <= reUtc) {
+        expanded.push({ instanceId: `${event.id}-${cursor.toUTC().toISO()}`, sourceEvent: event, occurrenceStart: cursor.toUTC().toISO()!, occurrenceEnd: occEnd.toUTC().toISO()! });
       }
-
       cursor = addInterval(cursor, interval, unit);
-      guard += 1;
+      guard++;
     }
   }
-
   return expanded;
 }
 
-function addInterval(date: DateTime, interval: number, unit: RecurrenceUnit) {
-  if (unit === "day") return date.plus({ days: interval });
-  if (unit === "week") return date.plus({ weeks: interval });
-  if (unit === "month") return date.plus({ months: interval });
-  return date.plus({ years: interval });
+function addInterval(d: DateTime, n: number, u: RecurrenceUnit) {
+  if (u === "day") return d.plus({ days: n });
+  if (u === "week") return d.plus({ weeks: n });
+  if (u === "month") return d.plus({ months: n });
+  return d.plus({ years: n });
 }
-
-const styles: Record<string, CSSProperties> = {
-  shell: {
-    minHeight: "100vh",
-    width: "100%",
-    background: "#0b0f17",
-    color: "white",
-    padding: 24,
-    boxSizing: "border-box",
-  },
-  page: {
-    width: "100%",
-    maxWidth: 1400,
-    margin: "0 auto",
-  },
-  headerRow: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    gap: 16,
-    marginBottom: 18,
-    flexWrap: "wrap",
-  },
-  eyebrow: {
-    color: "rgba(255,255,255,0.65)",
-    fontSize: 13,
-    marginBottom: 4,
-    letterSpacing: 0.4,
-  },
-  title: {
-    margin: 0,
-    fontSize: 34,
-    lineHeight: 1.05,
-  },
-  subtitle: {
-    marginTop: 8,
-    color: "rgba(255,255,255,0.72)",
-    fontSize: 15,
-  },
-  headerActions: {
-    display: "flex",
-    gap: 10,
-    flexWrap: "wrap",
-  },
-  toolbar: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 12,
-    marginBottom: 18,
-    flexWrap: "wrap",
-  },
-  monthControls: {
-    display: "flex",
-    alignItems: "center",
-    gap: 12,
-  },
-  monthLabel: {
-    minWidth: 220,
-    textAlign: "center",
-    fontSize: 20,
-    fontWeight: 700,
-  },
-  primaryButton: {
-    background: "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
-    color: "white",
-    border: "none",
-    borderRadius: 12,
-    padding: "10px 14px",
-    fontWeight: 700,
-    cursor: "pointer",
-  },
-  secondaryButton: {
-    background: "#151c2c",
-    color: "white",
-    border: "1px solid rgba(255,255,255,0.08)",
-    borderRadius: 12,
-    padding: "10px 14px",
-    fontWeight: 600,
-    cursor: "pointer",
-  },
-  deleteButton: {
-    background: "rgba(239,68,68,0.14)",
-    color: "#fecaca",
-    border: "1px solid rgba(239,68,68,0.35)",
-    borderRadius: 12,
-    padding: "10px 14px",
-    fontWeight: 700,
-    cursor: "pointer",
-  },
-  deleteChoiceButton: {
-    background: "#151c2c",
-    color: "#fca5a5",
-    border: "1px solid rgba(252,165,165,0.25)",
-    borderRadius: 12,
-    padding: "10px 14px",
-    fontWeight: 700,
-    cursor: "pointer",
-  },
-  deleteChoiceWrap: {
-    display: "flex",
-    gap: 10,
-    flexWrap: "wrap",
-  },
-  iconButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
-    border: "1px solid rgba(255,255,255,0.08)",
-    background: "#151c2c",
-    color: "white",
-    cursor: "pointer",
-    fontSize: 18,
-  },
-  card: {
-    background: "#111827",
-    border: "1px solid rgba(255,255,255,0.07)",
-    borderRadius: 18,
-    padding: 18,
-  },
-  calendarCard: {
-    background: "#111827",
-    border: "1px solid rgba(255,255,255,0.07)",
-    borderRadius: 22,
-    overflow: "hidden",
-    boxShadow: "0 16px 40px rgba(0,0,0,0.28)",
-  },
-  weekHeader: {
-    display: "grid",
-    gridTemplateColumns: "repeat(7, 1fr)",
-    background: "#0f172a",
-    borderBottom: "1px solid rgba(255,255,255,0.06)",
-  },
-  weekHeaderCell: {
-    padding: 14,
-    textAlign: "center",
-    fontWeight: 700,
-    color: "rgba(255,255,255,0.78)",
-    fontSize: 14,
-  },
-  grid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(7, 1fr)",
-  },
-  dayCell: {
-    minHeight: 190,
-    maxHeight: 190,
-    padding: 10,
-    borderRight: "1px solid rgba(255,255,255,0.05)",
-    borderBottom: "1px solid rgba(255,255,255,0.05)",
-    background: "#111827",
-    display: "flex",
-    flexDirection: "column",
-    gap: 8,
-    cursor: "pointer",
-  },
-  dayCellMuted: {
-    background: "#0d1422",
-  },
-  dayTopRow: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    flexShrink: 0,
-  },
-  dayNumber: {
-    background: "transparent",
-    color: "white",
-    border: "none",
-    width: 32,
-    height: 32,
-    borderRadius: 999,
-    cursor: "pointer",
-    fontWeight: 700,
-    fontSize: 14,
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 0,
-    lineHeight: 1,
-    flexShrink: 0,
-  },
-  dayNumberMuted: {
-    color: "rgba(255,255,255,0.35)",
-  },
-  todayBadge: {
-    background: "#2563eb",
-  },
-  eventsList: {
-    display: "flex",
-    flexDirection: "column",
-    gap: 6,
-    overflowY: "auto",
-    minHeight: 0,
-    flex: 1,
-    paddingRight: 2,
-  },
-  eventChip: {
-    display: "flex",
-    alignItems: "flex-start",
-    gap: 8,
-    width: "100%",
-    padding: "7px 8px",
-    borderRadius: 10,
-    border: "1px solid transparent",
-    color: "white",
-    cursor: "pointer",
-    textAlign: "left",
-    flexShrink: 0,
-  },
-  eventDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 999,
-    flexShrink: 0,
-    marginTop: 4,
-  },
-  eventChipContent: {
-    display: "flex",
-    flexDirection: "column",
-    minWidth: 0,
-    gap: 2,
-    flex: 1,
-  },
-  eventTitleText: {
-    fontSize: 12,
-    fontWeight: 700,
-    whiteSpace: "nowrap",
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-  },
-  eventMetaText: {
-    fontSize: 11,
-    color: "rgba(255,255,255,0.72)",
-    lineHeight: 1.25,
-    whiteSpace: "normal",
-    overflowWrap: "anywhere",
-  },
-  emptyDayText: {
-    fontSize: 12,
-    color: "rgba(255,255,255,0.5)",
-    padding: "4px 2px",
-  },
-  moreText: {
-    color: "rgba(255,255,255,0.58)",
-    fontSize: 12,
-    marginTop: 2,
-  },
-  legendCard: {
-    marginTop: 18,
-    background: "#111827",
-    border: "1px solid rgba(255,255,255,0.07)",
-    borderRadius: 18,
-    padding: 16,
-  },
-  legendTitle: {
-    fontWeight: 700,
-    marginBottom: 10,
-  },
-  legendWrap: {
-    display: "flex",
-    gap: 14,
-    flexWrap: "wrap",
-  },
-  legendItem: {
-    display: "flex",
-    alignItems: "center",
-    gap: 8,
-    color: "rgba(255,255,255,0.82)",
-    fontSize: 14,
-  },
-  legendDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 999,
-  },
-  infoText: {
-    color: "rgba(255,255,255,0.75)",
-  },
-  errorText: {
-    color: "#fca5a5",
-    fontWeight: 600,
-  },
-  modalOverlay: {
-    position: "fixed",
-    inset: 0,
-    background: "rgba(0,0,0,0.6)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 18,
-    zIndex: 50,
-  },
-  modalCard: {
-    width: "100%",
-    maxWidth: 760,
-    background: "#0f172a",
-    border: "1px solid rgba(255,255,255,0.08)",
-    borderRadius: 22,
-    boxShadow: "0 24px 60px rgba(0,0,0,0.4)",
-    padding: 20,
-    maxHeight: "90vh",
-    overflowY: "auto",
-  },
-  dayModalCard: {
-    width: "100%",
-    maxWidth: 680,
-    background: "#0f172a",
-    border: "1px solid rgba(255,255,255,0.08)",
-    borderRadius: 22,
-    boxShadow: "0 24px 60px rgba(0,0,0,0.4)",
-    padding: 20,
-    maxHeight: "85vh",
-    overflow: "hidden",
-    display: "flex",
-    flexDirection: "column",
-  },
-  dayModalList: {
-    display: "flex",
-    flexDirection: "column",
-    gap: 10,
-    overflowY: "auto",
-    paddingRight: 4,
-  },
-  dayModalEmpty: {
-    color: "rgba(255,255,255,0.72)",
-    padding: "8px 2px",
-  },
-  dayModalEvent: {
-    width: "100%",
-    textAlign: "left",
-    background: "#111827",
-    color: "white",
-    border: "1px solid rgba(255,255,255,0.06)",
-    borderLeft: "4px solid",
-    borderRadius: 14,
-    padding: "12px 14px",
-    cursor: "pointer",
-  },
-  dayModalEventTitle: {
-    fontSize: 15,
-    fontWeight: 700,
-    marginBottom: 4,
-  },
-  dayModalEventMeta: {
-    fontSize: 13,
-    color: "rgba(255,255,255,0.72)",
-  },
-  modalHeader: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    gap: 12,
-    marginBottom: 18,
-  },
-  modalTitle: {
-    fontSize: 24,
-    fontWeight: 800,
-  },
-  modalSubtitle: {
-    marginTop: 6,
-    color: "rgba(255,255,255,0.68)",
-    fontSize: 14,
-  },
-  closeButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 10,
-    border: "1px solid rgba(255,255,255,0.08)",
-    background: "#151c2c",
-    color: "white",
-    cursor: "pointer",
-    fontSize: 16,
-    flexShrink: 0,
-  },
-  formGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-    gap: 14,
-  },
-  fieldFull: {
-    gridColumn: "1 / -1",
-  },
-  label: {
-    display: "block",
-    marginBottom: 6,
-    fontSize: 13,
-    color: "rgba(255,255,255,0.72)",
-    fontWeight: 600,
-  },
-  input: {
-    width: "100%",
-    boxSizing: "border-box",
-    background: "#111827",
-    color: "white",
-    border: "1px solid rgba(255,255,255,0.08)",
-    borderRadius: 12,
-    padding: "11px 12px",
-    outline: "none",
-  },
-  textarea: {
-    width: "100%",
-    minHeight: 110,
-    resize: "vertical",
-    boxSizing: "border-box",
-    background: "#111827",
-    color: "white",
-    border: "1px solid rgba(255,255,255,0.08)",
-    borderRadius: 12,
-    padding: "11px 12px",
-    outline: "none",
-    fontFamily: "inherit",
-  },
-  repeatButtonRow: {
-    display: "flex",
-    gap: 10,
-    flexWrap: "wrap",
-  },
-  repeatButton: {
-    background: "#111827",
-    color: "rgba(255,255,255,0.86)",
-    border: "1px solid rgba(255,255,255,0.1)",
-    borderRadius: 999,
-    padding: "10px 14px",
-    cursor: "pointer",
-    fontWeight: 600,
-  },
-  repeatButtonActive: {
-    background: "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
-    color: "white",
-    border: "1px solid rgba(37,99,235,0.85)",
-    boxShadow: "0 0 0 3px rgba(37,99,235,0.18)",
-  },
-  modalActions: {
-    marginTop: 18,
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    gap: 12,
-    flexWrap: "wrap",
-  },
-  modalActionsRight: {
-    display: "flex",
-    gap: 10,
-    flexWrap: "wrap",
-  },
-  previewCard: {
-    marginTop: 18,
-    background: "#111827",
-    border: "1px solid rgba(255,255,255,0.06)",
-    borderRadius: 16,
-    padding: 14,
-  },
-  previewTitle: {
-    fontWeight: 700,
-    marginBottom: 10,
-  },
-  previewRow: {
-    display: "flex",
-    gap: 8,
-    marginBottom: 6,
-    color: "rgba(255,255,255,0.82)",
-  },
-  previewLabel: {
-    width: 78,
-    color: "rgba(255,255,255,0.58)",
-  },
-  calendarNavControls: {
-    display: "flex",
-    alignItems: "center",
-    gap: 10,
-    flexWrap: "wrap",
-  },
-  navSelect: {
-    background: "#151c2c",
-    color: "white",
-    border: "1px solid rgba(255,255,255,0.08)",
-    borderRadius: 12,
-    padding: "10px 14px",
-    fontWeight: 600,
-    cursor: "pointer",
-    outline: "none",
-  },
-};

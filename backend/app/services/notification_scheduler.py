@@ -1,6 +1,7 @@
 from datetime import datetime, timezone, timedelta
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from sqlalchemy.orm import Session
+from zoneinfo import ZoneInfo
 
 from app.db.session import SessionLocal
 from app.models.notification import Notification
@@ -41,7 +42,14 @@ def check_event_reminders():
         )
 
         for event in upcoming_events:
-            start_str = event.start_at.strftime("%b %d, %I:%M %p")
+            event_tz = event.timezone or "UTC"
+
+            start_dt = event.start_at
+            if start_dt.tzinfo is None:
+                start_dt = start_dt.replace(tzinfo=timezone.utc)
+
+            local_start = start_dt.astimezone(ZoneInfo(event_tz))
+            start_str = local_start.strftime("%b %d, %I:%M %p %Z")
 
             members = (
                 db.query(ProjectMember)

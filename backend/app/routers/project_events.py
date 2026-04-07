@@ -16,6 +16,7 @@ from app.schemas.project_event import (
     ProjectEventUpdate,
 )
 from app.services.notification_service import notify_event_created, notify_event_updated, notify_event_cancelled
+from zoneinfo import ZoneInfo
 
 router = APIRouter(prefix="/projects", tags=["events"])
 
@@ -107,8 +108,12 @@ def create_project_event(
     db.flush()
 
     members = db.query(ProjectMember).filter(ProjectMember.project_id == project_id).all()
+    event_tz = event.timezone or "UTC"
+    local_start = event.start_at.astimezone(ZoneInfo(event_tz))
+    start_str = local_start.strftime("%b %d, %I:%M %p")
+
     for m in members:
-        notify_event_created(db, m.user_id, event.title, event.start_at)
+        notify_event_created(db, m.user_id, event.title, start_str)
 
     db.commit()
     db.refresh(event)
