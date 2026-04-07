@@ -1,16 +1,36 @@
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 
+const CustomAxisTick = (props: any) => {
+    const { x, y, payload } = props;
+
+    if (payload.value.startsWith("Day 0")) {
+        return null;
+    }
+
+    const [dayPart, datePart] = payload.value.split('|');
+
+    return (
+        <g transform={`translate(${x},${y})`}>
+            <text x={0} y={0} dy={16} textAnchor="middle" fill="#666" fontSize={12} fontWeight={500}>
+                <tspan x="0" dy="1.2em">{dayPart}</tspan>
+                <tspan x="0" dy="1.2em">{datePart}</tspan>
+            </text>
+        </g>
+    );
+};
+
 export const BurndownChartUI = ({ data }: { data: any[] }) => (
     <ResponsiveContainer width="100%" height={400}>
         <LineChart data={data}
-            margin={{ top: 20, right: 30, left: 15, bottom: 20 }}
+            margin={{ top: 20, right: 30, left: 15, bottom: 35 }}
         >
             <CartesianGrid stroke="aaa" />
             <XAxis dataKey="day"
+                tick={<CustomAxisTick />}
                 label={{
                     value: "Sprint Day", 
                     position: "insideBottom", 
-                    offset: -15
+                    offset: -30
                 }} />
             <YAxis width="auto"
                 label={{ 
@@ -35,13 +55,6 @@ export const BurndownChartUI = ({ data }: { data: any[] }) => (
                 }} />
             <Line 
                 type="monotone" 
-                dataKey="ideal" 
-                stroke="#10b981" 
-                strokeDasharray="5 5" 
-                name="Ideal" 
-            />
-            <Line 
-                type="monotone" 
                 dataKey="actual" 
                 stroke="#7C4DFF"
                 //stroke="#8E5CF6"
@@ -49,6 +62,16 @@ export const BurndownChartUI = ({ data }: { data: any[] }) => (
                 strokeWidth={3} 
                 connectNulls={false}
                 name="Remaining Points" 
+            />
+            <Line 
+                type="monotone" 
+                dataKey="ideal" 
+                //stroke="#10b981"
+                stroke="#94A3B8"
+                strokeDasharray="4 4"
+                strokeWidth={2}
+                dot={false}
+                name="Ideal" 
             />
         </LineChart>
     </ResponsiveContainer>

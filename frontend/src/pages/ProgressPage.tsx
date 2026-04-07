@@ -30,6 +30,18 @@ export default function ProgressPage(): JSX.Element {
             : "1px solid rgba(17,24,39,0.1)",
     };
 
+    const velocityCardStyle: CSSProperties = {
+      padding: 40,
+      marginTop: 16,
+      borderRadius: 16,
+      background: isDark ? "rgba(255,255,255,0.05)" : "rgba(17,24,39,0.04)",
+      border: isDark 
+        ? "1px solid rgba(255,255,255,0.1)"
+        : "1px solid rgba(17,24,39,0.1)",
+      //minWidth: "200px",
+      //color: "white"
+    }
+
     const { projectId } = useParams<{ projectId: string }>();
     const [sprintId, setSprintId] = useState<string>("");
 
@@ -53,7 +65,7 @@ export default function ProgressPage(): JSX.Element {
       .catch((err) => console.error("Error resolving sprint:", err));
   }, [projectId]);
 
-    const { chartData, sprintNumber, loading } = useSprintBurndownData(sprintId);    
+    const { chartData, sprintNumber, velocity, expectedVelocity, loading } = useSprintBurndownData(sprintId);    
 
 
   return (
@@ -77,6 +89,60 @@ export default function ProgressPage(): JSX.Element {
             ) : (
               <p style={{ color: "#111" }}>No data found for this sprint.</p>
             )}
+        </div>
+
+        <div style={{ display: "flex", gap: "20px", marginBottom: "30px" }}>
+          <div style={velocityCardStyle}>
+            <h3 style={{ margin: 0, fontSize: "20px", opacity: 0.8}}>
+              Current Velocity
+            </h3>
+            <p 
+              style={{ 
+                margin: "10px 0 0 0", 
+                fontSize: "42px", 
+                fontWeight: 800,
+                color: "#7C4DFF" 
+              }}
+            >
+              {loading ? "--" : velocity}
+              <span 
+                style={{
+                  fontSize: "18px", 
+                  fontWeight: 400, 
+                  marginLeft: "8px",
+                  //color: "white" 
+                }}
+              >
+                pts
+              </span>
+            </p>
+          </div>
+
+          <div style={velocityCardStyle}>
+            <h3 style={{ margin: 0, fontSize: "20px", opacity: 0.8 }}>
+              Expected Velocity
+            </h3>
+            <p 
+              style={{ 
+                margin: "10px 0 0 0", 
+                fontSize: "42px", 
+                fontWeight: 800, 
+                color: "#94A3B8" 
+              }}
+            >
+              {loading ? "--" : expectedVelocity}
+              <span 
+                style={{ 
+                  fontSize: "18px", 
+                  fontWeight: 400, 
+                  marginLeft: "8px",
+                  //color: "white"
+                }}
+              >
+                pts
+              </span>
+            </p>
+          </div>
         </div>
 
 

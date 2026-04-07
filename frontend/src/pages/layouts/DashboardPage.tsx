@@ -310,6 +310,18 @@ const styles: Record<string, CSSProperties> = {
   },
 };
 
+function getLandingPathForRole(projectId: string, role: string): string {
+  switch (role) {
+    case "product-owner":
+      return `/projects/${projectId}/${role}/product-owner-dashboard`;
+    case "scrum-facilitator":
+      return `/projects/${projectId}/${role}/scrum-facilitator-dashboard`;
+    case "developer":
+    default:
+      return `/projects/${projectId}/${role}/developer-dashboard`;
+  }
+}
+
 export default function DashboardPage(): JSX.Element {
   const navigate = useNavigate();
   const { projectId, role } = useParams();
@@ -322,7 +334,8 @@ export default function DashboardPage(): JSX.Element {
   });
 
   const [projects, setProjects] = useState<Project[]>([]);
-  const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
+  // deleting this to solve leave project glitch: when project is left, the next active one cannot be left
+  //const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
   const [loadingProjects, setLoadingProjects] = useState(false);
   const [projectError, setProjectError] = useState("");
   const [revealed, setRevealed] = useState(() => {
@@ -358,11 +371,6 @@ export default function DashboardPage(): JSX.Element {
     listProjects()
       .then((data) => {
         setProjects(data);
-        if (projectId) {
-          setActiveProjectId(projectId);
-        } else if (data.length > 0) {
-          setActiveProjectId(data[0].id);
-        }
       })
       .catch((e: any) => {
         setProjectError(e?.message ?? "Unable to load projects.");
@@ -373,15 +381,56 @@ export default function DashboardPage(): JSX.Element {
   }, [user, projectId]);
 
   const activeProject = useMemo(() => {
-    return projects.find((project) => project.id === activeProjectId) ?? null;
-  }, [projects, activeProjectId]);
+    if (projectId) {
+      return projects.find((project) => project.id === projectId) ?? null;
+    }
 
-  const resolvedRole = role ?? user?.role ?? "developer";
+    return projects[0] ?? null;
+  }, [projects, projectId]);
+
+  const resolvedRole =
+  role ??
+  (user?.role === "Product Owner"
+    ? "product-owner"
+    : user?.role === "Scrum Facilitator"
+      ? "scrum-facilitator"
+      : user?.role === "Developer"
+        ? "developer"
+        : "developer");
+
+  useEffect(() => {
+    if (loadingProjects) return;
+
+    if (projects.length === 0) return;
+
+    const routeProjectStillExists = projectId
+      ? projects.some((project) => project.id === projectId)
+      : false;
+
+    if (!projectId || !routeProjectStillExists) {
+      const fallbackProject = projects[0];
+      navigate(getLandingPathForRole(fallbackProject.id, resolvedRole), {
+        replace: true,
+      });
+    }
+  }, [projects, projectId, resolvedRole, loadingProjects, navigate]);
+
+  const effectiveProjectId = projectId ?? activeProject?.id ?? "";
 
   const todoPreviewPath =
-    activeProjectId && resolvedRole
-      ? `/projects/${activeProjectId}/${resolvedRole}/to-do/planning`
+    effectiveProjectId && resolvedRole
+      ? `/projects/${effectiveProjectId}/${resolvedRole}/to-do/planning`
       : "";
+
+  const progressPreviewPath =
+      effectiveProjectId && resolvedRole
+        ? `/projects/${effectiveProjectId}/${resolvedRole}/progress`
+        : "";
+    
+  const eduPreviewPath =
+      effectiveProjectId && resolvedRole
+        ? `/projects/${effectiveProjectId}/${resolvedRole}/education`
+        : "";
 
   return (
     <SidebarLayout>
@@ -698,20 +747,83 @@ export default function DashboardPage(): JSX.Element {
                   Learning materials, guidance, and platform support resources
                   for the team.
                 </p>
+                
                 <div
                   style={{
-                    ...styles.imageWrap,
+                    ...styles.todoPreviewCard,
+                    background: isDark ? styles.todoPreviewCard.background : "#ffffff",
                     border: isDark
-                      ? styles.imageWrap.border
+                      ? styles.todoPreviewCard.border
                       : "1px solid rgba(17,24,39,0.08)",
-                    background: isDark ? styles.imageWrap.background : "#f8fafc",
+                      boxShadow: isDark
+                        ? styles.todoPreviewCard.boxShadow
+                        : "0 12px 32px rgba(15,23,42,0.08)",
+                  }}
+                  onClick={() => {
+                    if (eduPreviewPath) navigate(eduPreviewPath);
                   }}
                 >
-                  <img
-                    src="/education-module-placeholder.png"
-                    alt="Education module preview"
-                    style={styles.image}
-                  />
+                  <div style={styles.todoPreviewTop}>
+                    <span
+                      style={{
+                        ...styles.todoPreviewEyebrow,
+                        color: isDark ? styles.todoPreviewEyebrow.color : "#6b7280",
+                      }}
+                    >
+                      Scrum Edu
+                    </span>
+                    <span
+                      style={{
+                        ...styles.todoPreviewArrow,
+                        color: isDark ? styles.todoPreviewArrow.color : "#6b7280",
+                      }}
+                    >
+                      ↗
+                    </span>
+                  </div>
+
+                  <div style={styles.todoPreviewBody}>
+                    <h3
+                      style={{
+                        ...styles.todoPreviewTitle,
+                        color: isDark ? "white" : "#111827",
+                      }}
+                    >
+                      Preview
+                    </h3>
+
+                    <p
+                      style={{
+                        ...styles.todoPreviewText,
+                        color: isDark ? styles.todoPreviewText.color :"#4b5563",
+                      }}
+                    >
+                      View your learning modules and open the full Scrum Edu page.
+                    </p>
+
+                    <div
+                      style={{
+                        ...styles.todoPreviewViewport,
+                        border: isDark
+                          ? styles.todoPreviewViewport.border
+                          : "1px solid rgba(17,24,39,0.08)",
+                        background: isDark
+                          ? styles.todoPreviewViewport.background
+                          : "#f8fafc",
+                      }}
+                    >
+                      {eduPreviewPath ? (
+                        <iframe
+                          src={eduPreviewPath}
+                          title="Scrum Edu preview"
+                          style={{
+                            ...styles.todoPreviewIframe,
+                            background: isDark ? "#0f172a" : "#ffffff",
+                          }}
+                        />
+                      ) : null}
+                    </div>
+                  </div>
                 </div>
               </div>
             </section>
@@ -792,20 +904,80 @@ export default function DashboardPage(): JSX.Element {
                   High-level visibility into progress trends, delivery health,
                   and momentum.
                 </p>
+
                 <div
                   style={{
-                    ...styles.imageWrap,
+                    ...styles.todoPreviewCard,
+                    background: isDark ? styles.todoPreviewCard.background : "#ffffff",
                     border: isDark
-                      ? styles.imageWrap.border
+                      ? styles.todoPreviewCard.border
                       : "1px solid rgba(17,24,39,0.08)",
-                    background: isDark ? styles.imageWrap.background : "#f8fafc",
+                      boxShadow: isDark
+                        ? styles.todoPreviewCard.boxShadow
+                        : "0 12px 32px rgba(15,23,42,0.08)",
                   }}
-                >
-                  <img
-                    src="/progress-insights-placeholder.png"
-                    alt="Progress insights preview"
-                    style={styles.image}
-                  />
+                  onClick={() => {
+                    if (progressPreviewPath) navigate(progressPreviewPath);
+                  }}
+                  >
+                    <div style={styles.todoPreviewTop}>
+                      <span
+                      style={{
+                        ...styles.todoPreviewEyebrow,
+                        color: isDark ? styles.todoPreviewEyebrow.color : "#6b7280",
+                      }}
+                      >
+                        Sprint Burndown Chart
+                      </span>
+                      <span
+                        style={{
+                          ...styles.todoPreviewArrow,
+                          color: isDark ? styles.todoPreviewArrow.color : "#6b7280",
+                        }}
+                      >
+                        ↗
+                      </span>
+                    </div>
+                    <div style={styles.todoPreviewBody}>
+                      <h3
+                        style={{
+                          ...styles.todoPreviewTitle,
+                          color: isDark ? "white" : "#111827",
+                        }}
+                      >
+                        Preview
+                      </h3>
+
+                      <p
+                        style={{
+                          ...styles.todoPreviewText,
+                          color: isDark ? styles.todoPreviewText.color : "#4b5563",
+                        }}
+                      >
+                        View your velocity and sprint burndown chart and open the full progress page.
+                      </p>
+
+                      <div
+                        style={{
+                          ...styles.todoPreviewViewport,
+                          border: isDark
+                            ? styles.todoPreviewViewport.border
+                            : "1px solid rgba(17,24,39,0.08)",
+                          background: isDark ? styles.todoPreviewViewport.background : "#f8fafc",
+                          }}
+                      >
+                        {progressPreviewPath ? (
+                          <iframe
+                            src={progressPreviewPath}
+                            title="Progress page preview"
+                            style={{
+                              ...styles.todoPreviewIframe,
+                              background: isDark ? "#0f172a" : "#ffffff",
+                            }}
+                          />
+                        ) : null}
+                    </div>
+                  </div>
                 </div>
               </div>
             </section>

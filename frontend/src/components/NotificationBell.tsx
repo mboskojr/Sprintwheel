@@ -31,9 +31,7 @@ async function apiFetch(path: string, options: RequestInit = {}) {
 
 function timeAgo(dateStr: string): string {
   const normalized =
-    dateStr.endsWith("Z") || dateStr.includes("+")
-      ? dateStr
-      : dateStr + "Z";
+    dateStr.endsWith("Z") || dateStr.includes("+") ? dateStr : `${dateStr}Z`;
   const date = new Date(normalized);
   const diff = Date.now() - date.getTime();
   const mins = Math.floor(diff / 60000);
@@ -44,6 +42,7 @@ function timeAgo(dateStr: string): string {
   if (mins < 60) return `${mins}m ago`;
   if (hrs < 24) return `${hrs}h ${mins % 60}m ago`;
   if (days < 7) return `${days}d ${hrs % 24}h ago`;
+
   return date.toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
@@ -54,9 +53,8 @@ function timeAgo(dateStr: string): string {
 
 function formatExactTime(dateStr: string): string {
   const normalized =
-    dateStr.endsWith("Z") || dateStr.includes("+")
-      ? dateStr
-      : dateStr + "Z";
+    dateStr.endsWith("Z") || dateStr.includes("+") ? dateStr : `${dateStr}Z`;
+
   return new Date(normalized).toLocaleString("en-US", {
     month: "short",
     day: "numeric",
@@ -67,16 +65,25 @@ function formatExactTime(dateStr: string): string {
 }
 
 function getNotificationIcon(message: string): string {
-  if (message.includes("added to")) return "🎉";
-  if (message.includes("assigned")) return "📋";
-  if (message.includes("Assignee") || message.includes("assignee")) return "🔄";
-  if (message.includes("cancelled")) return "❌";
-  if (message.includes("updated")) return "✏️";
-  if (message.includes("event") || message.includes("Event")) return "📅";
-  if (message.includes("sprint") || message.includes("Sprint")) return "🏃";
-  if (message.includes("completed") || message.includes("done")) return "✅";
-  if (message.includes("story") || message.includes("Story")) return "📖";
-  if (message.includes("role")) return "🎭";
+  const msg = message.toLowerCase();
+
+  if (msg.includes("starts in 30 minutes") || msg.includes("reminder:")) return "⏰";
+  if (msg.includes("was deleted")) return "🗑️";
+  if (msg.includes("unassigned from")) return "➖";
+  if (msg.includes("were assigned to")) return "👤";
+  if (msg.includes("added to")) return "🎉";
+  if (msg.includes("cancelled")) return "❌";
+  if (msg.includes("updated")) return "✏️";
+  if (msg.includes("scheduled")) return "📅";
+  if (msg.includes("event")) return "📆";
+  if (msg.includes("assigned")) return "📋";
+  if (msg.includes("assignee")) return "🔄";
+  if (msg.includes("moved to")) return "📌";
+  if (msg.includes("done") || msg.includes("completed")) return "✅";
+  if (msg.includes("story")) return "📖";
+  if (msg.includes("role")) return "🎭";
+  if (msg.includes("project")) return "🚀";
+
   return "🔔";
 }
 
@@ -312,8 +319,8 @@ function NotifRow({
               : "rgba(0,0,0,0.02)"
             : "transparent"
           : hovered
-          ? "rgba(127,119,221,0.12)"
-          : "rgba(127,119,221,0.06)",
+            ? "rgba(127,119,221,0.12)"
+            : "rgba(127,119,221,0.06)",
         transition: "background 0.15s",
       }}
     >
@@ -347,8 +354,8 @@ function NotifRow({
                 ? "#a1a1aa"
                 : "#6b7280"
               : isDark
-              ? "#e7e5e4"
-              : "#111827",
+                ? "#e7e5e4"
+                : "#111827",
             lineHeight: 1.55,
             wordBreak: "break-word",
           }}
@@ -410,7 +417,10 @@ export default function NotificationBell({ size = 32 }: { size?: number }) {
   const fetchNotifications = async () => {
     try {
       const res = await apiFetch("/notifications");
-      if (res.ok) setNotifications(await res.json());
+      if (res.ok) {
+        const data: Notification[] = await res.json();
+        setNotifications(data);
+      }
     } catch (e) {
       console.error("Failed to fetch notifications", e);
     }
@@ -425,14 +435,12 @@ export default function NotificationBell({ size = 32 }: { size?: number }) {
   useEffect(() => {
     if (open && bellRef.current) {
       const rect = bellRef.current.getBoundingClientRect();
-
       const panelWidth = 440;
       const gap = 14;
       const rightSpace = window.innerWidth - rect.right;
       const leftSpace = rect.left;
 
       let left = rect.right + gap;
-
       if (rightSpace < panelWidth + gap && leftSpace > panelWidth + gap) {
         left = rect.left - panelWidth - gap;
       }
@@ -467,17 +475,26 @@ export default function NotificationBell({ size = 32 }: { size?: number }) {
   }, [open]);
 
   const markAsRead = async (id: string) => {
-    await apiFetch(`/notifications/${id}/read`, { method: "PATCH" });
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, is_read: true } : n))
-    );
+    try {
+      await apiFetch(`/notifications/${id}/read`, { method: "PATCH" });
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, is_read: true } : n))
+      );
+    } catch (e) {
+      console.error("Failed to mark notification as read", e);
+    }
   };
 
   const markAllRead = async () => {
-    setLoading(true);
-    await apiFetch("/notifications/read-all", { method: "PATCH" });
-    setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
-    setLoading(false);
+    try {
+      setLoading(true);
+      await apiFetch("/notifications/read-all", { method: "PATCH" });
+      setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
+    } catch (e) {
+      console.error("Failed to mark all notifications as read", e);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const panel = open
@@ -544,9 +561,7 @@ export default function NotificationBell({ size = 32 }: { size?: number }) {
                   }}
                 >
                   {unreadCount > 0
-                    ? `${unreadCount} new — Ollie delivered ${
-                        unreadCount > 1 ? "them" : "it"
-                      }! 🐙`
+                    ? `${unreadCount} new — Ollie delivered ${unreadCount > 1 ? "them" : "it"}! 🐙`
                     : "All caught up! Ollie is resting 🐙"}
                 </div>
               </div>

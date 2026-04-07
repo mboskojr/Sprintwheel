@@ -1,8 +1,9 @@
 // src/pages/NewProject.tsx
 import { motion } from "framer-motion";
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { createProject, joinProject } from "../api/projects";
+import { createProject, joinProject, listProjects } from "../api/projects";
+import type { Project } from "../api/projects";
 import { useTheme } from "../pages/ThemeContext";
 
 type Status = "idle" | "loading" | "success" | "error";
@@ -158,6 +159,11 @@ export default function NewProject(): React.JSX.Element {
 
   const [projectName, setProjectName] = useState("");
   const [sprintDurationInput, setSprintDurationInput] = useState("");
+  const [projects, setProjects] = useState<Project[]>([]);
+  useEffect(() => {
+    listProjects().then(setProjects).catch(() => setProjects([]));
+  }, []);
+  const mustCreateProject = projects.length === 0;
   const [createStatus, setCreateStatus] = useState<Status>("idle");
   const [createMsg, setCreateMsg] = useState("");
 
@@ -306,11 +312,18 @@ export default function NewProject(): React.JSX.Element {
               ? "1px solid rgba(255,255,255,0.18)"
               : "1px solid rgba(0,0,0,0.08)",
             color: isDark ? "white" : "#111827",
+            opacity: mustCreateProject ? 0.5 : 1,
+            cursor: mustCreateProject ? "not-allowed" : "pointer",
           }}
-          onClick={() => navigate(-1)}
+          onClick={() => {
+            if (!mustCreateProject) {
+              navigate(-1);
+            }
+          }}
+          disabled={mustCreateProject}
           aria-label="Close"
-          whileHover={{ y: -2 }}
-          whileTap={{ scale: 0.98 }}
+          whileHover={!mustCreateProject ? { y: -2 } : undefined}
+          whileTap={!mustCreateProject ? { scale: 0.98 } : undefined}
         >
           ×
         </motion.button>

@@ -103,3 +103,12 @@ export function updateRole(projectId: string, data: UpdateRoleInput) {
     body: JSON.stringify(data),
   });
 }
+
+export function leaveProject(projectId: string) {
+  return api<{ status: string; project_id: string }>(
+    `/projects/${projectId}/leave`,
+    {
+      method: "POST",
+    }
+  );
+}

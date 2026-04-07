@@ -8,7 +8,8 @@ class Task(Base):
     __tablename__ = "tasks"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    story_id = Column(UUID(as_uuid=True), ForeignKey("stories.id"), nullable=False)
+    # change task to point to story not project (for debugging purposes if errors arise)
+    story_id = Column(UUID(as_uuid=True), ForeignKey("stories.id", ondelete="CASCADE"), nullable=False)
     assignee_id = Column(String, ForeignKey("users.id"), nullable=True)
     title = Column(String, nullable=False)
     description = Column(String, nullable=True)

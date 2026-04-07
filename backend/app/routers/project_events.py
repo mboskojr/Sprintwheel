@@ -104,10 +104,13 @@ def create_project_event(
         is_cancelled=False,
     )
     db.add(event)
-    db.commit()
+    db.flush()
+
     members = db.query(ProjectMember).filter(ProjectMember.project_id == project_id).all()
     for m in members:
         notify_event_created(db, m.user_id, event.title, event.start_at)
+
+    db.commit()
     db.refresh(event)
     return event
 
@@ -146,13 +149,14 @@ def update_event(
         setattr(event, key, value)
 
     db.add(event)
-    db.commit()
+
     members = db.query(ProjectMember).filter(ProjectMember.project_id == project_id).all()
     for m in members:
         notify_event_updated(db, m.user_id, event.title)
+
+    db.commit()
     db.refresh(event)
     return event
-
 
 @router.delete("/{project_id}/events/{event_id}", response_model=ProjectEventOut)
 def cancel_event(
@@ -177,9 +181,11 @@ def cancel_event(
 
     event.is_cancelled = True
     db.add(event)
-    db.commit()
+
     members = db.query(ProjectMember).filter(ProjectMember.project_id == project_id).all()
     for m in members:
         notify_event_cancelled(db, m.user_id, event.title)
+
+    db.commit()
     db.refresh(event)
     return event
