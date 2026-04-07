@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-
+import { API_BASE } from "../api/base";
 
 export const useSprintBurndownData = (sprintId: string) => {
     const [chartData, setChartData] = useState<any[]>([]);
@@ -14,17 +14,16 @@ export const useSprintBurndownData = (sprintId: string) => {
         const fetchData = async () => {
             setLoading(true);
             try {
-                const headers = { Authorization: `Bearer ${localStorage.getItem("token")}`};
+                const headers = { Authorization: `Bearer ${localStorage.getItem("token")}` };
 
-                const metRes = await fetch(`http://127.0.0.1:8000/sprints/${sprintId}`, { headers });
+                const metRes = await fetch(`${API_BASE}/sprints/${sprintId}`, { headers });
                 const metData = await metRes.json();
                 setSprintNumber(metData.sprint_number);
-
                 setVelocity(metData.sprint_velocity || 0);
 
                 const startDate = new Date(metData.start_date);
 
-                const burnRes = await fetch(`http://127.0.0.1:8000/sprints/${sprintId}/burndown`, { headers });
+                const burnRes = await fetch(`${API_BASE}/sprints/${sprintId}/burndown`, { headers });
                 const data = await burnRes.json();
                 const burndown_array = data.burndown_array;
 
@@ -38,23 +37,24 @@ export const useSprintBurndownData = (sprintId: string) => {
                         const currentDate = new Date(startDate);
                         currentDate.setDate(startDate.getDate() + index);
 
-                        
-                        const datePart = currentDate.toLocaleDateString(`en-US`, {
+                        const datePart = currentDate.toLocaleDateString("en-US", {
                             month: "short",
-                            day: 'numeric'
-                        })
+                            day: "numeric",
+                        });
 
-                        const ideal = duration > 1
-                            ? Math.max(0, totalPoints - (index * (totalPoints / (duration - 1))))
-                            : totalPoints;
+                        const ideal =
+                            duration > 1
+                                ? Math.max(0, totalPoints - index * (totalPoints / (duration - 1)))
+                                : totalPoints;
 
                         return {
                             day: `Day ${index}:|${datePart}`,
-                            actual: actual,
+                            actual,
                             ideal,
                         };
-                });
-                console.log(formatted)
+                    });
+
+                    console.log(formatted);
                     setChartData(formatted);
                 }
             } catch (error) {

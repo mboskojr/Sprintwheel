@@ -527,6 +527,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import SidebarLayout from "../components/SidebarLayout";
 import { useTheme } from "./ThemeContext";
+import { API_BASE } from "../api/base";
 
 interface Task {
   id: string;
@@ -555,7 +556,7 @@ interface PendingDelete {
   title: string;
 }
 
-const API = "http://127.0.0.1:8000";
+const API = API_BASE;
 
 function authHeaders() {
   return { Authorization: `Bearer ${localStorage.getItem("token")}` };
@@ -1069,7 +1070,7 @@ export default function ToDoPage(): JSX.Element {
   );
 }
 
-function OllieTodo({ isDark }: { isDark: boolean }) {
+function OllieTodo(/*{ isDark }: { isDark: boolean }*/) {
   return (
     <div className="ollie-todo-wrap">
       <svg width="110" height="110" viewBox="0 0 80 90" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1130,7 +1131,7 @@ function OllieTodo({ isDark }: { isDark: boolean }) {
   );
 }
 
-function OllieInProgress({ isDark }: { isDark: boolean }) {
+function OllieInProgress(/*{ isDark }: { isDark: boolean }*/) {
   return (
     <div className="ollie-prog-wrap">
       <svg width="110" height="110" viewBox="0 0 80 90" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1182,7 +1183,7 @@ function OllieInProgress({ isDark }: { isDark: boolean }) {
   );
 }
 
-function OllieDone({ isDark }: { isDark: boolean }) {
+function OllieDone(/*{ isDark }: { isDark: boolean }*/) {
   return (
     <div className="ollie-done-wrap">
       <svg width="110" height="110" viewBox="0 0 80 90" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1371,7 +1372,7 @@ function SortableTaskCard({
   task: Task;
   assigneeName: string;
   members: Member[];
-  isDark: boolean;
+  /* isDark: boolean; */
   onDelete: () => void;
   onReassign: (taskId: string, newAssigneeId: string | null) => void;
 }) {

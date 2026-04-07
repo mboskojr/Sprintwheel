@@ -7,6 +7,7 @@ import { listProjects, type Project } from "../../api/projects";
 import SidebarLayout from "../../components/SidebarLayout";
 import DashboardCalendarPreview from "../../components/DashboardCalendarPreview";
 import { useTheme } from "../ThemeContext";
+import { API_BASE } from "../../api/base";
 
 type User = {
   id: string;
@@ -301,7 +302,7 @@ export default function ProductOwnerPage(): JSX.Element {
     setBacklogLoading(true);
     setBacklogError("");
 
-    fetch(`http://127.0.0.1:8000/stories/backlog?project_id=${activeProjectId}`, {
+    fetch(`${API_BASE}/stories/backlog?project_id=${activeProjectId}`, {
       headers: {
         Authorization: `Bearer ${localStorage.getItem("token")}`,
       },

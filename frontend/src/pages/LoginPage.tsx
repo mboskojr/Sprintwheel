@@ -298,6 +298,15 @@ import { useNavigate } from "react-router-dom";
 import { login, me, register, googleLogin } from "../api/auth";
 import { GoogleLogin } from "@react-oauth/google";
 import { listProjects, type ProjectRole } from "../api/projects";
+import { openUrl } from "@tauri-apps/plugin-opener";
+
+
+
+const isTauri = "__TAURI_INTERNALS__" in window;
+
+const handleGoogleLoginExternal = async () => {
+  await openUrl("http://127.0.0.1:8000/auth/google/login");
+};
 
 function roleToUrlKey(role: string): string {
   switch (role) {
@@ -458,7 +467,7 @@ function OllieLoginMascot() {
   );
 }
 
-function LoginPage(): JSX.Element {
+function LoginPage() {
   const navigate = useNavigate();
   const [mode, setMode] = useState<"login" | "register">("login");
 
@@ -467,7 +476,7 @@ function LoginPage(): JSX.Element {
   const [password, setPassword] = useState("");
 
   const [status, setStatus] = useState<string>("");
-  const [user, setUser] = useState<any>(null);
+  const [/*user*/, setUser] = useState<any>(null);
 
   async function routeAfterAuth() {
     const projects = await listProjects();
@@ -684,40 +693,55 @@ function LoginPage(): JSX.Element {
               </div>
 
               {mode === "login" && (
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "center",
-                    transform: "scale(1.15)",
-                  }}
-                >
-                  <GoogleLogin
-                    onSuccess={async (credentialResponse) => {
-                      try {
-                        const idToken = credentialResponse.credential;
-                        if (!idToken) return;
+  <div
+    style={{
+      display: "flex",
+      justifyContent: "center",
+      transform: "scale(1.15)",
+    }}
+  >
+    {isTauri ? (
+      <button
+        type="button"
+        onClick={handleGoogleLoginExternal}
+        className="primary-btn"
+        style={{
+          width: 360,
+          padding: "12px 16px",
+          fontSize: 16,
+        }}
+      >
+        Sign in with Google
+      </button>
+    ) : (
+      <GoogleLogin
+        onSuccess={async (credentialResponse) => {
+          try {
+            const idToken = credentialResponse.credential;
+            if (!idToken) return;
 
-                        const token = await googleLogin(idToken);
-                        localStorage.setItem("token", token.access_token);
+            const token = await googleLogin(idToken);
+            localStorage.setItem("token", token.access_token);
 
-                        const u = await me(token.access_token);
-                        localStorage.setItem("user", JSON.stringify(u));
-                        setUser(u);
+            const u = await me(token.access_token);
+            localStorage.setItem("user", JSON.stringify(u));
+            setUser(u);
 
-                        sessionStorage.removeItem("dashboard_revealed");
-                        await routeAfterAuth();
-                      } catch (err: any) {
-                        setStatus(err?.message ?? "Google login failed");
-                      }
-                    }}
-                    onError={() => {
-                      setStatus("Google login failed");
-                    }}
-                    size="large"
-                    width="360"
-                  />
-                </div>
-              )}
+            sessionStorage.removeItem("dashboard_revealed");
+            await routeAfterAuth();
+          } catch (err: any) {
+            setStatus(err?.message ?? "Google login failed");
+          }
+        }}
+        onError={() => {
+          setStatus("Google login failed");
+        }}
+        size="large"
+        width="360"
+      />
+    )}
+  </div>
+)}
 
               <div style={{ marginTop: 14, textAlign: "center" }}>
                 {mode === "login" ? (

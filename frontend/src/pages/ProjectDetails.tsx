@@ -3,6 +3,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import SidebarLayout from "../components/SidebarLayout";
 import { useTheme } from "./ThemeContext";
+import { API_BASE } from "../api/base";
+
 
 type Member = {
   user_id: string;
@@ -68,7 +70,7 @@ const featureOptions = [
   "workflow automation",
 ];
 
-const API = "http://127.0.0.1:8000";
+const API = API_BASE;
 
 function authHeaders() {
   return {

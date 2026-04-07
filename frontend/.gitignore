@@ -1,4 +1,6 @@
+# ========================
 # Logs
+# ========================
 logs
 *.log
 npm-debug.log*
@@ -7,16 +9,58 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
+# ========================
+# Environment / secrets
+# ========================
+.env
+.env.*
+!.env.example
 *.local
 
-# Editor directories and files
+# ========================
+# Node / Frontend
+# ========================
+node_modules/
+dist/
+dist-ssr/
+
+# ========================
+# Python / Backend
+# ========================
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# ========================
+# Backend build (PyInstaller)
+# ========================
+backend/build/
+backend/dist/
+backend/*.spec
+
+# ========================
+# Tauri build output
+# ========================
+frontend/src-tauri/target/
+
+# ========================
+# Installers / packaged apps
+# ========================
+*.msi
+*-setup.exe
+*.exe
+
+# ========================
+# OS / Editor
+# ========================
 .vscode/*
 !.vscode/extensions.json
-.idea
+.idea/
 .DS_Store
+Thumbs.db
 *.suo
 *.ntvs*
 *.njsproj
