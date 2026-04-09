@@ -1070,167 +1070,194 @@ export default function ToDoPage(): JSX.Element {
 }
 
 function OllieTodo({ isDark }: { isDark: boolean }) {
+  const bodyFill = isDark ? "#8b83f2" : "#6d66cf";
+  const bodyHighlight = isDark ? "#c7c2ff" : "#a9a2ef";
+  const limbFill = isDark ? "#5b52cc" : "#4a43a8";
+  const eyeFill = isDark ? "#ffffff" : "#f8fafc";
+  const pupilFill = isDark ? "#111827" : "#1f2937";
+  const blushFill = isDark ? "#f9a8d4" : "#e88aad";
+  const bulbStroke = isDark ? "#fbbf24" : "#d97706";
+  const bulbGlow = isDark ? "#fef3c7" : "#fde68a";
+  const bookFill = isDark ? "#93c5fd" : "#60a5fa";
+  const bookStroke = isDark ? "#2563eb" : "#1d4ed8";
+
   return (
     <div className="ollie-todo-wrap">
       <svg width="110" height="110" viewBox="0 0 80 90" fill="none" xmlns="http://www.w3.org/2000/svg">
         <g className="bulb-glow" style={{ transformOrigin: "40px 10px" }}>
           <g className="bulb-ray">
-            <line x1="40" y1="2" x2="40" y2="-3" stroke="#fde68a" strokeWidth="1.5" strokeLinecap="round" />
-            <line x1="32" y1="4" x2="29" y2="0" stroke="#fde68a" strokeWidth="1.5" strokeLinecap="round" />
-            <line x1="48" y1="4" x2="51" y2="0" stroke="#fde68a" strokeWidth="1.5" strokeLinecap="round" />
-            <line x1="27" y1="10" x2="22" y2="9" stroke="#fde68a" strokeWidth="1.5" strokeLinecap="round" />
-            <line x1="53" y1="10" x2="58" y2="9" stroke="#fde68a" strokeWidth="1.5" strokeLinecap="round" />
+            <line x1="40" y1="2" x2="40" y2="-3" stroke={bulbGlow} strokeWidth="1.5" strokeLinecap="round" />
+            <line x1="32" y1="4" x2="29" y2="0" stroke={bulbGlow} strokeWidth="1.5" strokeLinecap="round" />
+            <line x1="48" y1="4" x2="51" y2="0" stroke={bulbGlow} strokeWidth="1.5" strokeLinecap="round" />
+            <line x1="27" y1="10" x2="22" y2="9" stroke={bulbGlow} strokeWidth="1.5" strokeLinecap="round" />
+            <line x1="53" y1="10" x2="58" y2="9" stroke={bulbGlow} strokeWidth="1.5" strokeLinecap="round" />
           </g>
-          <ellipse cx="40" cy="11" rx="6" ry="7" fill="#fef9c3" stroke="#fbbf24" strokeWidth="1.2" />
-          <path d="M37 14 Q40 11 43 14" stroke="#f59e0b" strokeWidth="1" fill="none" strokeLinecap="round" />
-          <rect x="37" y="17" width="6" height="3" rx="1" fill="#d97706" />
-          <line x1="37" y1="18.5" x2="43" y2="18.5" stroke="#92400e" strokeWidth="0.8" />
-          <ellipse cx="40" cy="10" rx="4" ry="4.5" fill="#fde68a" opacity="0.5" />
+          <ellipse cx="40" cy="11" rx="6" ry="7" fill={isDark ? "#fef9c3" : "#fde68a"} stroke={bulbStroke} strokeWidth="1.2" />
+          <path d="M37 14 Q40 11 43 14" stroke={isDark ? "#f59e0b" : "#b45309"} strokeWidth="1" fill="none" strokeLinecap="round" />
+          <rect x="37" y="17" width="6" height="3" rx="1" fill={isDark ? "#d97706" : "#b45309"} />
+          <line x1="37" y1="18.5" x2="43" y2="18.5" stroke={isDark ? "#92400e" : "#78350f"} strokeWidth="0.8" />
+          <ellipse cx="40" cy="10" rx="4" ry="4.5" fill={bulbGlow} opacity="0.5" />
         </g>
 
-        <g className="todo-t1"><path d="M18 48 Q14 54 16 60 Q18 66 15 70" stroke="#7f77dd" strokeWidth="3.5" strokeLinecap="round" fill="none" /><circle cx="15" cy="70" r="2" fill="#534ab7" /></g>
-        <g className="todo-t2"><path d="M23 52 Q21 58 23 64 Q25 68 22 72" stroke="#7f77dd" strokeWidth="3.5" strokeLinecap="round" fill="none" /><circle cx="22" cy="72" r="2" fill="#534ab7" /></g>
-        <g className="todo-t3"><path d="M29 54 Q29 60 31 66 Q32 70 30 73" stroke="#7f77dd" strokeWidth="3.5" strokeLinecap="round" fill="none" /><circle cx="30" cy="73" r="2" fill="#534ab7" /></g>
-        <g className="todo-t4"><path d="M35 54 Q37 60 35 66 Q34 70 36 73" stroke="#7f77dd" strokeWidth="3.5" strokeLinecap="round" fill="none" /><circle cx="36" cy="73" r="2" fill="#534ab7" /></g>
-        <g className="todo-t5"><path d="M41 52 Q43 58 41 64 Q39 68 42 72" stroke="#7f77dd" strokeWidth="3.5" strokeLinecap="round" fill="none" /><circle cx="42" cy="72" r="2" fill="#534ab7" /></g>
-        <g className="todo-t6"><path d="M46 48 Q50 54 48 60 Q46 66 49 70" stroke="#7f77dd" strokeWidth="3.5" strokeLinecap="round" fill="none" /><circle cx="49" cy="70" r="2" fill="#534ab7" /></g>
+        <g className="todo-t1"><path d="M18 48 Q14 54 16 60 Q18 66 15 70" stroke={bodyFill} strokeWidth="3.5" strokeLinecap="round" fill="none" /><circle cx="15" cy="70" r="2" fill={limbFill} /></g>
+        <g className="todo-t2"><path d="M23 52 Q21 58 23 64 Q25 68 22 72" stroke={bodyFill} strokeWidth="3.5" strokeLinecap="round" fill="none" /><circle cx="22" cy="72" r="2" fill={limbFill} /></g>
+        <g className="todo-t3"><path d="M29 54 Q29 60 31 66 Q32 70 30 73" stroke={bodyFill} strokeWidth="3.5" strokeLinecap="round" fill="none" /><circle cx="30" cy="73" r="2" fill={limbFill} /></g>
+        <g className="todo-t4"><path d="M35 54 Q37 60 35 66 Q34 70 36 73" stroke={bodyFill} strokeWidth="3.5" strokeLinecap="round" fill="none" /><circle cx="36" cy="73" r="2" fill={limbFill} /></g>
+        <g className="todo-t5"><path d="M41 52 Q43 58 41 64 Q39 68 42 72" stroke={bodyFill} strokeWidth="3.5" strokeLinecap="round" fill="none" /><circle cx="42" cy="72" r="2" fill={limbFill} /></g>
+        <g className="todo-t6"><path d="M46 48 Q50 54 48 60 Q46 66 49 70" stroke={bodyFill} strokeWidth="3.5" strokeLinecap="round" fill="none" /><circle cx="49" cy="70" r="2" fill={limbFill} /></g>
 
         <g className="books-arm-l">
-          <path d="M16 36 Q10 25 10 15" stroke="#7f77dd" strokeWidth="3.5" strokeLinecap="round" fill="none" />
+          <path d="M16 36 Q10 25 10 15" stroke={bodyFill} strokeWidth="3.5" strokeLinecap="round" fill="none" />
           <g transform="translate(10, 15) rotate(-10)">
-            <rect x="-5" y="-6" width="10" height="12" rx="1" fill="#93c5fd" stroke="#2563eb" strokeWidth="1" />
-            <line x1="-3" y1="-3" x2="3" y2="-3" stroke="#2563eb" strokeWidth="0.8" />
-            <line x1="-3" y1="0" x2="3" y2="0" stroke="#2563eb" strokeWidth="0.8" />
+            <rect x="-5" y="-6" width="10" height="12" rx="1" fill={bookFill} stroke={bookStroke} strokeWidth="1" />
+            <line x1="-3" y1="-3" x2="3" y2="-3" stroke={bookStroke} strokeWidth="0.8" />
+            <line x1="-3" y1="0" x2="3" y2="0" stroke={bookStroke} strokeWidth="0.8" />
           </g>
         </g>
         <g className="books-arm-r">
-          <path d="M52 36 Q58 25 58 15" stroke="#7f77dd" strokeWidth="3.5" strokeLinecap="round" fill="none" />
+          <path d="M52 36 Q58 25 58 15" stroke={bodyFill} strokeWidth="3.5" strokeLinecap="round" fill="none" />
           <g transform="translate(58, 15) rotate(10)">
-            <rect x="-5" y="-6" width="10" height="12" rx="1" fill="#93c5fd" stroke="#2563eb" strokeWidth="1" />
-            <line x1="-3" y1="-3" x2="3" y2="-3" stroke="#2563eb" strokeWidth="0.8" />
-            <line x1="-3" y1="0" x2="3" y2="0" stroke="#2563eb" strokeWidth="0.8" />
+            <rect x="-5" y="-6" width="10" height="12" rx="1" fill={bookFill} stroke={bookStroke} strokeWidth="1" />
+            <line x1="-3" y1="-3" x2="3" y2="-3" stroke={bookStroke} strokeWidth="0.8" />
+            <line x1="-3" y1="0" x2="3" y2="0" stroke={bookStroke} strokeWidth="0.8" />
           </g>
         </g>
 
-        <ellipse cx="34" cy="36" rx="18" ry="16" fill="#7f77dd" />
-        <ellipse cx="28" cy="30" rx="6" ry="4" fill="#afa9ec" opacity="0.45" />
+        <ellipse cx="34" cy="36" rx="18" ry="16" fill={bodyFill} />
+        <ellipse cx="28" cy="30" rx="6" ry="4" fill={bodyHighlight} opacity="0.45" />
 
-        <circle cx="28" cy="34" r="4" fill="white" className="todo-eye-l" />
-        <circle cx="40" cy="34" r="4" fill="white" className="todo-eye-r" />
-        <circle cx="29" cy="34" r="2" fill="#1a1a2e" className="todo-eye-l" />
-        <circle cx="41" cy="34" r="2" fill="#1a1a2e" className="todo-eye-r" />
+        <circle cx="28" cy="34" r="4" fill={eyeFill} className="todo-eye-l" />
+        <circle cx="40" cy="34" r="4" fill={eyeFill} className="todo-eye-r" />
+        <circle cx="29" cy="34" r="2" fill={pupilFill} className="todo-eye-l" />
+        <circle cx="41" cy="34" r="2" fill={pupilFill} className="todo-eye-r" />
         <circle cx="30" cy="33" r="0.8" fill="white" className="todo-eye-l" />
         <circle cx="42" cy="33" r="0.8" fill="white" className="todo-eye-r" />
 
-        <path d="M29 40 Q34 44 39 40" stroke="white" strokeWidth="1.5" strokeLinecap="round" fill="none" />
-        <ellipse cx="24" cy="38" rx="3" ry="1.5" fill="#ed93b1" opacity="0.6" />
-        <ellipse cx="44" cy="38" rx="3" ry="1.5" fill="#ed93b1" opacity="0.6" />
+        <path d="M29 40 Q34 44 39 40" stroke={eyeFill} strokeWidth="1.5" strokeLinecap="round" fill="none" />
+        <ellipse cx="24" cy="38" rx="3" ry="1.5" fill={blushFill} opacity="0.6" />
+        <ellipse cx="44" cy="38" rx="3" ry="1.5" fill={blushFill} opacity="0.6" />
       </svg>
     </div>
   );
 }
 
 function OllieInProgress({ isDark }: { isDark: boolean }) {
+  const bodyFill = isDark ? "#8b83f2" : "#6d66cf";
+  const bodyHighlight = isDark ? "#c7c2ff" : "#a9a2ef";
+  const limbFill = isDark ? "#5b52cc" : "#4a43a8";
+  const eyeFill = isDark ? "#ffffff" : "#f8fafc";
+  const pupilFill = isDark ? "#111827" : "#1f2937";
+  const blushFill = isDark ? "#f9a8d4" : "#e88aad";
+
   return (
     <div className="ollie-prog-wrap">
       <svg width="110" height="110" viewBox="0 0 80 90" fill="none" xmlns="http://www.w3.org/2000/svg">
         <g style={{ transform: "rotate(-12deg)", transformOrigin: "16px 40px" }}>
-          <path d="M20 40 Q10 32 8 22" stroke="#7f77dd" strokeWidth="2.8" strokeLinecap="round" fill="none" />
-          <rect x="0" y="5" width="16" height="20" rx="2" fill="#fef3c7" stroke="#d97706" strokeWidth="1.2" />
-          <rect x="5" y="3" width="6" height="5" rx="1.5" fill="#d97706" />
-          <line x1="3" y1="13" x2="13" y2="13" stroke="#a16207" strokeWidth="0.9" />
-          <line x1="3" y1="17" x2="13" y2="17" stroke="#a16207" strokeWidth="0.9" />
-          <line x1="3" y1="21" x2="10" y2="21" stroke="#a16207" strokeWidth="0.9" />
-          <rect x="3" y="11.5" width="2" height="2" rx="0.4" fill="none" stroke="#a16207" strokeWidth="0.7" />
-          <rect x="3" y="15.5" width="2" height="2" rx="0.4" fill="none" stroke="#a16207" strokeWidth="0.7" />
-          <path d="M3.3 12.5 L4 13.3 L5.5 11.8" stroke="#16a34a" strokeWidth="0.8" strokeLinecap="round" fill="none" />
+          <path d="M20 40 Q10 32 8 22" stroke={bodyFill} strokeWidth="2.8" strokeLinecap="round" fill="none" />
+          <rect x="0" y="5" width="16" height="20" rx="2" fill={isDark ? "#fef3c7" : "#fde68a"} stroke={isDark ? "#d97706" : "#b45309"} strokeWidth="1.2" />
+          <rect x="5" y="3" width="6" height="5" rx="1.5" fill={isDark ? "#d97706" : "#b45309"} />
+          <line x1="3" y1="13" x2="13" y2="13" stroke={isDark ? "#a16207" : "#92400e"} strokeWidth="0.9" />
+          <line x1="3" y1="17" x2="13" y2="17" stroke={isDark ? "#a16207" : "#92400e"} strokeWidth="0.9" />
+          <line x1="3" y1="21" x2="10" y2="21" stroke={isDark ? "#a16207" : "#92400e"} strokeWidth="0.9" />
+          <rect x="3" y="11.5" width="2" height="2" rx="0.4" fill="none" stroke={isDark ? "#a16207" : "#92400e"} strokeWidth="0.7" />
+          <rect x="3" y="15.5" width="2" height="2" rx="0.4" fill="none" stroke={isDark ? "#a16207" : "#92400e"} strokeWidth="0.7" />
+          <path d="M3.3 12.5 L4 13.3 L5.5 11.8" stroke={isDark ? "#16a34a" : "#15803d"} strokeWidth="0.8" strokeLinecap="round" fill="none" />
         </g>
 
         <g className="pencil-anim">
-          <path d="M50 40 Q58 35 60 25" stroke="#7f77dd" strokeWidth="2.8" strokeLinecap="round" fill="none" />
+          <path d="M50 40 Q58 35 60 25" stroke={bodyFill} strokeWidth="2.8" strokeLinecap="round" fill="none" />
           <g transform="translate(60, 25) rotate(-15)">
-            <polygon points="-2,0 2,0 0,6" fill="#92400e" />
-            <polygon points="-3,-4 3,-4 0,3" fill="#fde047" />
-            <rect x="-3" y="-20" width="6" height="16" fill="#fbbf24" stroke="#d97706" strokeWidth="0.5" />
-            <rect x="-3" y="-23" width="6" height="3" fill="#9ca3af" />
-            <path d="M-3,-23 L-3,-25 Q0,-27 3,-25 L3,-23 Z" fill="#fca5a5" />
+            <polygon points="-2,0 2,0 0,6" fill={isDark ? "#92400e" : "#78350f"} />
+            <polygon points="-3,-4 3,-4 0,3" fill={isDark ? "#fde047" : "#facc15"} />
+            <rect x="-3" y="-20" width="6" height="16" fill={isDark ? "#fbbf24" : "#f59e0b"} stroke={isDark ? "#d97706" : "#b45309"} strokeWidth="0.5" />
+            <rect x="-3" y="-23" width="6" height="3" fill={isDark ? "#9ca3af" : "#6b7280"} />
+            <path d="M-3,-23 L-3,-25 Q0,-27 3,-25 L3,-23 Z" fill={isDark ? "#fca5a5" : "#f87171"} />
           </g>
         </g>
 
-        <g className="prog-t1"><path d="M18 48 Q14 54 16 60 Q18 66 15 70" stroke="#7f77dd" strokeWidth="3.5" strokeLinecap="round" fill="none" /><circle cx="15" cy="70" r="2" fill="#534ab7" /></g>
-        <g className="prog-t2"><path d="M23 52 Q21 58 23 64 Q25 68 22 72" stroke="#7f77dd" strokeWidth="3.5" strokeLinecap="round" fill="none" /><circle cx="22" cy="72" r="2" fill="#534ab7" /></g>
-        <g className="prog-t3"><path d="M29 54 Q29 60 31 66 Q32 70 30 73" stroke="#7f77dd" strokeWidth="3.5" strokeLinecap="round" fill="none" /><circle cx="30" cy="73" r="2" fill="#534ab7" /></g>
-        <g className="prog-t4"><path d="M35 54 Q37 60 35 66 Q34 70 36 73" stroke="#7f77dd" strokeWidth="3.5" strokeLinecap="round" fill="none" /><circle cx="36" cy="73" r="2" fill="#534ab7" /></g>
-        <g className="prog-t5"><path d="M41 52 Q43 58 41 64 Q39 68 42 72" stroke="#7f77dd" strokeWidth="3.5" strokeLinecap="round" fill="none" /><circle cx="42" cy="72" r="2" fill="#534ab7" /></g>
-        <g className="prog-t6"><path d="M46 48 Q50 54 48 60 Q46 66 49 70" stroke="#7f77dd" strokeWidth="3.5" strokeLinecap="round" fill="none" /><circle cx="49" cy="70" r="2" fill="#534ab7" /></g>
+        <g className="prog-t1"><path d="M18 48 Q14 54 16 60 Q18 66 15 70" stroke={bodyFill} strokeWidth="3.5" strokeLinecap="round" fill="none" /><circle cx="15" cy="70" r="2" fill={limbFill} /></g>
+        <g className="prog-t2"><path d="M23 52 Q21 58 23 64 Q25 68 22 72" stroke={bodyFill} strokeWidth="3.5" strokeLinecap="round" fill="none" /><circle cx="22" cy="72" r="2" fill={limbFill} /></g>
+        <g className="prog-t3"><path d="M29 54 Q29 60 31 66 Q32 70 30 73" stroke={bodyFill} strokeWidth="3.5" strokeLinecap="round" fill="none" /><circle cx="30" cy="73" r="2" fill={limbFill} /></g>
+        <g className="prog-t4"><path d="M35 54 Q37 60 35 66 Q34 70 36 73" stroke={bodyFill} strokeWidth="3.5" strokeLinecap="round" fill="none" /><circle cx="36" cy="73" r="2" fill={limbFill} /></g>
+        <g className="prog-t5"><path d="M41 52 Q43 58 41 64 Q39 68 42 72" stroke={bodyFill} strokeWidth="3.5" strokeLinecap="round" fill="none" /><circle cx="42" cy="72" r="2" fill={limbFill} /></g>
+        <g className="prog-t6"><path d="M46 48 Q50 54 48 60 Q46 66 49 70" stroke={bodyFill} strokeWidth="3.5" strokeLinecap="round" fill="none" /><circle cx="49" cy="70" r="2" fill={limbFill} /></g>
 
-        <ellipse cx="34" cy="36" rx="18" ry="16" fill="#7f77dd" />
-        <ellipse cx="28" cy="30" rx="6" ry="4" fill="#afa9ec" opacity="0.45" />
+        <ellipse cx="34" cy="36" rx="18" ry="16" fill={bodyFill} />
+        <ellipse cx="28" cy="30" rx="6" ry="4" fill={bodyHighlight} opacity="0.45" />
 
-        <circle cx="28" cy="34" r="4" fill="white" className="prog-eye-l" />
-        <circle cx="40" cy="34" r="4" fill="white" className="prog-eye-r" />
-        <circle cx="29" cy="34" r="2" fill="#1a1a2e" className="prog-eye-l" />
-        <circle cx="41" cy="34" r="2" fill="#1a1a2e" className="prog-eye-r" />
+        <circle cx="28" cy="34" r="4" fill={eyeFill} className="prog-eye-l" />
+        <circle cx="40" cy="34" r="4" fill={eyeFill} className="prog-eye-r" />
+        <circle cx="29" cy="34" r="2" fill={pupilFill} className="prog-eye-l" />
+        <circle cx="41" cy="34" r="2" fill={pupilFill} className="prog-eye-r" />
         <circle cx="30" cy="33" r="0.8" fill="white" className="prog-eye-l" />
         <circle cx="42" cy="33" r="0.8" fill="white" className="prog-eye-r" />
 
-        <path d="M29 40 Q34 44 39 40" stroke="white" strokeWidth="1.5" strokeLinecap="round" fill="none" />
-        <ellipse cx="24" cy="38" rx="3" ry="1.5" fill="#ed93b1" opacity="0.6" />
-        <ellipse cx="44" cy="38" rx="3" ry="1.5" fill="#ed93b1" opacity="0.6" />
+        <path d="M29 40 Q34 44 39 40" stroke={eyeFill} strokeWidth="1.5" strokeLinecap="round" fill="none" />
+        <ellipse cx="24" cy="38" rx="3" ry="1.5" fill={blushFill} opacity="0.6" />
+        <ellipse cx="44" cy="38" rx="3" ry="1.5" fill={blushFill} opacity="0.6" />
       </svg>
     </div>
   );
 }
 
 function OllieDone({ isDark }: { isDark: boolean }) {
+  const bodyFill = isDark ? "#8b83f2" : "#6d66cf";
+  const bodyHighlight = isDark ? "#c7c2ff" : "#a9a2ef";
+  const limbFill = isDark ? "#5b52cc" : "#4a43a8";
+  const eyeFill = isDark ? "#ffffff" : "#f8fafc";
+  const pupilFill = isDark ? "#111827" : "#1f2937";
+  const blushFill = isDark ? "#f9a8d4" : "#e88aad";
+  const starFill1 = isDark ? "#fde68a" : "#facc15";
+  const starFill2 = isDark ? "#fef9c3" : "#fde68a";
+
   return (
     <div className="ollie-done-wrap">
       <svg width="110" height="110" viewBox="0 0 80 90" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <g className="star1"><text x="10" y="14" fontSize="11" fill="#fde68a">★</text></g>
-        <g className="star2"><text x="52" y="12" fontSize="9" fill="#fef9c3">✦</text></g>
+        <g className="star1"><text x="10" y="14" fontSize="11" fill={starFill1}>★</text></g>
+        <g className="star2"><text x="52" y="12" fontSize="9" fill={starFill2}>✦</text></g>
 
         <g className="conf1" style={{ transformOrigin: "34px 30px" }}>
-          <circle cx="34" cy="8" r="3" fill="#f97316" />
-          <circle cx="14" cy="20" r="2" fill="#ec4899" />
-          <circle cx="54" cy="20" r="2" fill="#06b6d4" />
+          <circle cx="34" cy="8" r="3" fill={isDark ? "#f97316" : "#ea580c"} />
+          <circle cx="14" cy="20" r="2" fill={isDark ? "#ec4899" : "#db2777"} />
+          <circle cx="54" cy="20" r="2" fill={isDark ? "#06b6d4" : "#0891b2"} />
         </g>
         <g className="conf2" style={{ transformOrigin: "34px 30px" }}>
-          <rect x="32" y="4" width="4" height="4" rx="1" fill="#a78bfa" transform="rotate(30 34 6)" />
-          <rect x="10" y="22" width="4" height="4" rx="1" fill="#34d399" transform="rotate(15 12 24)" />
-          <rect x="54" y="24" width="4" height="4" rx="1" fill="#fbbf24" transform="rotate(45 56 26)" />
+          <rect x="32" y="4" width="4" height="4" rx="1" fill={isDark ? "#a78bfa" : "#8b5cf6"} transform="rotate(30 34 6)" />
+          <rect x="10" y="22" width="4" height="4" rx="1" fill={isDark ? "#34d399" : "#10b981"} transform="rotate(15 12 24)" />
+          <rect x="54" y="24" width="4" height="4" rx="1" fill={isDark ? "#fbbf24" : "#f59e0b"} transform="rotate(45 56 26)" />
         </g>
 
-        <polygon points="34,8 24,30 44,30" fill="#f97316" stroke="#ea580c" strokeWidth="1" />
-        <polygon points="33,10 28,24 38,24" fill="#fde68a" opacity="0.6" />
-        <circle cx="34" cy="8" r="2.5" fill="#fde68a" />
-        <path d="M25 28 Q34 25 43 28" stroke="#ea580c" strokeWidth="1.5" fill="none" />
+        <polygon points="34,8 24,30 44,30" fill={isDark ? "#f97316" : "#ea580c"} stroke={isDark ? "#ea580c" : "#c2410c"} strokeWidth="1" />
+        <polygon points="33,10 28,24 38,24" fill={isDark ? "#fde68a" : "#fcd34d"} opacity="0.6" />
+        <circle cx="34" cy="8" r="2.5" fill={starFill1} />
+        <path d="M25 28 Q34 25 43 28" stroke={isDark ? "#ea580c" : "#c2410c"} strokeWidth="1.5" fill="none" />
 
-        <path d="M18 42 Q8 30 5 16" stroke="#7f77dd" strokeWidth="2.8" strokeLinecap="round" fill="none" />
+        <path d="M18 42 Q8 30 5 16" stroke={bodyFill} strokeWidth="2.8" strokeLinecap="round" fill="none" />
         <text x="-2" y="18" fontSize="14">🎉</text>
 
-        <path d="M50 42 Q62 30 65 16" stroke="#7f77dd" strokeWidth="2.8" strokeLinecap="round" fill="none" />
+        <path d="M50 42 Q62 30 65 16" stroke={bodyFill} strokeWidth="2.8" strokeLinecap="round" fill="none" />
         <text x="60" y="18" fontSize="14">🎊</text>
 
-        <g className="done-t1"><path d="M18 48 Q14 54 16 60 Q18 66 15 70" stroke="#7f77dd" strokeWidth="3.5" strokeLinecap="round" fill="none" /><circle cx="15" cy="70" r="2" fill="#534ab7" /></g>
-        <g className="done-t2"><path d="M23 52 Q21 58 23 64 Q25 68 22 72" stroke="#7f77dd" strokeWidth="3.5" strokeLinecap="round" fill="none" /><circle cx="22" cy="72" r="2" fill="#534ab7" /></g>
-        <g className="done-t3"><path d="M29 54 Q29 60 31 66 Q32 70 30 73" stroke="#7f77dd" strokeWidth="3.5" strokeLinecap="round" fill="none" /><circle cx="30" cy="73" r="2" fill="#534ab7" /></g>
-        <g className="done-t4"><path d="M35 54 Q37 60 35 66 Q34 70 36 73" stroke="#7f77dd" strokeWidth="3.5" strokeLinecap="round" fill="none" /><circle cx="36" cy="73" r="2" fill="#534ab7" /></g>
-        <g className="done-t5"><path d="M41 52 Q43 58 41 64 Q39 68 42 72" stroke="#7f77dd" strokeWidth="3.5" strokeLinecap="round" fill="none" /><circle cx="42" cy="72" r="2" fill="#534ab7" /></g>
-        <g className="done-t6"><path d="M46 48 Q50 54 48 60 Q46 66 49 70" stroke="#7f77dd" strokeWidth="3.5" strokeLinecap="round" fill="none" /><circle cx="49" cy="70" r="2" fill="#534ab7" /></g>
+        <g className="done-t1"><path d="M18 48 Q14 54 16 60 Q18 66 15 70" stroke={bodyFill} strokeWidth="3.5" strokeLinecap="round" fill="none" /><circle cx="15" cy="70" r="2" fill={limbFill} /></g>
+        <g className="done-t2"><path d="M23 52 Q21 58 23 64 Q25 68 22 72" stroke={bodyFill} strokeWidth="3.5" strokeLinecap="round" fill="none" /><circle cx="22" cy="72" r="2" fill={limbFill} /></g>
+        <g className="done-t3"><path d="M29 54 Q29 60 31 66 Q32 70 30 73" stroke={bodyFill} strokeWidth="3.5" strokeLinecap="round" fill="none" /><circle cx="30" cy="73" r="2" fill={limbFill} /></g>
+        <g className="done-t4"><path d="M35 54 Q37 60 35 66 Q34 70 36 73" stroke={bodyFill} strokeWidth="3.5" strokeLinecap="round" fill="none" /><circle cx="36" cy="73" r="2" fill={limbFill} /></g>
+        <g className="done-t5"><path d="M41 52 Q43 58 41 64 Q39 68 42 72" stroke={bodyFill} strokeWidth="3.5" strokeLinecap="round" fill="none" /><circle cx="42" cy="72" r="2" fill={limbFill} /></g>
+        <g className="done-t6"><path d="M46 48 Q50 54 48 60 Q46 66 49 70" stroke={bodyFill} strokeWidth="3.5" strokeLinecap="round" fill="none" /><circle cx="49" cy="70" r="2" fill={limbFill} /></g>
 
-        <ellipse cx="34" cy="36" rx="18" ry="16" fill="#7f77dd" />
-        <ellipse cx="28" cy="30" rx="6" ry="4" fill="#afa9ec" opacity="0.45" />
+        <ellipse cx="34" cy="36" rx="18" ry="16" fill={bodyFill} />
+        <ellipse cx="28" cy="30" rx="6" ry="4" fill={bodyHighlight} opacity="0.45" />
 
-        <circle cx="28" cy="34" r="4" fill="white" className="done-eye-l" />
-        <circle cx="40" cy="34" r="4" fill="white" className="done-eye-r" />
-        <circle cx="29" cy="34" r="2" fill="#1a1a2e" className="done-eye-l" />
-        <circle cx="41" cy="34" r="2" fill="#1a1a2e" className="done-eye-r" />
+        <circle cx="28" cy="34" r="4" fill={eyeFill} className="done-eye-l" />
+        <circle cx="40" cy="34" r="4" fill={eyeFill} className="done-eye-r" />
+        <circle cx="29" cy="34" r="2" fill={pupilFill} className="done-eye-l" />
+        <circle cx="41" cy="34" r="2" fill={pupilFill} className="done-eye-r" />
         <circle cx="30" cy="33" r="0.8" fill="white" className="done-eye-l" />
         <circle cx="42" cy="33" r="0.8" fill="white" className="done-eye-r" />
 
-        <path d="M29 40 Q34 44 39 40" stroke="white" strokeWidth="1.5" strokeLinecap="round" fill="none" />
-        <ellipse cx="24" cy="38" rx="3" ry="1.5" fill="#ed93b1" opacity="0.6" />
-        <ellipse cx="44" cy="38" rx="3" ry="1.5" fill="#ed93b1" opacity="0.6" />
+        <path d="M29 40 Q34 44 39 40" stroke={eyeFill} strokeWidth="1.5" strokeLinecap="round" fill="none" />
+        <ellipse cx="24" cy="38" rx="3" ry="1.5" fill={blushFill} opacity="0.6" />
+        <ellipse cx="44" cy="38" rx="3" ry="1.5" fill={blushFill} opacity="0.6" />
       </svg>
     </div>
   );
@@ -1439,12 +1466,12 @@ function TaskCardView({
       {...dragHandleProps}
       style={{
         ...cardStyle,
-        background: "rgba(255,255,255,0.92)",
-        border: "none",
-        color: "#111827",
+        background: isDark ? "rgba(31,41,55,0.96)" : "rgba(255,255,255,0.92)",
+        border: isDark ? "1px solid rgba(255,255,255,0.08)" : "none",
+        color: isDark ? "#f9fafb" : "#111827",
         boxShadow: dragging
-          ? "0 10px 24px rgba(0,0,0,0.18)"
-          : "0 4px 12px rgba(0,0,0,0.12)",
+          ? (isDark ? "0 10px 24px rgba(0,0,0,0.45)" : "0 10px 24px rgba(0,0,0,0.18)")
+          : (isDark ? "0 4px 12px rgba(0,0,0,0.35)" : "0 4px 12px rgba(0,0,0,0.12)"),
         cursor: "grab",
       }}
     >

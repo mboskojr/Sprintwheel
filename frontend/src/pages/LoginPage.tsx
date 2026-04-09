@@ -458,7 +458,7 @@ function OllieLoginMascot() {
   );
 }
 
-function LoginPage(): JSX.Element {
+function LoginPage() {
   const navigate = useNavigate();
   const [mode, setMode] = useState<"login" | "register">("login");
 
@@ -467,7 +467,8 @@ function LoginPage(): JSX.Element {
   const [password, setPassword] = useState("");
 
   const [status, setStatus] = useState<string>("");
-  const [user, setUser] = useState<any>(null);
+  const [/*user*/, setUser] = useState<any>(null);
+  //removed unused "user" , unused terms prevent deployer from building application
 
   async function routeAfterAuth() {
     const projects = await listProjects();

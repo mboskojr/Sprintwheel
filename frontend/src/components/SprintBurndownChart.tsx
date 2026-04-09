@@ -1,5 +1,5 @@
-import React from "react";
-import {CartesianGrid, Legend, Line, LineChart, Tooltip, XAxis, YAxis, ResponsiveContainer, ReferenceLine } from "recharts";
+//import React from "react";
+import {CartesianGrid, Line, LineChart, Tooltip, XAxis, YAxis, ResponsiveContainer, ReferenceLine } from "recharts";
 // import { RechartsDevtools } from "@recharts/devtools";
 
 const mockData = [
@@ -15,10 +15,16 @@ const mockData = [
 // TODO: WILL WANT TO AUTOCALC THIS
 const today = "Jan 4";
 
+
+/*
 interface BurndownPoint {
     date: string;
     remaining: number;
 }
+*/
+
+//I removed react, legend, and burndownpoint, as their half-way implementation is preventing me
+//from deploying the app (application builders refuse to build if unused code is written)
 
 export default function SprintBurndownChart() {
     return (

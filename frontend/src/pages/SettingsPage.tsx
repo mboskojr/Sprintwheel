@@ -1,4 +1,4 @@
-import React, { useEffect, useState, type CSSProperties, type JSX } from "react";
+import { useEffect, useState, type CSSProperties, type JSX } from "react";
 import SidebarLayout from "../components/SidebarLayout";
 import { useTheme } from "./ThemeContext";
 

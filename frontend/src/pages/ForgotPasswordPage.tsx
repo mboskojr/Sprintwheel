@@ -3,7 +3,7 @@ import Banner from "../Banner";
 import { useState } from "react";
 import { forgotPassword } from "../api/auth";
 
-function ForgotPasswordPage(): JSX.Element {
+function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
