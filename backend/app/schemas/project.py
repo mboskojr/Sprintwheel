@@ -3,6 +3,9 @@ from datetime import datetime
 from typing import Optional
 from uuid import UUID
 from enum import Enum
+from pydantic import BaseModel
+from uuid import UUID
+
 
 
 class ProjectRole(str, Enum):
@@ -56,6 +59,15 @@ class ProjectMembershipOut(BaseModel):
 class UpdateRoleIn(BaseModel):
     role: ProjectRole
 
+
+class AssignModulesIn(BaseModel):
+    assigned_modules: list[UUID]
+
+class AssignModulesOut(BaseModel):
+    status: str
+    project_id: UUID
+    user_id: str
+    assigned_modules: list[UUID]
 
 class UpdateRoleOut(BaseModel):
     status: str

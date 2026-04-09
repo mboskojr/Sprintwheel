@@ -5,3 +5,4 @@ from .story import StoryCreate, StoryUpdate, StoryOut
 from .task import TaskCreate, TaskUpdate, TaskOut
 from .project_event import ProjectEventCreate, ProjectEventUpdate, ProjectEventOut
 from .information_radiator import NoteCreate, NoteContentUpdate, NoteMoveRequest, NoteOut, InformationRadiatorBoardOut, InformationRadiatorResponse
+from .edu import ModuleCreate, ModuleUpdate, ModuleOut

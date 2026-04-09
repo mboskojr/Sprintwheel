@@ -3,7 +3,8 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from datetime import datetime, timedelta, timezone
 from uuid import UUID
-
+from app.models.edu import Edu
+from pydantic import BaseModel
 from app.db.session import get_db
 from app.core.deps import get_current_user
 from app.models.user import User
@@ -19,7 +20,7 @@ from app.schemas.project import (
     UpdateRoleIn,
     UpdateRoleOut,
     TransferOwnershipIn,
-    TransferOwnershipOut,
+    TransferOwnershipOut, AssignModulesOut, AssignModulesIn,
 )
 from app.models.task import Task
 from app.models.story import Story
@@ -92,6 +93,121 @@ def list_projects(
     )
     for project, role in rows
 ]
+
+@router.post(
+    "/{project_id}/members/{member_user_id}/assigned-modules/{module_id}",
+    response_model=AssignModulesOut,
+)
+def add_module_to_member(
+    project_id: UUID,
+    member_user_id: str,
+    module_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    current_membership, _ = require_active_project_member(
+        db, project_id, current_user.id
+    )
+
+    target_membership = (
+        db.query(ProjectMember)
+        .filter(
+            ProjectMember.project_id == project_id,
+            ProjectMember.user_id == member_user_id,
+            ProjectMember.is_active == True,
+        )
+        .first()
+    )
+
+    if not target_membership:
+        raise HTTPException(status_code=404, detail="Project member not found")
+
+    if (
+        current_user.id != member_user_id
+        and current_membership.role not in ["Product Owner", "Scrum Facilitator"]
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail="Not allowed to assign modules for this member",
+        )
+
+    module = db.query(Edu).filter(Edu.id == module_id).first()
+    if not module:
+        raise HTTPException(status_code=404, detail="Module not found")
+
+    current_modules = target_membership.assigned_modules or []
+
+    if module_id in current_modules:
+        return AssignModulesOut(
+            status="ok",
+            project_id=project_id,
+            user_id=member_user_id,
+            assigned_modules=current_modules,
+        )
+
+    target_membership.assigned_modules = current_modules + [module_id]
+
+    db.commit()
+    db.refresh(target_membership)
+
+    return AssignModulesOut(
+        status="ok",
+        project_id=project_id,
+        user_id=member_user_id,
+        assigned_modules=target_membership.assigned_modules or [],
+    )
+
+@router.delete(
+    "/{project_id}/members/{member_user_id}/assigned-modules/{module_id}",
+    response_model=AssignModulesOut,
+)
+def remove_module_from_member(
+    project_id: UUID,
+    member_user_id: str,
+    module_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    current_membership, _ = require_active_project_member(
+        db, project_id, current_user.id
+    )
+
+    target_membership = (
+        db.query(ProjectMember)
+        .filter(
+            ProjectMember.project_id == project_id,
+            ProjectMember.user_id == member_user_id,
+            ProjectMember.is_active == True,
+        )
+        .first()
+    )
+
+    if not target_membership:
+        raise HTTPException(status_code=404, detail="Project member not found")
+
+    if (
+        current_user.id != member_user_id
+        and current_membership.role not in ["Product Owner", "Scrum Facilitator"]
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail="Not allowed to update modules for this member",
+        )
+
+    current_modules = target_membership.assigned_modules or []
+    target_membership.assigned_modules = [
+        mid for mid in current_modules if mid != module_id
+    ]
+
+    db.commit()
+    db.refresh(target_membership)
+
+    return AssignModulesOut(
+        status="ok",
+        project_id=project_id,
+        user_id=member_user_id,
+        assigned_modules=target_membership.assigned_modules or [],
+    )
 
 
 @router.get("/{project_id}", response_model=ProjectOut)
