@@ -337,7 +337,6 @@ export default function CalendarPage(): JSX.Element {
   const headerBg      = isDark ? "#162032" : "#f8fafc";
   const cellBg        = isDark ? "#1a2639" : "#ffffff";
   const cellMuted     = cellBg;
-  const cellWeekend   = cellBg;
   const inputBg       = isDark ? "#162032" : "#ffffff";
   const calendarIconColor = isDark ? "#ffffff" : "#0f172a";
 
