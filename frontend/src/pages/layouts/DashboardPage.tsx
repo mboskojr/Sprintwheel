@@ -1048,7 +1048,7 @@ export default function DashboardPage(): JSX.Element {
   
   // ─── Preview Components ───────────────────────────────────────────────────────
   
-  function TaskBoardPreview({ isDark }: { isDark: boolean }) {
+  function TaskBoardPreview() {
     const cols = [
       { label: "TO DO", color: "#ef4444", items: ["Write unit tests", "Review PR #42"] },
       { label: "IN PROGRESS", color: "#eab308", items: ["API integration", "Fix nav bug"] },
@@ -1321,7 +1321,7 @@ export default function DashboardPage(): JSX.Element {
                   </div>
                   {todoPath && <span style={{ fontSize: 16, color: isDark ? "rgba(255,255,255,0.38)" : "#9ca3af", flexShrink: 0, marginTop: 2 }}>↗</span>}
                 </div>
-                <TaskBoardPreview isDark={isDark} />
+                <TaskBoardPreview />
               </div>
   
               {/* Education */}

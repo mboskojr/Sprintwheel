@@ -22,7 +22,7 @@ interface PendingDelete {
   title: string;
 }
 
-const FIBONACCI_POINTS = [1, 2, 3, 5, 8, 13, 21, 34] as const;
+const FIBONACCI_POINTS: number[] = [1, 2, 3, 5, 8, 13, 21, 34];
 
 function normalizePoints(value: number | null | undefined): number {
   if (value == null || Number.isNaN(value)) return 1;
