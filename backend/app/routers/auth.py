@@ -1,37 +1,39 @@
+import os
+import smtplib
 import uuid
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 from fastapi import APIRouter, Depends, HTTPException
+from google.auth.transport import requests as google_requests
+from google.oauth2 import id_token
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from app.db.session import get_db
-from app.models.user import User
-from app.core.security import hash_password, verify_password
+from app.core.config import GOOGLE_CLIENT_ID
+from app.core.deps import get_current_user
 from app.core.jwt import (
     create_access_token,
     create_password_reset_token,
     verify_password_reset_token,
 )
-from app.core.deps import get_current_user
-from app.schemas import RegisterIn, LoginIn, TokenOut, UserOut
-import os
-from google.oauth2 import id_token
-from google.auth.transport import requests as google_requests
-from pydantic import BaseModel
-from app.core.config import GOOGLE_CLIENT_ID
+from app.core.security import hash_password, verify_password
+from app.db.session import get_db
+from app.models.user import User
+from app.schemas import LoginIn, RegisterIn, TokenOut, UserOut
 from app.schemas.auth import (
-    ChangePasswordIn,
     ChangeNameIn,
+    ChangePasswordIn,
     ForgotPasswordIn,
     ResetPasswordIn,
 )
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
+
 class GoogleLoginIn(BaseModel):
     id_token: str
+
 
 def send_password_reset_email(email: str, reset_link: str):
     smtp_host = os.getenv("SMTP_HOST")
@@ -41,7 +43,10 @@ def send_password_reset_email(email: str, reset_link: str):
     from_email = os.getenv("FROM_EMAIL", smtp_user)
 
     if not smtp_host or not smtp_user or not smtp_pass:
-        raise HTTPException(status_code=500, detail="SMTP email settings are not configured")
+        raise HTTPException(
+            status_code=500,
+            detail="SMTP email settings are not configured",
+        )
 
     subject = "Reset your SprintWheel password"
     body = f"""
@@ -76,7 +81,10 @@ def forgot_password(data: ForgotPasswordIn, db: Session = Depends(get_db)):
 
     if user:
         token = create_password_reset_token(user.email)
-        frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
+        frontend_url = os.getenv(
+            "FRONTEND_URL",
+            "https://sprintwheel-frontend.vercel.app",
+        )
         reset_link = f"{frontend_url}/reset-password?token={token}"
         send_password_reset_email(user.email, reset_link)
 
@@ -88,10 +96,16 @@ def forgot_password(data: ForgotPasswordIn, db: Session = Depends(get_db)):
 @router.post("/reset-password")
 def reset_password(data: ResetPasswordIn, db: Session = Depends(get_db)):
     if len(data.new_password) < 8:
-        raise HTTPException(status_code=400, detail="Password must be at least 8 characters")
+        raise HTTPException(
+            status_code=400,
+            detail="Password must be at least 8 characters",
+        )
 
     if len(data.new_password) > 72:
-        raise HTTPException(status_code=400, detail="Password must be 72 characters or fewer")
+        raise HTTPException(
+            status_code=400,
+            detail="Password must be 72 characters or fewer",
+        )
 
     email = verify_password_reset_token(data.token)
 
@@ -104,6 +118,7 @@ def reset_password(data: ResetPasswordIn, db: Session = Depends(get_db)):
     db.refresh(user)
 
     return {"message": "Password reset successful"}
+
 
 @router.post("/register", response_model=UserOut)
 def register(data: RegisterIn, db: Session = Depends(get_db)):
@@ -132,13 +147,17 @@ def change_password(
     current_user: User = Depends(get_current_user),
 ):
     if not verify_password(data.current_password, current_user.hashed_password):
-        raise HTTPException(status_code=400, detail="Current password is incorrect")
+        raise HTTPException(
+            status_code=400,
+            detail="Current password is incorrect",
+        )
 
     current_user.hashed_password = hash_password(data.new_password)
     db.commit()
     db.refresh(current_user)
 
     return {"message": "Password updated successfully"}
+
 
 @router.put("/change-name", response_model=UserOut)
 def change_name(
@@ -147,7 +166,10 @@ def change_name(
     current_user: User = Depends(get_current_user),
 ):
     if not verify_password(data.current_password, current_user.hashed_password):
-        raise HTTPException(status_code=400, detail="Current password is incorrect")
+        raise HTTPException(
+            status_code=400,
+            detail="Current password is incorrect",
+        )
 
     new_name = data.new_name.strip()
 
@@ -159,6 +181,7 @@ def change_name(
     db.refresh(current_user)
 
     return current_user
+
 
 @router.post("/login", response_model=TokenOut)
 def login(data: LoginIn, db: Session = Depends(get_db)):
@@ -214,4 +237,3 @@ def google_login(data: GoogleLoginIn, db: Session = Depends(get_db)):
 
     token = create_access_token(user.id)
     return {"access_token": token, "token_type": "bearer"}
-
