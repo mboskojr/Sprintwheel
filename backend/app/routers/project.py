@@ -352,11 +352,11 @@ def update_role(
 ):
     membership, _ = require_active_project_member(db, project_id, current_user.id)
 
-    if data.role.value == "Product Owner":
+    '''if data.role.value == "Product Owner":
         raise HTTPException(
             status_code=400,
             detail="Use the ownership transfer endpoint to assign Product Owner.",
-        )
+        )'''
     
     if data.role.value == "Scrum Facilitator":
         existing_scrum_master = (

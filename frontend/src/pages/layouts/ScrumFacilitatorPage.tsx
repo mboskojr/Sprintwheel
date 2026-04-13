@@ -710,300 +710,581 @@ export default function ScrumFacilitatorPage(): JSX.Element {
   );
 } */ 
 
-import { motion, AnimatePresence } from "framer-motion";
-import { useEffect, useMemo, useState } from "react";
-import type { CSSProperties, JSX } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { me } from "../../api/auth";
-import { listProjects, type Project } from "../../api/projects";
-import SidebarLayout from "../../components/SidebarLayout";
-import DashboardCalendarPreview from "../../components/DashboardCalendarPreview";
-import { useTheme } from "../ThemeContext";
-
-type User = { id: string; name: string; email: string; role: string };
-
-// Preview Components
-
-function ImpedimentPreview({ isDark }: { isDark: boolean }) {
-  const items = [
-    { label: "API access blocked",    severity: "High", color: "#ef4444" },
-    { label: "Missing design assets", severity: "Med",  color: "#f59e0b" },
-    { label: "Unclear requirements",  severity: "Low",  color: "#22c55e" },
-  ];
-  return (
-    <div style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: 8 }}>
-      {items.map((item) => (
-        <div key={item.label} style={{ display: "flex", alignItems: "center", gap: 10, background: isDark ? "rgba(255,255,255,0.05)" : "#f8fafc", borderRadius: 10, padding: "8px 12px", border: `1px solid ${isDark ? "rgba(255,255,255,0.07)" : "#e5e7eb"}` }}>
-          <div style={{ width: 8, height: 8, borderRadius: "50%", background: item.color, flexShrink: 0 }} />
-          <span style={{ fontSize: 12, fontWeight: 600, color: isDark ? "rgba(255,255,255,0.85)" : "#374151", flex: 1 }}>{item.label}</span>
-          <span style={{ fontSize: 10, fontWeight: 700, color: item.color, background: `${item.color}18`, padding: "2px 8px", borderRadius: 99 }}>{item.severity}</span>
+  import { motion, AnimatePresence } from "framer-motion";
+  import { useEffect, useMemo, useState } from "react";
+  import type { CSSProperties, JSX } from "react";
+  import { useNavigate, useParams } from "react-router-dom";
+  import { me } from "../../api/auth";
+  import { listProjects, type Project } from "../../api/projects";
+  import SidebarLayout from "../../components/SidebarLayout";
+  import DashboardCalendarPreview from "../../components/DashboardCalendarPreview";
+  import { useTheme } from "../ThemeContext";
+  
+  type User = { id: string; name: string; email: string; role: string };
+  
+  function MiniPagePreview({
+    path,
+    isDark,
+    height = 320,
+    scale = 0.43,
+  }: {
+    path: string;
+    isDark: boolean;
+    height?: number;
+    scale?: number;
+  }) {
+    const frameHeight = height / scale;
+  
+    return (
+      <div
+        style={{
+          marginTop: 14,
+          position: "relative",
+          height,
+          width: "100%",
+          overflow: "hidden",
+          borderRadius: 16,
+          border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "rgba(17,24,39,0.08)"}`,
+          background: isDark ? "rgba(255,255,255,0.03)" : "#f8fafc",
+        }}
+      >
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: `${100 / scale}%`,
+            height: frameHeight,
+            transform: `scale(${scale})`,
+            transformOrigin: "top left",
+            pointerEvents: "none",
+            background: isDark ? "#0f172a" : "#ffffff",
+          }}
+        >
+          <iframe
+            title={`preview-${path}`}
+            src={path}
+            style={{
+              width: "100%",
+              height: "100%",
+              border: "none",
+              background: isDark ? "#0f172a" : "#ffffff",
+            }}
+          />
         </div>
-      ))}
-    </div>
-  );
-}
-
-function MeetingPreview({ isDark }: { isDark: boolean }) {
-  const meetings = [
-    { title: "Sprint Planning",  time: "Mon 9:00am",   icon: "📋" },
-    { title: "Daily Standup",    time: "Daily 9:30am", icon: "☀️" },
-    { title: "Sprint Review",    time: "Fri 3:00pm",   icon: "🔍" },
-    { title: "Retrospective",    time: "Fri 4:00pm",   icon: "💬" },
-  ];
-  return (
-    <div style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: 7 }}>
-      {meetings.map((m) => (
-        <div key={m.title} style={{ display: "flex", alignItems: "center", gap: 10, background: isDark ? "rgba(255,255,255,0.05)" : "#f8fafc", borderRadius: 10, padding: "7px 12px", border: `1px solid ${isDark ? "rgba(255,255,255,0.07)" : "#e5e7eb"}` }}>
-          <span style={{ fontSize: 14, flexShrink: 0 }}>{m.icon}</span>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 12, fontWeight: 600, color: isDark ? "rgba(255,255,255,0.85)" : "#374151" }}>{m.title}</div>
-            <div style={{ fontSize: 10, color: isDark ? "rgba(255,255,255,0.4)" : "#9ca3af" }}>{m.time}</div>
-          </div>
-          <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#22c55e", flexShrink: 0 }} />
+  
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            background: isDark
+              ? "linear-gradient(to bottom, rgba(15,23,42,0.02), rgba(15,23,42,0.08))"
+              : "linear-gradient(to bottom, rgba(255,255,255,0.02), rgba(255,255,255,0.06))",
+            pointerEvents: "none",
+          }}
+        />
+  
+        <div
+          style={{
+            position: "absolute",
+            right: 10,
+            bottom: 10,
+            padding: "6px 10px",
+            borderRadius: 999,
+            fontSize: 11,
+            fontWeight: 700,
+            background: isDark ? "rgba(15,23,42,0.82)" : "rgba(255,255,255,0.92)",
+            color: isDark ? "rgba(255,255,255,0.85)" : "#374151",
+            border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "rgba(17,24,39,0.08)"}`,
+            backdropFilter: "blur(8px)",
+            pointerEvents: "none",
+          }}
+        >
+          Live Preview
         </div>
-      ))}
-    </div>
-  );
-}
-
-function ScrumEduAdminPreview({ isDark }: { isDark: boolean }) {
-  const modules = [
-    { name: "Scrum Basics",    assigned: 5, completed: 4 },
-    { name: "Sprint Planning", assigned: 5, completed: 2 },
-    { name: "Retrospectives",  assigned: 3, completed: 1 },
-  ];
-  return (
-    <div style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: 8 }}>
-      {modules.map((m) => (
-        <div key={m.name} style={{ background: isDark ? "rgba(255,255,255,0.05)" : "#f8fafc", borderRadius: 10, padding: "9px 12px", border: `1px solid ${isDark ? "rgba(255,255,255,0.07)" : "#e5e7eb"}` }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-            <span style={{ fontSize: 12, fontWeight: 600, color: isDark ? "rgba(255,255,255,0.85)" : "#374151" }}>{m.name}</span>
-            <span style={{ fontSize: 10, color: isDark ? "rgba(255,255,255,0.45)" : "#6b7280" }}>{m.completed}/{m.assigned} done</span>
-          </div>
-          <div style={{ height: 5, borderRadius: 99, background: isDark ? "rgba(255,255,255,0.08)" : "#e5e7eb", overflow: "hidden" }}>
-            <div style={{ height: "100%", width: `${(m.completed / m.assigned) * 100}%`, background: "#f97316", borderRadius: 99 }} />
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// Page
-
-export default function ScrumFacilitatorPage(): JSX.Element {
-  const navigate = useNavigate();
-  const { projectId, role } = useParams();
-  const { theme } = useTheme();
-  const isDark = theme === "dark";
-
-  const [user, setUser] = useState<User | null>(() => {
-    const raw = localStorage.getItem("user");
-    return raw ? JSON.parse(raw) : null;
-  });
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
-  const [loadingProjects, setLoadingProjects] = useState(false);
-  const [projectError, setProjectError] = useState("");
-  const [revealed, setRevealed] = useState(() => sessionStorage.getItem("dashboard_revealed") === "true");
-
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) { navigate("/login", { replace: true }); return; }
-    me(token)
-      .then((u: User) => { setUser(u); localStorage.setItem("user", JSON.stringify(u)); })
-      .catch(() => { localStorage.removeItem("token"); localStorage.removeItem("user"); navigate("/login", { replace: true }); });
-  }, [navigate]);
-
-  useEffect(() => {
-    if (!user) return;
-    setLoadingProjects(true);
-    listProjects()
-      .then((data) => { setProjects(data); setActiveProjectId(projectId ?? (data[0]?.id ?? null)); })
-      .catch((e: any) => setProjectError(e?.message ?? "Unable to load projects."))
-      .finally(() => setLoadingProjects(false));
-  }, [user, projectId]);
-
-  const activeProject = useMemo(() => projects.find((p) => p.id === activeProjectId) ?? null, [projects, activeProjectId]);
-  const dismiss = () => { sessionStorage.setItem("dashboard_revealed", "true"); setRevealed(true); };
-
-  // ── Page paths ──
-  // Impediment Tracker → communication page
-  const communicationPath = activeProjectId && role ? `/projects/${activeProjectId}/${role}/communication` : "";
-  // Set a Meeting → calendar page
-  const calendarPath      = activeProjectId && role ? `/projects/${activeProjectId}/${role}/calendar` : "";
-  // Admin Scrum Edu → education module
-  const educationPath     = activeProjectId && role ? `/projects/${activeProjectId}/${role}/education` : "";
-
-  const bg = isDark
-    ? "radial-gradient(circle at top left, rgba(99,102,241,0.14), transparent 28%), linear-gradient(180deg, #0b0f17 0%, #0f172a 45%, #0b0f17 100%)"
-    : "#f1f5f9";
-
-  const card: CSSProperties = {
-    background: isDark ? "rgba(255,255,255,0.05)" : "#ffffff",
-    border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "rgba(17,24,39,0.08)"}`,
-    borderRadius: 20,
-    padding: 20,
-    boxShadow: isDark ? "0 12px 32px rgba(0,0,0,0.18)" : "0 4px 24px rgba(15,23,42,0.07)",
-    transition: "box-shadow 0.15s",
-  };
-  const hoverShadow = isDark ? "0 18px 44px rgba(0,0,0,0.3)" : "0 8px 32px rgba(15,23,42,0.13)";
-  const cardTitle: CSSProperties = { margin: 0, fontSize: 17, fontWeight: 700, color: isDark ? "white" : "#111827" };
-  const cardDesc: CSSProperties  = { margin: "5px 0 0", fontSize: 13, lineHeight: 1.5, color: isDark ? "rgba(255,255,255,0.58)" : "#6b7280" };
-  const eyebrow: CSSProperties   = { margin: "0 0 4px", fontSize: 11, fontWeight: 700, letterSpacing: 1.4, textTransform: "uppercase" as const, color: isDark ? "rgba(255,255,255,0.38)" : "#9ca3af" };
-  const sectionLabel: CSSProperties = { fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" as const, color: isDark ? "rgba(255,255,255,0.38)" : "#9ca3af", margin: "0 0 12px" };
-  const arrow = <span style={{ fontSize: 16, color: isDark ? "rgba(255,255,255,0.38)" : "#9ca3af", flexShrink: 0, marginTop: 2 }}>↗</span>;
-
-  const clickCard = (path: string): CSSProperties => ({ ...card, cursor: path ? "pointer" : "default" });
-  const onEnter = (e: React.MouseEvent<HTMLDivElement>, active: boolean) => {
-    if (active) (e.currentTarget as HTMLDivElement).style.boxShadow = hoverShadow;
-  };
-  const onLeave = (e: React.MouseEvent<HTMLDivElement>) => {
-    (e.currentTarget as HTMLDivElement).style.boxShadow = isDark ? "0 12px 32px rgba(0,0,0,0.18)" : "0 4px 24px rgba(15,23,42,0.07)";
-  };
-
-  return (
-    <SidebarLayout>
-      <main style={{ width: "100%", minHeight: "100vh", padding: 24, background: bg, color: isDark ? "white" : "#111827", position: "relative" }}>
-
-        {/* ── Splash overlay ── */}
-        <AnimatePresence>
-          {!revealed && (
-            <motion.div
-              style={{ position: "absolute", inset: 0, zIndex: 30, display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "70px 24px", background: isDark ? "rgba(11,15,23,0.62)" : "rgba(241,245,249,0.82)", cursor: "pointer", backdropFilter: "blur(6px)" }}
-              initial={{ opacity: 1 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }}
-              onClick={dismiss}
-            >
+      </div>
+    );
+  }
+  
+  export default function ScrumFacilitatorPage(): JSX.Element {
+    const navigate = useNavigate();
+    const { projectId, role } = useParams();
+    const { theme } = useTheme();
+    const isDark = theme === "dark";
+  
+    const [user, setUser] = useState<User | null>(() => {
+      const raw = localStorage.getItem("user");
+      return raw ? JSON.parse(raw) : null;
+    });
+    const [projects, setProjects] = useState<Project[]>([]);
+    const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
+    const [loadingProjects, setLoadingProjects] = useState(false);
+    const [projectError, setProjectError] = useState("");
+    const [revealed, setRevealed] = useState(
+      () => sessionStorage.getItem("dashboard_revealed") === "true"
+    );
+  
+    useEffect(() => {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        navigate("/login", { replace: true });
+        return;
+      }
+      me(token)
+        .then((u: User) => {
+          setUser(u);
+          localStorage.setItem("user", JSON.stringify(u));
+        })
+        .catch(() => {
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          navigate("/login", { replace: true });
+        });
+    }, [navigate]);
+  
+    useEffect(() => {
+      if (!user) return;
+      setLoadingProjects(true);
+      listProjects()
+        .then((data) => {
+          setProjects(data);
+          setActiveProjectId(projectId ?? (data[0]?.id ?? null));
+        })
+        .catch((e: any) => setProjectError(e?.message ?? "Unable to load projects."))
+        .finally(() => setLoadingProjects(false));
+    }, [user, projectId]);
+  
+    const activeProject = useMemo(
+      () => projects.find((p) => p.id === activeProjectId) ?? null,
+      [projects, activeProjectId]
+    );
+  
+    const dismiss = () => {
+      sessionStorage.setItem("dashboard_revealed", "true");
+      setRevealed(true);
+    };
+  
+    const communicationPath =
+      activeProjectId && role ? `/projects/${activeProjectId}/${role}/communication` : "";
+    const calendarPath =
+      activeProjectId && role ? `/projects/${activeProjectId}/${role}/calendar` : "";
+    const educationPath =
+      activeProjectId && role ? `/projects/${activeProjectId}/${role}/education` : "";
+  
+    const bg = isDark
+      ? "radial-gradient(circle at top left, rgba(99,102,241,0.14), transparent 28%), linear-gradient(180deg, #0b0f17 0%, #0f172a 45%, #0b0f17 100%)"
+      : "#f1f5f9";
+  
+    const baseShadow = isDark
+      ? "0 12px 32px rgba(0,0,0,0.18)"
+      : "0 4px 24px rgba(15,23,42,0.07)";
+  
+    const hoverShadow = isDark
+      ? "0 18px 44px rgba(0,0,0,0.3)"
+      : "0 8px 32px rgba(15,23,42,0.13)";
+  
+    const card: CSSProperties = {
+      background: isDark ? "rgba(255,255,255,0.05)" : "#ffffff",
+      border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "rgba(17,24,39,0.08)"}`,
+      borderRadius: 20,
+      padding: 20,
+      boxShadow: baseShadow,
+      transition: "box-shadow 0.15s, transform 0.15s",
+    };
+  
+    const cardTitle: CSSProperties = {
+      margin: 0,
+      fontSize: 17,
+      fontWeight: 700,
+      color: isDark ? "white" : "#111827",
+    };
+  
+    const cardDesc: CSSProperties = {
+      margin: "5px 0 0",
+      fontSize: 13,
+      lineHeight: 1.5,
+      color: isDark ? "rgba(255,255,255,0.58)" : "#6b7280",
+    };
+  
+    const eyebrow: CSSProperties = {
+      margin: "0 0 4px",
+      fontSize: 11,
+      fontWeight: 700,
+      letterSpacing: 1.4,
+      textTransform: "uppercase" as const,
+      color: isDark ? "rgba(255,255,255,0.38)" : "#9ca3af",
+    };
+  
+    const sectionLabel: CSSProperties = {
+      fontSize: 11,
+      fontWeight: 700,
+      letterSpacing: 1.5,
+      textTransform: "uppercase" as const,
+      color: isDark ? "rgba(255,255,255,0.38)" : "#9ca3af",
+      margin: "0 0 12px",
+    };
+  
+    const arrow = (
+      <span
+        style={{
+          fontSize: 16,
+          color: isDark ? "rgba(255,255,255,0.38)" : "#9ca3af",
+          flexShrink: 0,
+          marginTop: 2,
+        }}
+      >
+        ↗
+      </span>
+    );
+  
+    const clickCard = (path: string): CSSProperties => ({
+      ...card,
+      cursor: path ? "pointer" : "default",
+    });
+  
+    const onEnter = (e: React.MouseEvent<HTMLDivElement>, active: boolean) => {
+      if (!active) return;
+      e.currentTarget.style.boxShadow = hoverShadow;
+      e.currentTarget.style.transform = "translateY(-2px)";
+    };
+  
+    const onLeave = (e: React.MouseEvent<HTMLDivElement>) => {
+      e.currentTarget.style.boxShadow = baseShadow;
+      e.currentTarget.style.transform = "translateY(0)";
+    };
+  
+    return (
+      <SidebarLayout>
+        <main
+          style={{
+            width: "100%",
+            minHeight: "100vh",
+            padding: 24,
+            background: bg,
+            color: isDark ? "white" : "#111827",
+            position: "relative",
+          }}
+        >
+          <AnimatePresence>
+            {!revealed && (
               <motion.div
-                style={{ width: "min(580px,94%)", borderRadius: 28, padding: "44px 36px", textAlign: "center", background: isDark ? "rgba(255,255,255,0.07)" : "#ffffff", border: `1px solid ${isDark ? "rgba(255,255,255,0.12)" : "rgba(17,24,39,0.08)"}`, backdropFilter: "blur(24px)", boxShadow: isDark ? "0 24px 70px rgba(0,0,0,0.4)" : "0 24px 70px rgba(15,23,42,0.12)" }}
-                initial={{ opacity: 0, y: 28, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 12, scale: 0.97 }}
-                transition={{ duration: 0.5, ease: "easeOut" }} onClick={(e) => e.stopPropagation()}
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  zIndex: 30,
+                  display: "flex",
+                  alignItems: "flex-start",
+                  justifyContent: "center",
+                  padding: "70px 24px",
+                  background: isDark ? "rgba(11,15,23,0.62)" : "rgba(241,245,249,0.82)",
+                  cursor: "pointer",
+                  backdropFilter: "blur(6px)",
+                }}
+                initial={{ opacity: 1 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.4 }}
+                onClick={dismiss}
               >
-                <p style={{ margin: "0 0 10px", fontSize: 12, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", color: isDark ? "rgba(255,255,255,0.4)" : "#9ca3af" }}>Scrum Facilitator</p>
-                <h1 style={{ margin: "0 0 12px", fontSize: "clamp(1.8rem,4vw,2.8rem)", fontWeight: 800, color: isDark ? "white" : "#111827", lineHeight: 1.1 }}>
-                  Hi {user?.name ?? "there"}, welcome!
-                </h1>
-                <p style={{ margin: "0 auto 24px", maxWidth: 420, fontSize: 15, lineHeight: 1.6, color: isDark ? "rgba(255,255,255,0.65)" : "#4b5563" }}>
-                  Manage impediments, ceremonies, team education, and scrum support tools from one central page.
-                </p>
-                <button
-                  type="button"
-                  onClick={(e) => { e.stopPropagation(); dismiss(); }}
-                  style={{ padding: "12px 28px", borderRadius: 999, border: `1px solid ${isDark ? "rgba(255,255,255,0.15)" : "rgba(17,24,39,0.1)"}`, background: isDark ? "rgba(249,115,22,0.22)" : "#fff7ed", color: isDark ? "white" : "#c2410c", fontSize: 14, fontWeight: 700, cursor: "pointer" }}
+                <motion.div
+                  style={{
+                    width: "min(580px,94%)",
+                    borderRadius: 28,
+                    padding: "44px 36px",
+                    textAlign: "center",
+                    background: isDark ? "rgba(255,255,255,0.07)" : "#ffffff",
+                    border: `1px solid ${isDark ? "rgba(255,255,255,0.12)" : "rgba(17,24,39,0.08)"}`,
+                    backdropFilter: "blur(24px)",
+                    boxShadow: isDark
+                      ? "0 24px 70px rgba(0,0,0,0.4)"
+                      : "0 24px 70px rgba(15,23,42,0.12)",
+                  }}
+                  initial={{ opacity: 0, y: 28, scale: 0.97 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 12, scale: 0.97 }}
+                  transition={{ duration: 0.5, ease: "easeOut" }}
+                  onClick={(e) => e.stopPropagation()}
                 >
-                  Enter Workspace →
-                </button>
+                  <p
+                    style={{
+                      margin: "0 0 10px",
+                      fontSize: 12,
+                      fontWeight: 700,
+                      letterSpacing: 2,
+                      textTransform: "uppercase",
+                      color: isDark ? "rgba(255,255,255,0.4)" : "#9ca3af",
+                    }}
+                  >
+                    Scrum Master
+                  </p>
+                  <h1
+                    style={{
+                      margin: "0 0 12px",
+                      fontSize: "clamp(1.8rem,4vw,2.8rem)",
+                      fontWeight: 800,
+                      color: isDark ? "white" : "#111827",
+                      lineHeight: 1.1,
+                    }}
+                  >
+                    Hi {user?.name ?? "there"}, welcome!
+                  </h1>
+                  <p
+                    style={{
+                      margin: "0 auto 24px",
+                      maxWidth: 420,
+                      fontSize: 15,
+                      lineHeight: 1.6,
+                      color: isDark ? "rgba(255,255,255,0.65)" : "#4b5563",
+                    }}
+                  >
+                    Manage impediments, ceremonies, team education, and scrum support tools from one central page.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      dismiss();
+                    }}
+                    style={{
+                      padding: "12px 28px",
+                      borderRadius: 999,
+                      border: `1px solid ${isDark ? "rgba(255,255,255,0.15)" : "rgba(17,24,39,0.1)"}`,
+                      background: isDark ? "rgba(249,115,22,0.22)" : "#fff7ed",
+                      color: isDark ? "white" : "#c2410c",
+                      fontSize: 14,
+                      fontWeight: 700,
+                      cursor: "pointer",
+                    }}
+                  >
+                    Enter Workspace →
+                  </button>
+                </motion.div>
               </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
-
-          {/* ── Header ── */}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 16, marginBottom: 28 }}>
-            <div>
-              <motion.h1
-                initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}
-                style={{ margin: 0, fontSize: "clamp(1.8rem,4vw,2.6rem)", fontWeight: 800, color: isDark ? "white" : "#111827", lineHeight: 1.05 }}
+            )}
+          </AnimatePresence>
+  
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "flex-start",
+                flexWrap: "wrap",
+                gap: 16,
+                marginBottom: 28,
+              }}
+            >
+              <div>
+                <motion.h1
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6 }}
+                  style={{
+                    margin: 0,
+                    fontSize: "clamp(1.8rem,4vw,2.6rem)",
+                    fontWeight: 800,
+                    color: isDark ? "white" : "#111827",
+                    lineHeight: 1.05,
+                  }}
+                >
+                  Scrum Master
+                </motion.h1>
+                <p
+                  style={{
+                    margin: "5px 0 0",
+                    fontSize: 14,
+                    color: isDark ? "rgba(255,255,255,0.55)" : "#6b7280",
+                  }}
+                >
+                  Impediments · Ceremonies · Education
+                </p>
+              </div>
+  
+              <div style={{ ...card, padding: "12px 18px", minWidth: 200 }}>
+                <p
+                  style={{
+                    margin: 0,
+                    fontSize: 11,
+                    fontWeight: 700,
+                    letterSpacing: 1.2,
+                    textTransform: "uppercase",
+                    color: isDark ? "rgba(255,255,255,0.38)" : "#9ca3af",
+                  }}
+                >
+                  Active Project
+                </p>
+                <p
+                  style={{
+                    margin: "4px 0 0",
+                    fontSize: 16,
+                    fontWeight: 700,
+                    color: isDark ? "white" : "#111827",
+                  }}
+                >
+                  {activeProject?.name ?? "—"}
+                </p>
+                <p
+                  style={{
+                    margin: "3px 0 0",
+                    fontSize: 12,
+                    color: isDark ? "rgba(255,255,255,0.45)" : "#6b7280",
+                  }}
+                >
+                  {loadingProjects
+                    ? "Loading…"
+                    : projectError
+                    ? projectError
+                    : `${projects.length} project${projects.length === 1 ? "" : "s"}`}
+                </p>
+              </div>
+            </div>
+  
+            {projectId && role && (
+              <div style={{ marginBottom: 28 }}>
+                <p style={sectionLabel}>📅 Calendar</p>
+                <DashboardCalendarPreview
+                  projectId={projectId}
+                  role={role}
+                  title="All Projects Calendar"
+                  subtitle="This week's events. Click to open the full calendar."
+                />
+              </div>
+            )}
+  
+            <p style={sectionLabel}>🔧 Facilitation Workspace</p>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))",
+                gap: 16,
+              }}
+            >
+              <div
+                style={clickCard(communicationPath)}
+                onClick={() => communicationPath && navigate(communicationPath)}
+                onMouseEnter={(e) => onEnter(e, !!communicationPath)}
+                onMouseLeave={onLeave}
               >
-                Scrum Facilitator
-              </motion.h1>
-              <p style={{ margin: "5px 0 0", fontSize: 14, color: isDark ? "rgba(255,255,255,0.55)" : "#6b7280" }}>Impediments · Ceremonies · Education</p>
-            </div>
-            <div style={{ ...card, padding: "12px 18px", minWidth: 200 }}>
-              <p style={{ margin: 0, fontSize: 11, fontWeight: 700, letterSpacing: 1.2, textTransform: "uppercase", color: isDark ? "rgba(255,255,255,0.38)" : "#9ca3af" }}>Active Project</p>
-              <p style={{ margin: "4px 0 0", fontSize: 16, fontWeight: 700, color: isDark ? "white" : "#111827" }}>{activeProject?.name ?? "—"}</p>
-              <p style={{ margin: "3px 0 0", fontSize: 12, color: isDark ? "rgba(255,255,255,0.45)" : "#6b7280" }}>
-                {loadingProjects ? "Loading…" : projectError ? projectError : `${projects.length} project${projects.length === 1 ? "" : "s"}`}
-              </p>
-            </div>
-          </div>
-
-          {/* ── Calendar ── */}
-          {projectId && role && (
-            <div style={{ marginBottom: 28 }}>
-              <p style={sectionLabel}>📅 Calendar</p>
-              <DashboardCalendarPreview
-                projectId={projectId}
-                role={role}
-                title="All Projects Calendar"
-                subtitle="This week's events. Click to open the full calendar."
-              />
-            </div>
-          )}
-
-          {/* ── Cards grid (3 cards: no Retrospective Notes) ── */}
-          <p style={sectionLabel}>🔧 Facilitation Workspace</p>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(290px, 1fr))", gap: 16 }}>
-
-            {/* Impediment Tracker → Communication page */}
-            <div
-              style={clickCard(communicationPath)}
-              onClick={() => communicationPath && navigate(communicationPath)}
-              onMouseEnter={(e) => onEnter(e, !!communicationPath)}
-              onMouseLeave={onLeave}
-            >
-              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8 }}>
-                <div>
-                  <p style={eyebrow}>Blockers</p>
-                  <h2 style={cardTitle}>Impediment Tracker</h2>
-                  <p style={cardDesc}>Track blockers and issues that may slow sprint progress or delivery.</p>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "flex-start",
+                    justifyContent: "space-between",
+                    gap: 8,
+                  }}
+                >
+                  <div>
+                    <p style={eyebrow}>Blockers</p>
+                    <h2 style={cardTitle}>Impediment Tracker</h2>
+                    <p style={cardDesc}>
+                      A smaller live version of the actual Communication page.
+                    </p>
+                  </div>
+                  {communicationPath && arrow}
                 </div>
-                {communicationPath && arrow}
+                {communicationPath && (
+                  <MiniPagePreview
+                    path={communicationPath}
+                    isDark={isDark}
+                    height={320}
+                    scale={0.43}
+                  />
+                )}
               </div>
-              <ImpedimentPreview isDark={isDark} />
-            </div>
-
-            {/* Set a Meeting → Calendar page */}
-            <div
-              style={clickCard(calendarPath)}
-              onClick={() => calendarPath && navigate(calendarPath)}
-              onMouseEnter={(e) => onEnter(e, !!calendarPath)}
-              onMouseLeave={onLeave}
-            >
-              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8 }}>
-                <div>
-                  <p style={eyebrow}>Ceremonies</p>
-                  <h2 style={cardTitle}>Set a Meeting</h2>
-                  <p style={cardDesc}>Schedule ceremonies, syncs, and follow-ups to maintain sprint alignment.</p>
+  
+              <div
+                style={clickCard(calendarPath)}
+                onClick={() => calendarPath && navigate(calendarPath)}
+                onMouseEnter={(e) => onEnter(e, !!calendarPath)}
+                onMouseLeave={onLeave}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "flex-start",
+                    justifyContent: "space-between",
+                    gap: 8,
+                  }}
+                >
+                  <div>
+                    <p style={eyebrow}>Ceremonies</p>
+                    <h2 style={cardTitle}>Set a Meeting</h2>
+                    <p style={cardDesc}>
+                      A smaller live version of the actual Calendar page.
+                    </p>
+                  </div>
+                  {calendarPath && arrow}
                 </div>
-                {calendarPath && arrow}
+                {calendarPath && (
+                  <MiniPagePreview
+                    path={calendarPath}
+                    isDark={isDark}
+                    height={320}
+                    scale={0.43}
+                  />
+                )}
               </div>
-              <MeetingPreview isDark={isDark} />
-            </div>
-
-            {/* Admin Scrum Edu → Education module */}
-            <div
-              style={clickCard(educationPath)}
-              onClick={() => educationPath && navigate(educationPath)}
-              onMouseEnter={(e) => onEnter(e, !!educationPath)}
-              onMouseLeave={onLeave}
-            >
-              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8 }}>
-                <div>
-                  <p style={eyebrow}>Education Admin</p>
-                  <h2 style={cardTitle}>Admin Scrum Edu</h2>
-                  <p style={cardDesc}>Assign learning modules and track team education progress.</p>
+  
+              <div
+                style={clickCard(educationPath)}
+                onClick={() => educationPath && navigate(educationPath)}
+                onMouseEnter={(e) => onEnter(e, !!educationPath)}
+                onMouseLeave={onLeave}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "flex-start",
+                    justifyContent: "space-between",
+                    gap: 8,
+                  }}
+                >
+                  <div>
+                    <p style={eyebrow}>Education Admin</p>
+                    <h2 style={cardTitle}>Admin Scrum Edu</h2>
+                    <p style={cardDesc}>
+                      A smaller live version of the actual Education page.
+                    </p>
+                  </div>
+                  {educationPath && arrow}
                 </div>
-                {educationPath && arrow}
+                {educationPath && (
+                  <MiniPagePreview
+                    path={educationPath}
+                    isDark={isDark}
+                    height={320}
+                    scale={0.43}
+                  />
+                )}
               </div>
-              <ScrumEduAdminPreview isDark={isDark} />
             </div>
-
-          </div>
-
-          {/* ── Empty state ── */}
-          {projects.length === 0 && !loadingProjects && !projectError && (
-            <div style={{ ...card, marginTop: 20, textAlign: "center", padding: 40 }}>
-              <p style={{ fontSize: 30, margin: "0 0 10px" }}>🚀</p>
-              <h3 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: isDark ? "white" : "#111827" }}>No Projects Yet</h3>
-              <p style={{ margin: "8px 0 0", fontSize: 13, color: isDark ? "rgba(255,255,255,0.5)" : "#6b7280" }}>Once a project is created, it will appear here.</p>
-            </div>
-          )}
-
-        </motion.div>
-      </main>
-    </SidebarLayout>
-  );
-}
+  
+            {projects.length === 0 && !loadingProjects && !projectError && (
+              <div style={{ ...card, marginTop: 20, textAlign: "center", padding: 40 }}>
+                <p style={{ fontSize: 30, margin: "0 0 10px" }}>🚀</p>
+                <h3
+                  style={{
+                    margin: 0,
+                    fontSize: 17,
+                    fontWeight: 700,
+                    color: isDark ? "white" : "#111827",
+                  }}
+                >
+                  No Projects Yet
+                </h3>
+                <p
+                  style={{
+                    margin: "8px 0 0",
+                    fontSize: 13,
+                    color: isDark ? "rgba(255,255,255,0.5)" : "#6b7280",
+                  }}
+                >
+                  Once a project is created, it will appear here.
+                </p>
+              </div>
+            )}
+          </motion.div>
+        </main>
+      </SidebarLayout>
+    );
+  }

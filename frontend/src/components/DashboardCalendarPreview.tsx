@@ -559,8 +559,13 @@ function addInterval(
   import type { CSSProperties, JSX } from "react";
   import { useNavigate } from "react-router-dom";
   import { DateTime } from "luxon";
-  import { listProjectEvents, type ProjectEvent, type EventType } from "../api/projectEvents";
+  import {
+    listProjectEvents,
+    type ProjectEvent,
+    type EventType,
+  } from "../api/projectEvents";
   import { listProjects } from "../api/projects";
+  import { useTheme } from "../pages/ThemeContext";
   
   type DashboardCalendarPreviewProps = {
     projectId: string;
@@ -579,6 +584,25 @@ function addInterval(
   
   type CalendarDay = {
     date: Date;
+  };
+  
+  type ThemeStyles = {
+    card: CSSProperties;
+    title: CSSProperties;
+    subtitle: CSSProperties;
+    weekLabel: CSSProperties;
+    timezoneLabel: CSSProperties;
+    weekHeaderCell: CSSProperties;
+    dayCell: CSSProperties;
+    today: CSSProperties;
+    dayName: CSSProperties;
+    dayNumber: CSSProperties;
+    eventCount: CSSProperties;
+    todayPill: CSSProperties;
+    emptyEventSpace: CSSProperties;
+    loading: CSSProperties;
+    scrollbarThumb: string;
+    scrollbarThumbHover: string;
   };
   
   const localTimezone =
@@ -648,20 +672,17 @@ function addInterval(
     },
   };
   
-  const styles: Record<string, CSSProperties> = {
+  const baseStyles: Record<string, CSSProperties> = {
     card: {
       width: "100%",
-      background: "rgba(255,255,255,0.05)",
-      border: "1px solid rgba(255,255,255,0.08)",
       borderRadius: 24,
       padding: 22,
-      boxShadow: "0 18px 44px rgba(0,0,0,0.22)",
-      backdropFilter: "blur(10px)",
-      WebkitBackdropFilter: "blur(10px)",
       cursor: "pointer",
       userSelect: "none",
       overflow: "hidden",
       boxSizing: "border-box",
+      transition:
+        "background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease",
     },
   
     header: {
@@ -684,13 +705,11 @@ function addInterval(
       fontSize: 24,
       fontWeight: 700,
       lineHeight: 1.1,
-      color: "white",
     },
   
     subtitle: {
       margin: 0,
       fontSize: 14,
-      color: "rgba(255,255,255,0.72)",
       lineHeight: 1.5,
     },
   
@@ -705,7 +724,6 @@ function addInterval(
       margin: 0,
       fontSize: 13,
       fontWeight: 700,
-      color: "rgba(255,255,255,0.86)",
       textTransform: "uppercase",
       letterSpacing: 0.7,
     },
@@ -714,7 +732,6 @@ function addInterval(
       margin: 0,
       fontSize: 11,
       fontWeight: 600,
-      color: "rgba(255,255,255,0.54)",
       letterSpacing: 0.3,
     },
   
@@ -729,7 +746,6 @@ function addInterval(
       textAlign: "left",
       fontSize: 12,
       fontWeight: 700,
-      color: "rgba(255,255,255,0.56)",
       padding: "0 8px",
       textTransform: "uppercase",
       letterSpacing: 0.7,
@@ -746,21 +762,13 @@ function addInterval(
       minHeight: 250,
       maxHeight: 250,
       borderRadius: 20,
-      background: "rgba(15,23,42,0.72)",
-      border: "1px solid rgba(255,255,255,0.08)",
       padding: 12,
       display: "flex",
       flexDirection: "column",
       overflow: "hidden",
-      boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03)",
     },
   
-    today: {
-      background: "linear-gradient(180deg, rgba(30,64,175,0.38), rgba(15,23,42,0.82))",
-      border: "1px solid rgba(96,165,250,0.55)",
-      boxShadow:
-        "inset 0 0 0 1px rgba(96,165,250,0.12), 0 8px 20px rgba(37,99,235,0.12)",
-    },
+    today: {},
   
     dayHeader: {
       display: "flex",
@@ -780,7 +788,6 @@ function addInterval(
     dayName: {
       fontSize: 11,
       fontWeight: 700,
-      color: "rgba(255,255,255,0.54)",
       textTransform: "uppercase",
       letterSpacing: 0.7,
       lineHeight: 1,
@@ -790,15 +797,11 @@ function addInterval(
       fontSize: 22,
       fontWeight: 800,
       lineHeight: 1,
-      color: "white",
     },
   
     eventCount: {
       fontSize: 11,
       fontWeight: 700,
-      color: "rgba(255,255,255,0.6)",
-      background: "rgba(255,255,255,0.06)",
-      border: "1px solid rgba(255,255,255,0.08)",
       borderRadius: 999,
       padding: "5px 8px",
       whiteSpace: "nowrap",
@@ -809,9 +812,6 @@ function addInterval(
       fontWeight: 700,
       padding: "4px 7px",
       borderRadius: 999,
-      background: "rgba(96,165,250,0.18)",
-      border: "1px solid rgba(96,165,250,0.3)",
-      color: "white",
       textTransform: "uppercase",
       letterSpacing: 0.5,
       whiteSpace: "nowrap",
@@ -894,16 +894,137 @@ function addInterval(
     emptyEventSpace: {
       marginTop: 2,
       fontSize: 12,
-      color: "rgba(255,255,255,0.34)",
       padding: "10px 4px",
     },
   
     loading: {
       fontSize: 14,
-      color: "rgba(255,255,255,0.72)",
       padding: "8px 2px",
     },
   };
+  
+  function getThemeStyles(isDark: boolean): ThemeStyles {
+    if (isDark) {
+      return {
+        card: {
+          background: "rgba(255,255,255,0.05)",
+          border: "1px solid rgba(255,255,255,0.08)",
+          boxShadow: "0 18px 44px rgba(0,0,0,0.22)",
+          backdropFilter: "blur(10px)",
+          WebkitBackdropFilter: "blur(10px)",
+        },
+        title: {
+          color: "white",
+        },
+        subtitle: {
+          color: "rgba(255,255,255,0.72)",
+        },
+        weekLabel: {
+          color: "rgba(255,255,255,0.86)",
+        },
+        timezoneLabel: {
+          color: "rgba(255,255,255,0.54)",
+        },
+        weekHeaderCell: {
+          color: "rgba(255,255,255,0.56)",
+        },
+        dayCell: {
+          background: "rgba(15,23,42,0.72)",
+          border: "1px solid rgba(255,255,255,0.08)",
+          boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03)",
+        },
+        today: {
+          background:
+            "linear-gradient(180deg, rgba(30,64,175,0.38), rgba(15,23,42,0.82))",
+          border: "1px solid rgba(96,165,250,0.55)",
+          boxShadow:
+            "inset 0 0 0 1px rgba(96,165,250,0.12), 0 8px 20px rgba(37,99,235,0.12)",
+        },
+        dayName: {
+          color: "rgba(255,255,255,0.54)",
+        },
+        dayNumber: {
+          color: "white",
+        },
+        eventCount: {
+          color: "rgba(255,255,255,0.6)",
+          background: "rgba(255,255,255,0.06)",
+          border: "1px solid rgba(255,255,255,0.08)",
+        },
+        todayPill: {
+          background: "rgba(96,165,250,0.18)",
+          border: "1px solid rgba(96,165,250,0.3)",
+          color: "white",
+        },
+        emptyEventSpace: {
+          color: "rgba(255,255,255,0.34)",
+        },
+        loading: {
+          color: "rgba(255,255,255,0.72)",
+        },
+        scrollbarThumb: "rgba(255,255,255,0.18)",
+        scrollbarThumbHover: "rgba(255,255,255,0.28)",
+      };
+    }
+  
+    return {
+      card: {
+        background: "#ffffff",
+        border: "1px solid #e5e7eb",
+        boxShadow: "0 12px 30px rgba(15,23,42,0.08)",
+      },
+      title: {
+        color: "#111827",
+      },
+      subtitle: {
+        color: "#6b7280",
+      },
+      weekLabel: {
+        color: "#374151",
+      },
+      timezoneLabel: {
+        color: "#6b7280",
+      },
+      weekHeaderCell: {
+        color: "#6b7280",
+      },
+      dayCell: {
+        background: "#f8fafc",
+        border: "1px solid #e5e7eb",
+        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.9)",
+      },
+      today: {
+        background: "linear-gradient(180deg, #eff6ff, #dbeafe)",
+        border: "1px solid #93c5fd",
+        boxShadow:
+          "inset 0 0 0 1px rgba(147,197,253,0.3), 0 8px 20px rgba(59,130,246,0.08)",
+      },
+      dayName: {
+        color: "#6b7280",
+      },
+      dayNumber: {
+        color: "#111827",
+      },
+      eventCount: {
+        color: "#4b5563",
+        background: "#ffffff",
+        border: "1px solid #e5e7eb",
+      },
+      todayPill: {
+        background: "#dbeafe",
+        border: "1px solid #93c5fd",
+        color: "#1d4ed8",
+      },
+      emptyEventSpace: {
+        color: "#9ca3af",
+      },
+      loading: {
+        color: "#4b5563",
+      },
+      scrollbarThumb: "rgba(100,116,139,0.35)",
+      scrollbarThumbHover: "rgba(100,116,139,0.55)",
+    };
+  }
   
   export default function DashboardCalendarPreview({
     projectId,
@@ -912,11 +1033,16 @@ function addInterval(
     subtitle = "This week across all projects. Scroll inside a day to view all events.",
   }: DashboardCalendarPreviewProps): JSX.Element {
     const navigate = useNavigate();
+    const { theme } = useTheme();
+    const isDark = theme === "dark";
+  
     const [events, setEvents] = useState<EventOccurrence[]>([]);
     const [loading, setLoading] = useState(true);
   
     const currentWeekStart = useMemo(() => startOfWeek(new Date()), []);
     const currentWeekEnd = useMemo(() => endOfWeek(new Date()), []);
+  
+    const themeStyles = useMemo(() => getThemeStyles(isDark), [isDark]);
   
     useEffect(() => {
       const load = async () => {
@@ -951,8 +1077,7 @@ function addInterval(
             })
           );
   
-          const merged = results.flat();
-          setEvents(merged);
+          setEvents(results.flat());
         } catch {
           setEvents([]);
         } finally {
@@ -960,7 +1085,7 @@ function addInterval(
         }
       };
   
-      load();
+      void load();
     }, [currentWeekStart, currentWeekEnd]);
   
     const weekDays = useMemo(
@@ -998,7 +1123,10 @@ function addInterval(
   
     return (
       <div
-        style={styles.card}
+        style={{
+          ...baseStyles.card,
+          ...themeStyles.card,
+        }}
         onClick={openCalendar}
         title="Open full calendar"
         role="button"
@@ -1020,44 +1148,59 @@ function addInterval(
           }
   
           .dashboard-week-scroll::-webkit-scrollbar-thumb {
-            background: rgba(255,255,255,0.18);
+            background: ${themeStyles.scrollbarThumb};
             border-radius: 999px;
           }
   
           .dashboard-week-scroll::-webkit-scrollbar-thumb:hover {
-            background: rgba(255,255,255,0.28);
+            background: ${themeStyles.scrollbarThumbHover};
           }
         `}</style>
   
-        <div style={styles.header}>
-          <div style={styles.titleWrap}>
-            <h2 style={styles.title}>{title}</h2>
-            <p style={styles.subtitle}>{subtitle}</p>
+        <div style={baseStyles.header}>
+          <div style={baseStyles.titleWrap}>
+            <h2 style={{ ...baseStyles.title, ...themeStyles.title }}>{title}</h2>
+            <p style={{ ...baseStyles.subtitle, ...themeStyles.subtitle }}>
+              {subtitle}
+            </p>
           </div>
   
-          <div style={styles.weekLabelWrap}>
-            <p style={styles.weekLabel}>
+          <div style={baseStyles.weekLabelWrap}>
+            <p style={{ ...baseStyles.weekLabel, ...themeStyles.weekLabel }}>
               {formatWeekRange(currentWeekStart, currentWeekEnd)}
             </p>
-            <p style={styles.timezoneLabel}>
+            <p
+              style={{
+                ...baseStyles.timezoneLabel,
+                ...themeStyles.timezoneLabel,
+              }}
+            >
               Displayed in {localTimezone} ({timezoneShort})
             </p>
           </div>
         </div>
   
         {loading ? (
-          <div style={styles.loading}>Loading week view...</div>
+          <div style={{ ...baseStyles.loading, ...themeStyles.loading }}>
+            Loading week view...
+          </div>
         ) : (
           <>
-            <div style={styles.weekHeader}>
+            <div style={baseStyles.weekHeader}>
               {weekdayLabels.map((label) => (
-                <div key={label} style={styles.weekHeaderCell}>
+                <div
+                  key={label}
+                  style={{
+                    ...baseStyles.weekHeaderCell,
+                    ...themeStyles.weekHeaderCell,
+                  }}
+                >
                   {label}
                 </div>
               ))}
             </div>
   
-            <div style={styles.grid}>
+            <div style={baseStyles.grid}>
               {weekDays.map((day) => {
                 const key = formatLocalDateKey(day.date);
                 const dayEvents = eventsByDate.get(key) ?? [];
@@ -1067,18 +1210,26 @@ function addInterval(
                   <div
                     key={key}
                     style={{
-                      ...styles.dayCell,
-                      ...(today ? styles.today : null),
+                      ...baseStyles.dayCell,
+                      ...themeStyles.dayCell,
+                      ...(today ? themeStyles.today : {}),
                     }}
                   >
-                    <div style={styles.dayHeader}>
-                      <div style={styles.dayNameWrap}>
-                        <div style={styles.dayName}>
+                    <div style={baseStyles.dayHeader}>
+                      <div style={baseStyles.dayNameWrap}>
+                        <div style={{ ...baseStyles.dayName, ...themeStyles.dayName }}>
                           {day.date.toLocaleDateString(undefined, {
                             weekday: "short",
                           })}
                         </div>
-                        <div style={styles.dayNumber}>{day.date.getDate()}</div>
+                        <div
+                          style={{
+                            ...baseStyles.dayNumber,
+                            ...themeStyles.dayNumber,
+                          }}
+                        >
+                          {day.date.getDate()}
+                        </div>
                       </div>
   
                       <div
@@ -1089,8 +1240,22 @@ function addInterval(
                           gap: 6,
                         }}
                       >
-                        {today && <div style={styles.todayPill}>Today</div>}
-                        <div style={styles.eventCount}>
+                        {today && (
+                          <div
+                            style={{
+                              ...baseStyles.todayPill,
+                              ...themeStyles.todayPill,
+                            }}
+                          >
+                            Today
+                          </div>
+                        )}
+                        <div
+                          style={{
+                            ...baseStyles.eventCount,
+                            ...themeStyles.eventCount,
+                          }}
+                        >
                           {dayEvents.length} event{dayEvents.length === 1 ? "" : "s"}
                         </div>
                       </div>
@@ -1098,12 +1263,19 @@ function addInterval(
   
                     <div
                       className="dashboard-week-scroll"
-                      style={styles.eventsList}
+                      style={baseStyles.eventsList}
                       onClick={(e) => e.stopPropagation()}
                       onWheel={(e) => e.stopPropagation()}
                     >
                       {dayEvents.length === 0 ? (
-                        <div style={styles.emptyEventSpace}>No events</div>
+                        <div
+                          style={{
+                            ...baseStyles.emptyEventSpace,
+                            ...themeStyles.emptyEventSpace,
+                          }}
+                        >
+                          No events
+                        </div>
                       ) : (
                         dayEvents.map((occurrence) => {
                           const zone =
@@ -1115,33 +1287,33 @@ function addInterval(
                             <div
                               key={occurrence.instanceId}
                               style={{
-                                ...styles.eventItem,
+                                ...baseStyles.eventItem,
                                 background: colors.bg,
                                 border: `1px solid ${colors.border}`,
                                 color: colors.text,
                               }}
                             >
-                              <div style={styles.eventTop}>
+                              <div style={baseStyles.eventTop}>
                                 <span
                                   style={{
-                                    ...styles.dot,
+                                    ...baseStyles.dot,
                                     background: colors.dot,
                                   }}
                                 />
-                                <span style={styles.eventType}>{colors.label}</span>
+                                <span style={baseStyles.eventType}>{colors.label}</span>
                               </div>
   
-                              <div style={styles.eventName}>
+                              <div style={baseStyles.eventName}>
                                 {occurrence.sourceEvent.title || "Untitled event"}
                               </div>
   
                               {occurrence.projectName ? (
-                                <div style={styles.projectName}>
+                                <div style={baseStyles.projectName}>
                                   {occurrence.projectName}
                                 </div>
                               ) : null}
   
-                              <div style={styles.eventTime}>
+                              <div style={baseStyles.eventTime}>
                                 {formatEventTime(
                                   occurrence.occurrenceStart,
                                   occurrence.occurrenceEnd,

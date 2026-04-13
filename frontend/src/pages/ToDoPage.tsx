@@ -504,7 +504,7 @@ const confirmDeleteButtonStyle: CSSProperties = {
   color: "white",
   cursor: "pointer"
 }; */
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import type { JSX, CSSProperties } from "react";
 import {
@@ -605,6 +605,9 @@ export default function ToDoPage(): JSX.Element {
   const [taskToDelete, setTaskToDelete] = useState<PendingDelete | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
   const [activeTask, setActiveTask] = useState<Task | null>(null);
+
+  const dragStartBoardRef = useRef<Board | null>(null);
+  const dragStartColumnRef = useRef<keyof Board | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -745,6 +748,9 @@ export default function ToDoPage(): JSX.Element {
     const column = findTaskColumn(board, taskId);
     if (!column) return;
 
+    dragStartBoardRef.current = cloneBoard(board);
+    dragStartColumnRef.current = column;
+
     const task = board[column].find((t) => String(t.id) === taskId) || null;
     setActiveTask(task);
   }
@@ -795,26 +801,38 @@ export default function ToDoPage(): JSX.Element {
     const { active, over } = event;
     setActiveTask(null);
 
+    const originalBoard = dragStartBoardRef.current
+      ? cloneBoard(dragStartBoardRef.current)
+      : cloneBoard(board);
+
+    const originalColumn = dragStartColumnRef.current;
+
+    dragStartBoardRef.current = null;
+    dragStartColumnRef.current = null;
+
     if (!over) return;
 
     const activeId = String(active.id);
     const overId = String(over.id);
 
-    const activeColumn = findTaskColumn(board, activeId);
+    const activeColumn = originalColumn ?? findTaskColumn(originalBoard, activeId);
     if (!activeColumn) return;
 
     const overColumn = isColumnId(overId) ? overId : findTaskColumn(board, overId);
     if (!overColumn) return;
 
-    const nextBoard = cloneBoard(board);
+    const nextBoard = cloneBoard(originalBoard);
 
     if (activeColumn === overColumn) {
       const oldIndex = getTaskIndex(nextBoard, activeColumn, activeId);
       const newIndex = isColumnId(overId)
         ? nextBoard[activeColumn].length - 1
-        : getTaskIndex(nextBoard, activeColumn, overId);
+        : getTaskIndex(board, overColumn, overId);
 
-      if (oldIndex < 0 || newIndex < 0 || oldIndex === newIndex) return;
+      if (oldIndex < 0 || newIndex < 0 || oldIndex === newIndex) {
+        setBoard(board);
+        return;
+      }
 
       nextBoard[activeColumn] = normalizePositions(
         arrayMove(nextBoard[activeColumn], oldIndex, newIndex)
@@ -833,12 +851,17 @@ export default function ToDoPage(): JSX.Element {
 
     const [movedTask] = sourceItems.splice(sourceIndex, 1);
 
-    const targetIndex = isColumnId(overId)
-      ? targetItems.length
-      : Math.max(
-          0,
-          targetItems.findIndex((task) => String(task.id) === overId)
-        );
+    const previewTargetItems = board[overColumn];
+    const previewIndex = previewTargetItems.findIndex((task) => String(task.id) === activeId);
+
+    const targetIndex = previewIndex >= 0
+      ? previewIndex
+      : isColumnId(overId)
+        ? targetItems.length
+        : Math.max(
+            0,
+            targetItems.findIndex((task) => String(task.id) === overId)
+          );
 
     targetItems.splice(targetIndex, 0, { ...movedTask, status: overColumn });
 

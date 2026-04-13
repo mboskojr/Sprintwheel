@@ -375,19 +375,21 @@ export default function ProductBacklogPage(): JSX.Element {
               <div style={verticalStepperButtonsStyle}>
                 <button
                   type="button"
+                  aria-label="Increase points"
                   style={verticalArrowButtonStyle}
                   onClick={() => setNewPoints((prev) => nextFib(prev))}
                   disabled={newPoints === FIBONACCI_POINTS[FIBONACCI_POINTS.length - 1]}
                 >
-                  ▲
+                  <span style={stepperArrowIconStyle}>&#9650;</span>
                 </button>
                 <button
                   type="button"
+                  aria-label="Decrease points"
                   style={verticalArrowButtonStyle}
                   onClick={() => setNewPoints((prev) => prevFib(prev))}
                   disabled={newPoints === FIBONACCI_POINTS[0]}
                 >
-                  ▼
+                  <span style={stepperArrowIconStyle}>&#9660;</span>
                 </button>
               </div>
             </div>
@@ -575,6 +577,7 @@ export default function ProductBacklogPage(): JSX.Element {
                           <div style={verticalStepperButtonsStyle}>
                             <button
                               type="button"
+                              aria-label="Increase story points"
                               style={verticalArrowButtonStyle}
                               onClick={() => void changePoints(story.id, "up")}
                               disabled={
@@ -582,17 +585,18 @@ export default function ProductBacklogPage(): JSX.Element {
                                 storyPoints === FIBONACCI_POINTS[FIBONACCI_POINTS.length - 1]
                               }
                             >
-                              ▲
+                              <span style={stepperArrowIconStyle}>&#9650;</span>
                             </button>
                             <button
                               type="button"
+                              aria-label="Decrease story points"
                               style={verticalArrowButtonStyle}
                               onClick={() => void changePoints(story.id, "down")}
                               disabled={
                                 isSavingPoints || storyPoints === FIBONACCI_POINTS[0]
                               }
                             >
-                              ▼
+                              <span style={stepperArrowIconStyle}>&#9660;</span>
                             </button>
                           </div>
                         </div>
@@ -605,12 +609,12 @@ export default function ProductBacklogPage(): JSX.Element {
                         }}
                       >
                         <label style={doneCheckboxWrapperStyle}>
-                            <input
-                                style={checkboxStyle}
-                                type="checkbox"
-                                checked={story.isDone}
-                                onChange={(e) => void toggleDone(story.id, e.target.checked)}
-                            />
+                          <input
+                            style={checkboxStyle}
+                            type="checkbox"
+                            checked={story.isDone}
+                            onChange={(e) => void toggleDone(story.id, e.target.checked)}
+                          />
                         </label>
                       </td>
 
@@ -622,6 +626,8 @@ export default function ProductBacklogPage(): JSX.Element {
                       >
                         <div style={reorderButtonGroupStyle}>
                           <button
+                            type="button"
+                            aria-label="Move story up"
                             style={{
                               ...secondaryButtonStyle,
                               background: "#ffffff",
@@ -630,9 +636,11 @@ export default function ProductBacklogPage(): JSX.Element {
                             disabled={index === 0}
                             onClick={() => moveStory(index, "up")}
                           >
-                            ↑
+                            <span style={arrowIconStyle}>&uarr;</span>
                           </button>
                           <button
+                            type="button"
+                            aria-label="Move story down"
                             style={{
                               ...secondaryButtonStyle,
                               background: "#ffffff",
@@ -641,7 +649,7 @@ export default function ProductBacklogPage(): JSX.Element {
                             disabled={index === stories.length - 1}
                             onClick={() => moveStory(index, "down")}
                           >
-                            ↓
+                            <span style={arrowIconStyle}>&darr;</span>
                           </button>
                         </div>
                       </td>
@@ -937,6 +945,24 @@ const verticalArrowButtonStyle: CSSProperties = {
   fontSize: "12px",
   fontWeight: 700,
   lineHeight: 1,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  padding: 0,
+  appearance: "none",
+  WebkitAppearance: "none",
+};
+
+const stepperArrowIconStyle: CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  width: "100%",
+  height: "100%",
+  fontSize: "11px",
+  fontWeight: 800,
+  lineHeight: 1,
+  color: "#111827",
 };
 
 const doneCheckboxWrapperStyle: CSSProperties = {
@@ -960,13 +986,34 @@ const reorderButtonGroupStyle: CSSProperties = {
 };
 
 const secondaryButtonStyle: CSSProperties = {
-  padding: "10px 14px",
+  width: "42px",
+  height: "42px",
+  padding: 0,
   borderRadius: "10px",
   border: "1px solid #d1d5db",
   background: "white",
   cursor: "pointer",
   fontSize: "22px",
   fontWeight: 700,
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  lineHeight: 1,
+  color: "#111827",
+  appearance: "none",
+  WebkitAppearance: "none",
+};
+
+const arrowIconStyle: CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  width: "18px",
+  height: "18px",
+  fontSize: "22px",
+  fontWeight: 800,
+  lineHeight: 1,
+  color: "#111827",
 };
 
 const disabledButtonStyle: CSSProperties = {
