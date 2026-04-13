@@ -51,6 +51,10 @@ class JoinProjectIn(BaseModel):
     role: ProjectRole
 
 
+class total_points(BaseModel):
+    total_project_points: int
+
+
 class ProjectMembershipOut(BaseModel):
     project_id: UUID
     role: ProjectRole

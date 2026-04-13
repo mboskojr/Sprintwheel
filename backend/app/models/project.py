@@ -19,6 +19,7 @@ class Project(Base):
     status = Column(String, nullable=False, default="active")
     archived_at = Column(DateTime(timezone=True), nullable=True)
     delete_after = Column(DateTime(timezone=True), nullable=True)
+    total_project_points = Column(Integer, nullable=False, default=0)
 
     stories = relationship(
         "Story",

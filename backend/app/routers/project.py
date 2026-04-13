@@ -20,7 +20,7 @@ from app.schemas.project import (
     UpdateRoleIn,
     UpdateRoleOut,
     TransferOwnershipIn,
-    TransferOwnershipOut, AssignModulesOut, AssignModulesIn,
+    TransferOwnershipOut, AssignModulesOut, AssignModulesIn, total_points,
 )
 from app.models.task import Task
 from app.models.story import Story
@@ -259,6 +259,25 @@ def update_project_velocity(
     return project
 
 
+@router.patch("/{project_id}/total_points", response_model=total_points)
+def update_total_points(
+    project_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    _, project = require_active_project_member(db, project_id, current_user.id)
+
+    tot_velocity = (
+        db.query(func.coalesce(func.sum(Sprint.sprint_velocity), 0.0))
+        .filter(Sprint.project_id == project_id)
+        .scalar()
+    )
+
+    project.total_project_points = tot_velocity
+    db.commit()
+    db.refresh(project)
+    return project
+
 @router.delete("/{project_id}")
 def delete_project(
     project_id: UUID,
@@ -352,11 +371,23 @@ def update_role(
 ):
     membership, _ = require_active_project_member(db, project_id, current_user.id)
 
-    '''if data.role.value == "Product Owner":
-        raise HTTPException(
-            status_code=400,
-            detail="Use the ownership transfer endpoint to assign Product Owner.",
-        )'''
+    if data.role.value == "Product Owner":
+        existing_product_owner = (
+            db.query(ProjectMember)
+            .filter(
+                ProjectMember.project_id == project_id,
+                ProjectMember.is_active == True,
+                ProjectMember.role == "Product Owner",
+                ProjectMember.user_id != current_user.id,
+            )
+            .first()
+        )
+
+        if existing_product_owner:
+            raise HTTPException(
+                status_code=400,
+                detail="This project already has a Product Owner.",
+            )
     
     if data.role.value == "Scrum Facilitator":
         existing_scrum_master = (
