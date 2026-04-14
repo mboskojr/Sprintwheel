@@ -24,5 +24,6 @@ class Story(Base):
     isDone = Column(Boolean, default=False)
     priority = Column(Integer, default=10)
     date_completed = Column(Date, nullable=True)
+    date_added = Column(Date, nullable=True)
 
     project = relationship("Project", back_populates="stories")

@@ -187,20 +187,32 @@ def get_sprint_burndown(
     sprint_days = (sprint.end_date - sprint.start_date).days + 1
     final_array = [None] * sprint_days
     today = date.today()
+    index_day = sprint.start_date
+
 
     remaining_points = (
         db.query(func.coalesce(func.sum(Story.points), 0))
-        .filter(Story.sprint_id == sprint_id)
+        .filter(
+            Story.sprint_id == sprint_id,
+            Story.date_added < index_day,
+        )
         .scalar()
     )
+
     remaining_points = int(remaining_points)
-
-    index_day = sprint.start_date
-
     for day in range(sprint_days):
         if index_day > today:
             break
-
+        added_points = (
+            db.query(func.coalesce(func.sum(Story.points), 0))
+            .filter(
+                Story.sprint_id == sprint_id,
+                Story.date_added == index_day,
+            )
+            .scalar()
+        )
+        remaining_points += added_points
+        
         points_completed_that_day = (
             db.query(func.coalesce(func.sum(Story.points), 0))
             .filter(

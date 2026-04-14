@@ -53,6 +53,7 @@ def create_story(
         points=data.points,
         isDone=False,
         priority=data.priority,
+        date_added=date.today(),
     )
     db.add(story)
     db.commit()

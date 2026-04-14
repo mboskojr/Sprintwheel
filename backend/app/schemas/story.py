@@ -36,6 +36,7 @@ class StoryOut(BaseModel):
     isDone: bool
     priority: int
     date_completed: date | None = None
+    date_added: date | None = None
 
     class Config:
         from_attributes = True
