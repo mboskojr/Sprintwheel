@@ -17,6 +17,7 @@ from app.schemas.project import (
     ProjectOut,
     ProjectListItemOut,
     JoinProjectIn,
+    JoinProjectByCodeIn,
     UpdateRoleIn,
     UpdateRoleOut,
     TransferOwnershipIn,
@@ -26,8 +27,31 @@ from app.models.task import Task
 from app.models.story import Story
 from app.services.notification_service import notify_added_to_project, notify_project_created
 from app.services.project_cleanup import delete_expired_projects
+import random
+import re
+import string
+
 
 router = APIRouter(prefix="/projects", tags=["projects"])
+
+
+def normalize_join_code(code: str) -> str:
+    code = code.strip().lower()
+    code = re.sub(r"[^a-z0-9\-]", "", code)
+    return code
+
+
+def generate_join_code(length: int = 8) -> str:
+    chars = string.ascii_lowercase + string.digits
+    return "".join(random.choices(chars, k=length))
+
+
+def generate_unique_join_code(db: Session) -> str:
+    while True:
+        code = generate_join_code()
+        existing = db.query(Project).filter(Project.join_code == code).first()
+        if not existing:
+            return code
 
 
 @router.post("", response_model=ProjectOut)
@@ -39,6 +63,7 @@ def create_project(
     project = Project(
         name=data.name,
         sprint_duration=data.sprint_duration,
+        join_code=generate_unique_join_code(db),
     )
     db.add(project)
     db.flush()
@@ -65,6 +90,70 @@ def create_project(
     return project
 
 
+@router.post("/join-by-code")
+def join_project_by_code(
+    data: JoinProjectByCodeIn,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    normalized_code = normalize_join_code(data.join_code)
+
+    if not normalized_code:
+        raise HTTPException(status_code=400, detail="Invalid join code")
+
+    project = (
+        db.query(Project)
+        .filter(Project.join_code == normalized_code)
+        .first()
+    )
+
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    existing = (
+        db.query(ProjectMember)
+        .filter(
+            ProjectMember.project_id == project.id,
+            ProjectMember.user_id == current_user.id,
+        )
+        .first()
+    )
+
+    if existing and existing.is_active:
+        raise HTTPException(status_code=400, detail="Already joined this project")
+
+    if existing and not existing.is_active:
+        existing.is_active = True
+        existing.left_at = None
+        existing.role = data.role.value
+        db.flush()
+    else:
+        db.add(
+            ProjectMember(
+                project_id=project.id,
+                user_id=current_user.id,
+                role=data.role.value,
+                is_active=True,
+            )
+        )
+
+    if project.status == "archived":
+        project.status = "active"
+        project.archived_at = None
+        project.delete_after = None
+
+    notify_added_to_project(db, current_user.id, project.name, data.role.value)
+
+    db.commit()
+
+    return {
+        "status": "ok",
+        "project_id": project.id,
+        "join_code": project.join_code,
+        "role": data.role,
+    }
+
+
 @router.get("", response_model=list[ProjectListItemOut])
 def list_projects(
     db: Session = Depends(get_db),
@@ -84,6 +173,7 @@ def list_projects(
     ProjectListItemOut(
         id=project.id,
         name=project.name,
+        join_code=project.join_code,
         sprint_duration=project.sprint_duration,
         project_velocity=project.project_velocity,
         role=role,

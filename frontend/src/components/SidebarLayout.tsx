@@ -379,6 +379,9 @@ export default function SidebarLayout({ children }: { children: ReactNode }): JS
   const [user, setUser] = useState<StoredUser | null>(null);
   const [profileOpen, setProfileOpen] = useState(false);
   const [leaving, setLeaving] = useState(false);
+  const [joinCode, setJoinCode] = useState("");
+  const [joinError, setJoinError] = useState("");
+  const [joining, setJoining] = useState(false);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -410,10 +413,14 @@ export default function SidebarLayout({ children }: { children: ReactNode }): JS
   const userId = user?.id?.trim() || "No ID found";
   const avatarLetter = userName.charAt(0).toUpperCase() || "U";
 
-  async function handleCopyProjectId() {
+  async function handleCopyJoinCode() {
     if (!projectId) return;
+
+    const currentProject = projects.find((p) => p.id === projectId);
+    const codeToCopy = currentProject?.join_code || projectId;
+
     try {
-      await navigator.clipboard.writeText(projectId);
+      await navigator.clipboard.writeText(codeToCopy);
       setCopyStatus("Copied!");
       window.setTimeout(() => setCopyStatus(""), 1500);
     } catch {
@@ -430,6 +437,45 @@ export default function SidebarLayout({ children }: { children: ReactNode }): JS
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     navigate("/login");
+  }
+
+  async function handleJoinByCode() {
+    if (!joinCode.trim()) return;
+
+    try {
+      setJoining(true);
+      setJoinError("");
+
+      const token = localStorage.getItem("token");
+
+      const res = await fetch("http://127.0.0.1:8000/projects/join-by-code", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          join_code: joinCode,
+          role: "Developer",
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.detail || "Failed to join project");
+      }
+
+      const updatedProjects = await listProjects();
+      setProjects(updatedProjects);
+
+      setJoinCode("");
+      navigate(getLandingPathForRole(data.project_id, "developer"));
+    } catch (err: any) {
+      setJoinError(err.message || "Failed to join project");
+    } finally {
+      setJoining(false);
+    }
   }
 
   async function handleLeaveProject() {
@@ -634,6 +680,72 @@ export default function SidebarLayout({ children }: { children: ReactNode }): JS
               ➕ New Project
             </button>
 
+            {!collapsed && (
+              <div
+                style={{
+                  ...styles.selectorBox,
+                  background: "transparent",
+                  border: "none",
+                  padding: 0,
+                  gap: 6,
+                }}
+              >
+                <div
+                  style={{
+                    ...styles.selectorHeader,
+                    color: colors.mutedText,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                  }}
+                >
+                  🔗 Join Project
+                </div>
+
+                <div style={{ display: "flex", gap: 8 }}>
+                  <input
+                    placeholder="Enter code"
+                    value={joinCode}
+                    onChange={(e) => setJoinCode(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleJoinByCode();
+                    }}
+                    style={{
+                      ...styles.select,
+                      flex: 1,
+                      background: colors.selectBg,
+                      border: `1px solid ${colors.borderStrong}`,
+                      color: colors.text,
+                    }}
+                  />
+
+                  <button
+                    type="button"
+                    onClick={handleJoinByCode}
+                    disabled={joining}
+                    style={{
+                      borderRadius: 10,
+                      padding: "10px 14px",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      background: "#22c55e",
+                      color: "white",
+                      opacity: joining ? 0.7 : 1,
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    Join
+                  </button>
+                </div>
+
+                {joinError && (
+                  <div style={{ color: "#ef4444", fontSize: 12 }}>
+                    {joinError}
+                  </div>
+                )}
+              </div>
+            )}
+
             {projectId && (
               <button
                 type="button"
@@ -679,7 +791,7 @@ export default function SidebarLayout({ children }: { children: ReactNode }): JS
             {!collapsed && projectId && (
               <button
                 type="button"
-                onClick={handleCopyProjectId}
+                onClick={handleCopyJoinCode}
                 title="Click to copy project ID"
                 style={{
                   ...styles.projectBox,
@@ -688,8 +800,10 @@ export default function SidebarLayout({ children }: { children: ReactNode }): JS
                   color: colors.text,
                 }}
               >
-                <div style={styles.projectIdTitle}>Current Project ID</div>
-                <div>{projectId}</div>
+                <div style={styles.projectIdTitle}>Project Join Code</div>
+                <div>
+                  {projects.find(p => p.id === projectId)?.join_code || projectId}
+                </div>
                 <div
                   style={{
                     ...styles.copyHint,

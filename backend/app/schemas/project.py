@@ -29,6 +29,7 @@ class ProjectOut(BaseModel):
 
     id: UUID
     name: str
+    join_code: Optional[str] = None
     sprint_duration: int
     project_velocity: float
     status: str
@@ -39,6 +40,7 @@ class ProjectOut(BaseModel):
 class ProjectListItemOut(BaseModel):
     id: UUID
     name: str
+    join_code: Optional[str] = None
     sprint_duration: int
     project_velocity: float
     role: ProjectRole
@@ -48,6 +50,10 @@ class ProjectListItemOut(BaseModel):
 
 
 class JoinProjectIn(BaseModel):
+    role: ProjectRole
+
+class JoinProjectByCodeIn(BaseModel):
+    join_code: str = Field(min_length=3, max_length=25)
     role: ProjectRole
 
 

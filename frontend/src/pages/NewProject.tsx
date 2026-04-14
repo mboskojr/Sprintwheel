@@ -2,7 +2,7 @@
 import { motion } from "framer-motion";
 import React, { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { createProject, joinProject, listProjects } from "../api/projects";
+import { createProject, joinProjectByCode, listProjects } from "../api/projects";
 import type { Project } from "../api/projects";
 import { useTheme } from "../pages/ThemeContext";
 
@@ -167,7 +167,7 @@ export default function NewProject(): React.JSX.Element {
   const [createStatus, setCreateStatus] = useState<Status>("idle");
   const [createMsg, setCreateMsg] = useState("");
 
-  const [joinProjectId, setJoinProjectId] = useState("");
+  const [joinCode, setJoinCode] = useState("");
   const [joinStatus, setJoinStatus] = useState<Status>("idle");
   const [joinMsg, setJoinMsg] = useState("");
 
@@ -236,11 +236,11 @@ export default function NewProject(): React.JSX.Element {
   async function handleJoinProject() {
     if (isBusy) return;
 
-    const id = joinProjectId.trim();
+    const code = joinCode.trim();
 
-    if (!id) {
+    if (!code) {
       setJoinStatus("error");
-      setJoinMsg("Please enter a Project ID.");
+      setJoinMsg("Please enter a Join Code.");
       return;
     }
 
@@ -250,19 +250,22 @@ export default function NewProject(): React.JSX.Element {
     setCreateMsg("");
 
     try {
-      await joinProject(id, { role: "Developer" });
+      const joined = await joinProjectByCode({
+        join_code: code,
+        role: "Developer",
+      });
 
       setJoinStatus("success");
       setJoinMsg('Joined project as "Developer". Redirecting...');
-      navigate(`/projects/${id}/role-options`, { replace: true });
+      navigate(`/projects/${joined.project_id}/role-options`, { replace: true });
     } catch (err: any) {
       const message = String(err?.message || "");
       const lower = message.toLowerCase();
       const status = err?.status;
 
-      if (status === 404 || lower.includes("not found")) {
+      if (status === 404 || lower.includes("not found") || lower.includes("invalid")) {
         setJoinStatus("error");
-        setJoinMsg("Project ID is invalid or not found.");
+        setJoinMsg("Join Code is invalid or not found.");
         return;
       }
 
@@ -336,7 +339,7 @@ export default function NewProject(): React.JSX.Element {
               color: isDark ? "rgba(255,255,255,0.82)" : "#6b7280",
             }}
           >
-            Create a new project, or join an existing one with its Project ID.
+            Create a new project, or join an existing one with a Join Code.
           </p>
         </div>
 
@@ -538,7 +541,7 @@ export default function NewProject(): React.JSX.Element {
                       color: isDark ? "rgba(255,255,255,0.8)" : "#6b7280",
                     }}
                   >
-                    Enter a Project ID to join an existing project.
+                    Enter a Join Code to join an existing project.
                   </p>
                 </div>
               </div>
@@ -546,13 +549,13 @@ export default function NewProject(): React.JSX.Element {
 
             <div style={styles.formRow}>
               <div style={styles.fieldGroup}>
-                <label style={styles.label} htmlFor="join-project-id">
-                  Project ID
+                <label style={styles.label} htmlFor="join-code">
+                  Join Code
                 </label>
 
                 <div style={styles.inlineRow}>
                   <input
-                    id="join-project-id"
+                    id="join-code"
                     style={{
                       ...styles.input,
                       background: isDark ? "rgba(255,255,255,0.08)" : "#ffffff",
@@ -562,8 +565,8 @@ export default function NewProject(): React.JSX.Element {
                       color: isDark ? "white" : "#111827",
                       ...(joinInputError ? styles.inputError : {}),
                     }}
-                    value={joinProjectId}
-                    onChange={(e) => setJoinProjectId(e.target.value)}
+                    value={joinCode}
+                    onChange={(e) => setJoinCode(e.target.value)}
                     onKeyDown={onJoinKeyDown}
                     disabled={isBusy}
                   />
@@ -584,7 +587,7 @@ export default function NewProject(): React.JSX.Element {
                     whileHover={isBusy ? undefined : { y: -2 }}
                     whileTap={isBusy ? undefined : { scale: 0.98 }}
                   >
-                    {joinStatus === "loading" ? "Joining..." : "Enter"}
+                    {joinStatus === "loading" ? "Joining..." : "Join Project"}
                   </motion.button>
                 </div>
               </div>

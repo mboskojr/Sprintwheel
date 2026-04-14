@@ -8,6 +8,7 @@ export type ProjectRole =
 export type Project = {
   id: string;
   name: string;
+  join_code: string;
   sprint_duration: number;
   project_velocity: number;
   role: ProjectRole;
@@ -29,6 +30,11 @@ export type ProjectMembership = {
 };
 
 export type JoinProjectInput = {
+  role: ProjectRole;
+};
+
+export type JoinProjectByCodeInput = {
+  join_code: string;
   role: ProjectRole;
 };
 
@@ -92,6 +98,18 @@ export function joinProject(projectId: string, data: JoinProjectInput) {
     project_id: string;
     role: ProjectRole;
   }>(`/projects/${projectId}/join`, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export function joinProjectByCode(data: JoinProjectByCodeInput) {
+  return api<{
+    status: string;
+    project_id: string;
+    join_code: string;
+    role: ProjectRole;
+  }>("/projects/join-by-code", {
     method: "POST",
     body: JSON.stringify(data),
   });
