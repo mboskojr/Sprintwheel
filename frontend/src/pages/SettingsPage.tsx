@@ -346,7 +346,9 @@ export default function SettingsPage(): JSX.Element {
             </p>
             <div style={styles.topActions}>
               <button style={styles.primaryButton}>Save Changes</button>
-              <button style={styles.secondaryButton}>Reset to Default</button>
+              <button style={styles.secondaryButton} onClick={() => {
+                if (theme !== "dark") { toggleTheme(); }
+              }}>Reset to Default</button>
             </div>
           </div>
 
@@ -362,6 +364,7 @@ export default function SettingsPage(): JSX.Element {
               </button>
             </div>
 
+{/*}
             <div style={styles.quickCard}>
               <h3 style={styles.quickTitle}>Dashboard Layout</h3>
               <p style={styles.quickText}>
@@ -369,7 +372,8 @@ export default function SettingsPage(): JSX.Element {
               </p>
               <button style={styles.smallButton}>Customize Layout</button>
             </div>
-
+*/}
+{/*
             <div style={styles.quickCard}>
               <h3 style={styles.quickTitle}>Integrations</h3>
               <p style={styles.quickText}>
@@ -377,7 +381,8 @@ export default function SettingsPage(): JSX.Element {
               </p>
               <button style={styles.smallButton}>Manage Integrations</button>
             </div>
-
+*/}
+{/*}
             <div style={styles.quickCard}>
               <h3 style={styles.quickTitle}>Permissions</h3>
               <p style={styles.quickText}>
@@ -385,6 +390,7 @@ export default function SettingsPage(): JSX.Element {
               </p>
               <button style={styles.smallButton}>View Access Controls</button>
             </div>
+*/}
           </div>
 
           <div style={styles.grid}>
@@ -439,6 +445,7 @@ export default function SettingsPage(): JSX.Element {
             </div>
 
             {/* Notification Preferences Card */}
+            {/*
             <div style={styles.card}>
               <h2 style={styles.cardTitle}>Notification Preferences</h2>
               <p style={styles.cardText}>
@@ -450,6 +457,7 @@ export default function SettingsPage(): JSX.Element {
                 <button style={styles.outlineButton}>Mute All</button>
               </div>
             </div>
+            */}
 
             {/* Account Settings Card */}
             <div style={styles.card}>
