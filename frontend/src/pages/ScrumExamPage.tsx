@@ -19,6 +19,17 @@ function shuffleArray<T>(array: T[]): T[] {
   return shuffled;
 }
 
+const EXAM_LENGTH = 50;
+
+function buildExamQuestions(): ScrumQuestion[] {
+  return shuffleArray(scrumQuestions)
+    .slice(0, EXAM_LENGTH)
+    .map((q) => ({
+      ...q,
+      options: shuffleArray(q.options),
+    }));
+}
+
 const styles: Record<string, CSSProperties> = {
   page: {
     minHeight: "100vh",
@@ -168,12 +179,17 @@ function ScrumExamPage(): JSX.Element {
   const [submitted, setSubmitted] = useState(false);
   const [score, setScore] = useState(0);
 
-  const [questions, setQuestions] = useState<ScrumQuestion[]>(() =>
-    shuffleArray(scrumQuestions).map((q) => ({
-      ...q,
-      options: shuffleArray(q.options),
-    }))
-  );
+  const [questions, setQuestions] = useState<ScrumQuestion[]>(() => {
+    const saved = localStorage.getItem("scrum_exam_questions");
+
+    if (saved) {
+      return JSON.parse(saved);
+    }
+
+    const generated = buildExamQuestions();
+    localStorage.setItem("scrum_exam_questions", JSON.stringify(generated));
+    return generated;
+  });
 
   const navigate = useNavigate();
   const { projectId, role } = useParams();
@@ -209,7 +225,9 @@ function ScrumExamPage(): JSX.Element {
     setAnswers({});
     setSubmitted(false);
     setScore(0);
-    setQuestions(shuffleArray(scrumQuestions));
+    const newQuestions = buildExamQuestions();
+    localStorage.setItem("scrum_exam_questions", JSON.stringify(newQuestions));
+    setQuestions(newQuestions);
 
     window.scrollTo({
       top: 0,
