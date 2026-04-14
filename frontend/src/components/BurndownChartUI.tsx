@@ -39,7 +39,13 @@ export const BurndownChartUI = ({ data }: { data: any[] }) => (
                 angle: -90,
                 textAnchor: "middle",
             }} />
-            <Tooltip />
+            <Tooltip 
+                formatter={(value, name) => {
+                    if (name === "Ideal") {
+                        return [Number(value).toFixed(1), name];
+                    }
+                    return [value, name];
+                }}/>
             <ReferenceLine
                 //x={today}
                 stroke="#8016c1"
