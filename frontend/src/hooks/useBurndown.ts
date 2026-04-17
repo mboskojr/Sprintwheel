@@ -20,7 +20,7 @@ interface Story {
   date_completed: string | null;
 }
 
-interface BurndownPoint {
+export interface BurndownPoint {
   day: string;
   actual: number | null;
   ideal: number;
@@ -39,16 +39,24 @@ function toLocalISODate(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
-function formatAxisLabel(index: number, date: Date): string {
+function formatAxisLabel(dayIndex: number, date: Date): string {
   const pretty = date.toLocaleDateString(undefined, {
     month: "short",
     day: "numeric",
   });
-  return `Day ${index + 1}|${pretty}`;
+
+  return `Day ${dayIndex}|${pretty}`;
 }
 
 function sumPoints(stories: Story[]): number {
   return stories.reduce((sum, story) => sum + (story.points ?? 0), 0);
+}
+
+function diffInDays(start: Date, end: Date): number {
+  const msPerDay = 1000 * 60 * 60 * 24;
+  const startOnly = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+  const endOnly = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+  return Math.floor((endOnly.getTime() - startOnly.getTime()) / msPerDay);
 }
 
 export function useSprintBurndownData(projectId: string, sprintId: string) {
@@ -110,42 +118,84 @@ export function useSprintBurndownData(projectId: string, sprintId: string) {
 
     if (sprintEnd < sprintStart) return [];
 
-    const days: Date[] = [];
-    const cursor = new Date(sprintStart);
-
-    while (cursor <= sprintEnd) {
-      days.push(new Date(cursor));
-      cursor.setDate(cursor.getDate() + 1);
-    }
-
     const totalPoints = sumPoints(stories);
+    const sprintLengthDays = diffInDays(sprintStart, sprintEnd) + 1; // inclusive
+    const today = new Date();
+    const todayIso = toLocalISODate(today);
 
-    return days.map((date, idx) => {
-      const isoDate = toLocalISODate(date);
+    const isCurrentSprint =
+      todayIso >= sprint.start_date && todayIso <= sprint.end_date;
 
-      const remaining = stories.reduce((sum, story) => {
+    const isFutureSprint = todayIso < sprint.start_date;
+
+    const totalPointsInSeries = sprintLengthDays + 1;
+
+    const pointsRemainingThroughDate = (isoDate: string) => {
+      return stories.reduce((sum, story) => {
         const pts = story.points ?? 0;
         const addedDate = story.date_added || sprint.start_date;
         const completedDate = story.date_completed;
 
+        // story not yet in sprint scope on that day
         if (addedDate > isoDate) return sum;
 
-        if (completedDate && completedDate < isoDate) {
-          return sum;
-        }
+        // old logic look: drop after that day's work is applied
+        if (completedDate && completedDate <= isoDate) return sum;
 
         return sum + pts;
       }, 0);
+    };
 
-      const ideal = totalPoints - (totalPoints * idx) / Math.max(days.length - 1, 1);
+    let lastActualIndex = totalPointsInSeries - 1;
 
-      return {
-        day: formatAxisLabel(idx, date),
+    if (isFutureSprint) {
+      lastActualIndex = 0;
+    } else if (isCurrentSprint) {
+      const elapsedSprintDays = diffInDays(sprintStart, today) + 1;
+      lastActualIndex = Math.min(Math.max(elapsedSprintDays, 0), sprintLengthDays);
+    }
+
+    const data: BurndownPoint[] = [];
+
+    for (let index = 0; index < totalPointsInSeries; index++) {
+      const chartDate =
+        index === 0
+          ? new Date(sprintStart)
+          : new Date(
+              sprintStart.getFullYear(),
+              sprintStart.getMonth(),
+              sprintStart.getDate() + (index - 1)
+            );
+
+      const isoDate = toLocalISODate(chartDate);
+
+      let actual: number | null;
+
+      if (index > lastActualIndex) {
+        actual = null;
+      } else if (index === 0) {
+        actual = totalPoints;
+      } else {
+        actual = pointsRemainingThroughDate(isoDate);
+      }
+
+      const ideal =
+        totalPointsInSeries > 1
+          ? Math.max(
+              0,
+              totalPoints - index * (totalPoints / (totalPointsInSeries - 1))
+            )
+          : totalPoints;
+
+      data.push({
+        day: formatAxisLabel(index, chartDate),
         isoDate,
-        actual: remaining,
+        actual,
         ideal: Number(ideal.toFixed(1)),
-      };
-    });
+      });
+    }
+
+    return data;
   }, [sprint, stories]);
 
   const velocity = useMemo(() => {

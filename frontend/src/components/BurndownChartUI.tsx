@@ -6,22 +6,30 @@ import {
     CartesianGrid,
     Tooltip,
     ResponsiveContainer,
+    //ReferenceLine,
   } from "recharts";
-  
-  type BurndownPoint = {
-    day: string;
-    actual: number | null;
-    ideal: number;
-    isoDate: string;
-  };
+  import type { BurndownPoint } from "../hooks/useBurndown";
   
   const CustomAxisTick = (props: any) => {
     const { x, y, payload } = props;
+  
+    if (String(payload.value).startsWith("Day 0|")) {
+      return null;
+    }
+  
     const [dayPart, datePart] = String(payload.value).split("|");
   
     return (
       <g transform={`translate(${x},${y})`}>
-        <text x={0} y={0} dy={16} textAnchor="middle" fill="#666" fontSize={12} fontWeight={500}>
+        <text
+          x={0}
+          y={0}
+          dy={16}
+          textAnchor="middle"
+          fill="#666"
+          fontSize={12}
+          fontWeight={500}
+        >
           <tspan x="0" dy="1.2em">
             {dayPart}
           </tspan>
@@ -33,8 +41,11 @@ import {
     );
   };
   
+  export const BurndownChartUI = ({ data }: { data: BurndownPoint[] }) => {
+   // const todayIndex = data.findIndex(
+    //  (point) => point.actual === null
+    //);
   
-  export const BurndownChartUI = ({ data }: { data: BurndownPoint[] }) => {  
     return (
       <ResponsiveContainer width="100%" height={400}>
         <LineChart data={data} margin={{ top: 20, right: 30, left: 15, bottom: 35 }}>
@@ -60,15 +71,19 @@ import {
           />
           <Tooltip
             formatter={(value, name) => {
-              if (name === "Ideal") return [Number(value).toFixed(1), name];
+              if (name === "Ideal") {
+                return [Number(value).toFixed(1), name];
+              }
               return [value, name];
             }}
             labelFormatter={(label, payload) => {
-              const point = payload?.[0]?.payload;
-              return point?.isoDate ? `${String(label).replace("|", " ")} (${point.isoDate})` : label;
+              const point = payload?.[0]?.payload as BurndownPoint | undefined;
+              return point?.isoDate
+                ? `${String(label).replace("|", " ")} (${point.isoDate})`
+                : label;
             }}
           />
-    
+  
           <Line
             type="monotone"
             dataKey="actual"
@@ -76,7 +91,10 @@ import {
             strokeWidth={3}
             connectNulls={false}
             name="Remaining Points"
+            dot={{ r: 4 }}
+            isAnimationActive={false}
           />
+  
           <Line
             type="monotone"
             dataKey="ideal"
@@ -85,6 +103,7 @@ import {
             strokeWidth={2}
             dot={false}
             name="Ideal"
+            isAnimationActive={false}
           />
         </LineChart>
       </ResponsiveContainer>
