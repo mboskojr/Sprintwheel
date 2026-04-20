@@ -35,6 +35,7 @@ class ProjectOut(BaseModel):
     status: str
     archived_at: Optional[datetime] = None
     delete_after: Optional[datetime] = None
+    active_member_count: int
 
 
 class ProjectListItemOut(BaseModel):
@@ -47,6 +48,7 @@ class ProjectListItemOut(BaseModel):
     status: str
     archived_at: Optional[datetime] = None
     delete_after: Optional[datetime] = None
+    active_member_count: int
 
 
 class JoinProjectIn(BaseModel):

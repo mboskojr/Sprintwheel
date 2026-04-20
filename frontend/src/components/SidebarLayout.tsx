@@ -703,9 +703,22 @@ export default function SidebarLayout({ children }: { children: ReactNode }): JS
                   style={{
                     ...styles.selectorHeader,
                     color: colors.mutedText,
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
                   }}
                 >
-                  Project Selector
+                  <span>Project Selector</span>
+
+                  <span
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 600,
+                      opacity: 0.8,
+                    }}
+                  >
+                    {projects.length} project{projects.length === 1 ? "" : "s"}
+                  </span>
                 </div>
                 <select
                   style={{

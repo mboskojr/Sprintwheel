@@ -12,6 +12,7 @@ export type Project = {
   sprint_duration: number;
   project_velocity: number;
   role: ProjectRole;
+  active_member_count: number;
 };
 
 export type ProjectCreate = {

@@ -87,7 +87,17 @@ def create_project(
 
     db.commit()
     db.refresh(project)
-    return project
+    return ProjectOut(
+        id=project.id,
+        name=project.name,
+        join_code=project.join_code,
+        sprint_duration=project.sprint_duration,
+        project_velocity=project.project_velocity,
+        status=project.status,
+        archived_at=project.archived_at,
+        delete_after=project.delete_after,
+        active_member_count=1,
+    )
 
 
 @router.post("/join-by-code")
@@ -180,6 +190,14 @@ def list_projects(
         status=project.status,
         archived_at=project.archived_at,
         delete_after=project.delete_after,
+        active_member_count=(
+            db.query(ProjectMember)
+            .filter(
+                ProjectMember.project_id == project.id,
+                ProjectMember.is_active == True
+            )
+            .count()
+        ),
     )
     for project, role in rows
 ]
@@ -309,7 +327,27 @@ def get_project(
     _, project = require_active_project_member(
         db, project_id, current_user.id, allow_archived=True
     )
-    return project
+
+    active_member_count = (
+        db.query(ProjectMember)
+        .filter(
+            ProjectMember.project_id == project.id,
+            ProjectMember.is_active == True
+        )
+        .count()
+    )
+
+    return ProjectOut(
+        id=project.id,
+        name=project.name,
+        join_code=project.join_code,
+        sprint_duration=project.sprint_duration,
+        project_velocity=project.project_velocity,
+        status=project.status,
+        archived_at=project.archived_at,
+        delete_after=project.delete_after,
+        active_member_count=active_member_count,
+    )
 
 
 @router.patch("/{project_id}", response_model=ProjectOut)
