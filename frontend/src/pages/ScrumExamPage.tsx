@@ -19,11 +19,11 @@ function shuffleArray<T>(array: T[]): T[] {
   return shuffled;
 }
 
-const EXAM_LENGTH = 50;
+//const EXAM_LENGTH = 50;
 
-function buildExamQuestions(): ScrumQuestion[] {
+function buildExamQuestions(length: number): ScrumQuestion[] {
   return shuffleArray(scrumQuestions)
-    .slice(0, EXAM_LENGTH)
+    .slice(0, length)
     .map((q) => ({
       ...q,
       options: shuffleArray(q.options),
@@ -179,22 +179,28 @@ function ScrumExamPage(): JSX.Element {
   const [submitted, setSubmitted] = useState(false);
   const [score, setScore] = useState(0);
 
-  const [questions, setQuestions] = useState<ScrumQuestion[]>(() => {
-    const saved = localStorage.getItem("scrum_exam_questions");
-
-    if (saved) {
-      return JSON.parse(saved);
-    }
-
-    const generated = buildExamQuestions();
-    localStorage.setItem("scrum_exam_questions", JSON.stringify(generated));
-    return generated;
-  });
+  const [questions, setQuestions] = useState<ScrumQuestion[]>([]);
+  const [examLength, setExamLength] = useState<number | null>(null);
+  const [showLengthModal, setShowLengthModal] = useState(true);
+  const [hasStarted, setHasStarted] = useState(false);
 
   const navigate = useNavigate();
   const { projectId, role } = useParams();
   const { theme } = useTheme();
   const isDark = theme === "dark";
+
+  function startExam(length: number): void {
+    const generated = buildExamQuestions(length);
+
+    setQuestions(generated);
+    setExamLength(length);
+    setAnswers({});
+    setSubmitted(false);
+    setScore(0);
+
+    setShowLengthModal(false);
+    setHasStarted(true);
+  }
 
   function handleAnswerSelect(questionId: number, selectedOption: string): void {
     setAnswers((prev) => ({
@@ -225,9 +231,11 @@ function ScrumExamPage(): JSX.Element {
     setAnswers({});
     setSubmitted(false);
     setScore(0);
-    const newQuestions = buildExamQuestions();
-    localStorage.setItem("scrum_exam_questions", JSON.stringify(newQuestions));
-    setQuestions(newQuestions);
+    setQuestions([]);
+    setExamLength(null);
+
+    setShowLengthModal(true);
+    setHasStarted(false);
 
     window.scrollTo({
       top: 0,
@@ -241,117 +249,180 @@ function ScrumExamPage(): JSX.Element {
   const progressPercentage = Math.round((answeredCount / questions.length) * 100);
 
   return (
-    <SidebarLayout>
-      <div
-        style={{
-          ...styles.page,
-          background: isDark ? styles.page.background : "#f8fafc",
-          color: isDark ? "#f9fafb" : "#111827",
-        }}
-      >
-        <div style={styles.container}>
-          <section
+    <>
+      {showLengthModal && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100vh",
+            background: "rgba(0,0,0,0.6)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 9999,
+          }}
+        >
+          <div
             style={{
-              ...styles.hero,
-              background: isDark ? styles.hero.background : "#ffffff",
-              border: isDark
-                ? styles.hero.border
-                : "1px solid rgba(17,24,39,0.08)",
+              background: "#0b0f17",
+              padding: "32px",
+              borderRadius: 16,
+              border: "1px solid rgba(255,255,255,0.1)",
+              maxWidth: 400,
+              width: "100%",
+              textAlign: "center",
             }}
           >
-            <button
-              onClick={() => navigate(`/projects/${projectId}/${role}/education`)}
-              style={styles.backButton}
-            >
-              ← Back to Learning
-            </button>
+            <h2 style={{ marginBottom: 12 }}>Choose Exam Length</h2>
+            <p style={{ marginBottom: 24, color: "#9ca3af" }}>
+              Select a full exam or a shorter quiz.
+            </p>
 
-            <p style={styles.eyebrow}>Scrum Assessment</p>
-            <h1 style={styles.title}>Scrum Knowledge Exam</h1>
-            <p
+            <div
               style={{
-                ...styles.subtitle,
-                color: isDark ? "#d1d5db" : "#4b5563",
+                display: "flex",
+                gap: 12,
+                justifyContent: "center",
               }}
             >
-              Test your understanding of Scrum roles, events, artifacts, and principles.
-              Complete all questions before submitting to view your score and feedback.
-            </p>
-          </section>
-
-          {!submitted ? (
-            <>
-              <div style={styles.stickyProgressWrap}>
-                <section
-                  style={{
-                    ...styles.stickyProgressCard,
-                    background: isDark ? "rgba(11,15,23,0.92)" : "rgba(255,255,255,0.96)",
-                    border: isDark
-                      ? "1px solid rgba(255,255,255,0.08)"
-                      : "1px solid rgba(17,24,39,0.08)",
-                  }}
-                >
-                <div style={styles.progressTop}>
-                  <p style={styles.progressLabel}>
-                    Progress: {answeredCount} / {questions.length} answered
-                  </p>
-                  <span
-                    style={{
-                      ...styles.progressSubtext,
-                      color: isDark ? "#9ca3af" : "#6b7280",
-                    }}
-                  >
-                    {progressPercentage}% complete
-                  </span>
-                </div>
-
-                <div style={styles.progressBarWrap}>
-                  <div
-                    style={{
-                      ...styles.progressBar,
-                      width: `${progressPercentage}%`,
-                    }}
-                  />
-                </div>
-              </section>
-              </div>
-
-              {questions.map((question, index) => (
-                <ScrumQuestionCard
-                  key={question.id}
-                  question={question}
-                  questionNumber={index + 1}
-                  selectedAnswer={answers[question.id]}
-                  onSelectAnswer={handleAnswerSelect}
-                />
-              ))}
-
               <button
-                onClick={handleSubmit}
-                disabled={!allAnswered}
-                style={allAnswered ? styles.primaryButton : styles.disabledButton}
+                onClick={() => startExam(15)}
+                style={styles.primaryButton}
               >
-                Submit Exam
+                15 Questions
               </button>
 
-              {!allAnswered && (
-                <p style={styles.helperText}>
-                  Please answer all questions before submitting.
+              <button
+                onClick={() => startExam(50)}
+                style={styles.primaryButton}
+              >
+                50 Questions
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+    <SidebarLayout>
+        <div
+          style={{
+            ...styles.page,
+            background: isDark ? styles.page.background : "#f8fafc",
+            color: isDark ? "#f9fafb" : "#111827",
+          }}
+        >
+          <div style={styles.container}>
+            <section
+              style={{
+                ...styles.hero,
+                background: isDark ? styles.hero.background : "#ffffff",
+                border: isDark
+                  ? styles.hero.border
+                  : "1px solid rgba(17,24,39,0.08)",
+              }}
+            >
+              <button
+                onClick={() => navigate(`/projects/${projectId}/${role}/education`)}
+                style={styles.backButton}
+              >
+                ← Back to Learning
+              </button>
+
+              <p style={styles.eyebrow}>Scrum Assessment</p>
+              <h1 style={styles.title}>Scrum Knowledge Exam</h1>
+              {examLength && (
+                <p style={{ color: "#a78bfa", marginTop: 8 }}>
+                  {examLength === 15 ? "15-Question Quick Quiz" : "50-Question Full Exam"}
                 </p>
               )}
-            </>
-          ) : (
-            <ScrumExamResults
-              questions={questions}
-              answers={answers}
-              score={score}
-              percentage={percentage}
-              onRetake={handleRetake}
-            />
-          )}
+              <p
+                style={{
+                  ...styles.subtitle,
+                  color: isDark ? "#d1d5db" : "#4b5563",
+                }}
+              >
+                Test your understanding of Scrum roles, events, artifacts, and principles.
+                Complete all questions before submitting to view your score and feedback.
+              </p>
+            </section>
+
+            {hasStarted && !submitted ? (
+              <>
+                <div style={styles.stickyProgressWrap}>
+                  <section
+                    style={{
+                      ...styles.stickyProgressCard,
+                      background: isDark ? "rgba(11,15,23,0.92)" : "rgba(255,255,255,0.96)",
+                      border: isDark
+                        ? "1px solid rgba(255,255,255,0.08)"
+                        : "1px solid rgba(17,24,39,0.08)",
+                    }}
+                  >
+                  <div style={styles.progressTop}>
+                    <p style={styles.progressLabel}>
+                      Progress: {answeredCount} / {questions.length} answered
+                    </p>
+                    <span
+                      style={{
+                        ...styles.progressSubtext,
+                        color: isDark ? "#9ca3af" : "#6b7280",
+                      }}
+                    >
+                      {progressPercentage}% complete
+                    </span>
+                  </div>
+
+                  <div style={styles.progressBarWrap}>
+                    <div
+                      style={{
+                        ...styles.progressBar,
+                        width: `${progressPercentage}%`,
+                      }}
+                    />
+                  </div>
+                </section>
+                </div>
+
+                {questions.map((question, index) => (
+                  <ScrumQuestionCard
+                    key={question.id}
+                    question={question}
+                    questionNumber={index + 1}
+                    selectedAnswer={answers[question.id]}
+                    onSelectAnswer={handleAnswerSelect}
+                  />
+                ))}
+
+                <button
+                  onClick={handleSubmit}
+                  disabled={!allAnswered}
+                  style={allAnswered ? styles.primaryButton : styles.disabledButton}
+                >
+                  Submit Exam
+                </button>
+
+                {!allAnswered && (
+                  <p style={styles.helperText}>
+                    Please answer all questions before submitting.
+                  </p>
+                )}
+              </>
+            ) : hasStarted ? (
+              <ScrumExamResults
+                questions={questions}
+                answers={answers}
+                score={score}
+                percentage={percentage}
+                onRetake={handleRetake}
+              />
+            ) : null}
+          </div>
         </div>
-      </div>
-    </SidebarLayout>
+      </SidebarLayout>
+    </>
   );
 }
 
