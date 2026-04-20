@@ -471,6 +471,8 @@ export default function SidebarLayout({ children }: { children: ReactNode }): JS
   const userId = user?.id?.trim() || "No ID found";
   const avatarLetter = userName.charAt(0).toUpperCase() || "U";
   const isCurrentProjectOwner = currentProject?.role === "Product Owner";
+  const isLastMember = (currentProject?.active_member_count ?? 0) === 1;
+  const mustTransferOwnership = isCurrentProjectOwner && !isLastMember;
 
   async function handleCopyJoinCode() {
     if (!projectId) return;
@@ -843,25 +845,29 @@ export default function SidebarLayout({ children }: { children: ReactNode }): JS
                 type="button"
                 style={{
                   ...styles.bottomButton,
-                  background: isCurrentProjectOwner ? colors.surfaceStrong : "#ef4444",
+                  background: mustTransferOwnership ? colors.surfaceStrong : "#ef4444",
                   border: `1px solid ${colors.borderStrong}`,
-                  color: isCurrentProjectOwner ? colors.text : "white",
-                  opacity: isCurrentProjectOwner ? 0.7 : 1,
-                  cursor: isCurrentProjectOwner ? "not-allowed" : "pointer",
+                  color: mustTransferOwnership ? colors.text : "white",
+                  opacity: mustTransferOwnership ? 0.7 : 1,
+                  cursor: mustTransferOwnership ? "not-allowed" : "pointer",
                 }}
-                onClick={isCurrentProjectOwner ? undefined : () => void handleLeaveProject()}
-                disabled={leaving || isCurrentProjectOwner}
+                onClick={mustTransferOwnership ? undefined : () => void handleLeaveProject()}
+                disabled={leaving || mustTransferOwnership}
                 title={
-                  isCurrentProjectOwner
+                  mustTransferOwnership
                     ? "Transfer ownership before leaving the project"
-                    : undefined
+                    : isLastMember && isCurrentProjectOwner
+                      ? "Leaving will archive this project"
+                      : undefined
                 }
               >
-                {isCurrentProjectOwner
+                {mustTransferOwnership
                   ? "Transfer Ownership to Leave"
                   : leaving
                     ? "Leaving..."
-                    : "🚪 Leave Project"}
+                    : isLastMember && isCurrentProjectOwner
+                      ? "🚪 Leave Project (Will Archive)"
+                      : "🚪 Leave Project"}
               </button>
             )}
 
