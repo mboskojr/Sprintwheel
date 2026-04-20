@@ -355,24 +355,34 @@ export default function SprintSetupPage(): JSX.Element {
           <h2 style={sectionHeadingStyle}>Create Sprint</h2>
 
           <div style={formRowStyle}>
-            <input
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              style={inputStyle}
-            />
+            <div style={inputGroupStyle}>
+              <label style={{ ...labelStyle, color: isDark ? "rgba(255,255,255,0.7)" : "#64748b" }}>Start Date</label>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                style={inputStyle}
+              />
+            </div>
 
-            <input
-              type="number"
-              min={1}
-              value={durationWeeks}
-              onChange={(e) => setDurationWeeks(Number(e.target.value))}
-              style={inputStyle}
-            />
+            <div style={inputGroupStyle}>
+              <label style={{ ...labelStyle, color: isDark ? "rgba(255,255,255,0.7)" : "#64748b" }}>Duration (Weeks)</label>
+              <input
+                type="number"
+                min={1}
+                value={durationWeeks}
+                onChange={(e) => setDurationWeeks(Number(e.target.value))}
+                style={inputStyle}
+              />
+            </div>
 
-            <button style={primaryButtonStyle} onClick={handleCreateSprint} disabled={creatingSprint}>
-              {creatingSprint ? "Creating..." : "Create Sprint"}
-            </button>
+            <div style={inputGroupStyle}>
+              <label style={labelStyle}>&nbsp;</label>
+              <button style={primaryButtonStyle} onClick={handleCreateSprint} disabled={creatingSprint}>
+                {creatingSprint ? "Creating..." : "Create Sprint"}
+              </button>
+            </div>
+
           </div>
         </div>
 
@@ -401,7 +411,7 @@ export default function SprintSetupPage(): JSX.Element {
                     </button>
 
                     {!sprint.is_active ? (
-                      <button style={secondaryButtonStyle} onClick={() => void activateSprint(sprint.id)}>
+                      <button style={primaryButtonStyle} onClick={() => void activateSprint(sprint.id)}>
                         Activate
                       </button>
                     ) : (
@@ -622,7 +632,7 @@ const formRowStyle: CSSProperties = {
 };
 
 const inputStyle: CSSProperties = {
-  flex: 1,
+  //flex: 1,
   minWidth: "220px",
   padding: "14px 16px",
   borderRadius: "12px",
@@ -637,6 +647,7 @@ const buttonRowStyle: CSSProperties = {
 };
 
 const primaryButtonStyle: CSSProperties = {
+  //display: "flex", //added
   padding: "14px 18px",
   borderRadius: "12px",
   border: "none",
@@ -738,4 +749,18 @@ const confirmDeleteButtonStyle: CSSProperties = {
   color: "white",
   cursor: "pointer",
   fontSize: "16px",
+};
+
+const labelStyle: CSSProperties = {
+  display: "block",
+  marginBottom: "6px",
+  fontSize: "16px",
+  fontWeight: 600,
+};
+
+const inputGroupStyle: CSSProperties = {
+  flex: 1,
+  minWidth: "220px",
+  display: "flex",
+  flexDirection: "column",
 };
