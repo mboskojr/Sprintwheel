@@ -22,7 +22,7 @@ export default function ProjectsDebug() {
         onClick={async () => {
           try {
             setStatus("Creating...");
-            await createProject({ name: "Test Project", sprint_duration: 14 });
+            await createProject({ name: "Test Project" });
             await refresh();
             setStatus("Created ✅");
           } catch (e: any) {
