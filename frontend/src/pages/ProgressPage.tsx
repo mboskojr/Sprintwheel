@@ -105,6 +105,16 @@ export default function ProgressPage(): JSX.Element {
     border: isDark ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(17,24,39,0.1)",
   };
 
+  const primaryButtonStyle: CSSProperties = {
+    padding: "14px 18px",
+    borderRadius: "12px",
+    border: "none",
+    background: "#7c3aed",
+    color: "white",
+    fontWeight: 700,
+    cursor: "pointer",
+  };
+
   return (
     <SidebarLayout>
       <div style={containerStyle}>
@@ -139,14 +149,7 @@ export default function ProgressPage(): JSX.Element {
             onClick={() => {
               if (projectId && role) navigate(`/projects/${projectId}/${role}/sprint-setup`);
             }}
-            style={{
-              padding: "12px 16px",
-              borderRadius: 12,
-              border: "1px solid #cbd5e1",
-              background: "white",
-              cursor: "pointer",
-              fontWeight: 700,
-            }}
+            style={primaryButtonStyle}
           >
             Manage Sprints
           </button>
