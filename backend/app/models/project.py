@@ -28,3 +28,10 @@ class Project(Base):
         cascade="all, delete-orphan",
         passive_deletes=True,
     )
+
+    project_members = relationship(
+        "ProjectMember",
+        backref="project",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )

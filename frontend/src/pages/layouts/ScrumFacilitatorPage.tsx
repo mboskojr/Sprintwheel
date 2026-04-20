@@ -1134,7 +1134,9 @@ export default function ScrumFacilitatorPage(): JSX.Element {
                     ? "Loading…"
                     : projectError
                     ? projectError
-                    : `${projects.length} project${projects.length === 1 ? "" : "s"}`}
+                    : activeProject
+                    ? `${activeProject.active_member_count} member${activeProject.active_member_count === 1 ? "" : "s"}`
+                    : "No active project"}
                 </p>
               </div>
             </div>
