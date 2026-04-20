@@ -158,7 +158,6 @@ export default function NewProject(): React.JSX.Element {
   const isDark = theme === "dark";
 
   const [projectName, setProjectName] = useState("");
-  const [sprintDurationInput, setSprintDurationInput] = useState("");
   const [projects, setProjects] = useState<Project[]>([]);
   useEffect(() => {
     listProjects().then(setProjects).catch(() => setProjects([]));
@@ -177,18 +176,9 @@ export default function NewProject(): React.JSX.Element {
   );
 
   const trimmedProjectName = projectName.trim();
-  const trimmedSprint = sprintDurationInput.trim();
 
   const projectNameEmpty =
     createStatus === "error" && trimmedProjectName.length === 0;
-
-  const sprintEmpty =
-    createStatus === "error" && trimmedSprint.length === 0;
-
-  const sprintInvalid =
-    createStatus === "error" &&
-    trimmedSprint.length > 0 &&
-    (!Number.isInteger(Number(trimmedSprint)) || Number(trimmedSprint) <= 0);
 
   const joinInputError =
     joinStatus === "error" &&
@@ -204,24 +194,15 @@ export default function NewProject(): React.JSX.Element {
     setJoinStatus("idle");
     setJoinMsg("");
 
-    if (!trimmedProjectName || !trimmedSprint) {
+    if (!trimmedProjectName) {
       setCreateStatus("error");
-      setCreateMsg("Please fill in all required fields.");
-      return;
-    }
-
-    const sprintNumber = Number(trimmedSprint);
-
-    if (!Number.isInteger(sprintNumber) || sprintNumber <= 0) {
-      setCreateStatus("error");
-      setCreateMsg("Please enter a valid whole number for sprint length in days.");
+      setCreateMsg("Project name cannot be empty.");
       return;
     }
 
     try {
       const created = await createProject({
         name: trimmedProjectName,
-        sprint_duration: sprintNumber,
       });
 
       setCreateStatus("success");
@@ -412,47 +393,6 @@ export default function NewProject(): React.JSX.Element {
                 )}
               </div>
 
-              <div style={styles.fieldGroup}>
-                <label style={styles.label} htmlFor="sprint-length">
-                  Sprint Length in Days
-                </label>
-                <input
-                  id="sprint-length"
-                  style={{
-                    ...styles.input,
-                    background: isDark ? "rgba(255,255,255,0.08)" : "#ffffff",
-                    border: isDark
-                      ? "1px solid rgba(255,255,255,0.14)"
-                      : "1px solid rgba(0,0,0,0.10)",
-                    color: isDark ? "white" : "#111827",
-                    ...((sprintEmpty || sprintInvalid) ? styles.inputError : {}),
-                  }}
-                  value={sprintDurationInput}
-                  onChange={(e) => setSprintDurationInput(e.target.value)}
-                  disabled={isBusy}
-                />
-                {sprintEmpty && (
-                  <div
-                    style={{
-                      ...styles.error,
-                      color: isDark ? "#ffb4b4" : "#b91c1c",
-                    }}
-                  >
-                    Sprint length cannot be empty.
-                  </div>
-                )}
-                {sprintInvalid && (
-                  <div
-                    style={{
-                      ...styles.error,
-                      color: isDark ? "#ffb4b4" : "#b91c1c",
-                    }}
-                  >
-                    Please enter a valid whole number for sprint length.
-                  </div>
-                )}
-              </div>
-
               <motion.button
                 type="button"
                 style={{
@@ -484,19 +424,16 @@ export default function NewProject(): React.JSX.Element {
                 </div>
               )}
 
-              {createStatus === "error" &&
-                !projectNameEmpty &&
-                !sprintEmpty &&
-                !sprintInvalid && (
-                  <div
-                    style={{
-                      ...styles.error,
-                      color: isDark ? "#ffb4b4" : "#b91c1c",
-                    }}
-                  >
-                    {createMsg}
-                  </div>
-                )}
+              {createStatus === "error" && !projectNameEmpty && (
+                <div
+                  style={{
+                    ...styles.error,
+                    color: isDark ? "#ffb4b4" : "#b91c1c",
+                  }}
+                >
+                  {createMsg}
+                </div>
+              )}
 
               {createStatus === "idle" && (
                 <div
@@ -505,7 +442,7 @@ export default function NewProject(): React.JSX.Element {
                     color: isDark ? "rgba(255,255,255,0.7)" : "#6b7280",
                   }}
                 >
-                  Enter a project name and sprint length to create your project.
+                  Enter a project name to create your project.
                 </div>
               )}
             </div>
