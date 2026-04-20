@@ -17,7 +17,6 @@ export type Project = {
 
 export type ProjectCreate = {
   name: string;
-  sprint_duration: number;
 };
 
 export type ProjectUpdate = {
