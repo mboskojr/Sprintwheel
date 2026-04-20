@@ -205,28 +205,6 @@ export default function EducationPage(): JSX.Element {
             <button style={styles.primaryButton}>Browse Topics</button>
           </div>
           </section>
-          <section
-            style={{
-              ...styles.progressCard,
-              background: isDark ? styles.progressCard.background : "#ffffff",
-              border: isDark ? styles.progressCard.border : "1px solid rgba(17,24,39, 0.08)",
-            }}
-          >
-            <div style={styles.progressTop}>
-              <h2 style={styles.sectionTitle}>Your Progress</h2>
-              <span
-                style={{
-                  ...styles.progressText,
-                  color: isDark ? "#9ca3af" : "#6b7280",
-                }}
-              >
-                35% complete 
-              </span>
-            </div>
-            <div style={styles.progressBarWrap}>
-              <div style={styles.progressBar}></div>
-            </div>
-          </section>
           <section>
             <h2 style={styles.sectionTitle}>Topics</h2>
             <div style={styles.grid}>

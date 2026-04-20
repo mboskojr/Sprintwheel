@@ -1,16 +1,9 @@
 import type { CSSProperties, JSX, ChangeEvent, FormEvent } from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import SidebarLayout from "../components/SidebarLayout";
 import { useTheme } from "./ThemeContext";
 import { api } from "../api/client";
-
-type Member = {
-  user_id: string;
-  name: string;
-  email: string;
-  role: string;
-};
 
 type Story = {
   id: string;
@@ -41,9 +34,6 @@ type BacklogPreviewItem = {
 
 type ProjectFormData = {
   projectName: string;
-  scrumMaster: string;
-  productOwner: string;
-  developer: string;
   sprintGoal: string;
   status: string;
   repoLink: string;
@@ -62,16 +52,13 @@ type MicrocharterInputs = {
 
 const emptyForm: ProjectFormData = {
   projectName: "",
-  scrumMaster: "",
-  productOwner: "",
-  developer: "",
   sprintGoal: "",
   status: "",
   repoLink: "",
   vercelLink: "",
   microcharter: "",
   projectSummary:
-    "This is where you can manage the product, update project focus, see current role assignment, manage or create a GitHub repo, create or deploy a Vercel app.",
+    "This is where you can manage the project focus, generate backlog ideas, and save deployment links like GitHub and Vercel.",
 };
 
 const emptyMicroInputs: MicrocharterInputs = {
@@ -85,7 +72,6 @@ const emptyMicroInputs: MicrocharterInputs = {
 const featureOptions = [
   "backlog generation",
   "timeline tracking",
-  "role assignment",
   "navigation",
   "dashboard",
   "collaboration",
@@ -134,110 +120,325 @@ function cleanStories(data: Story[]): BacklogPreviewItem[] {
     }));
 }
 
+function generateBacklogFromMicrocharter(text: string): GeneratedBacklogItem[] {
+  const clean = text.trim();
+  if (!clean) return [];
+
+  const sentenceChunks = clean
+    .split(/[.!?]+/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  const keywordMap = [
+    {
+      test: /navigation|menu|find|browse/i,
+      title: "Improve navigation experience",
+      description:
+        "Create or refine navigation so users can move through the platform more easily.",
+      points: 3,
+    },
+    {
+      test: /user flow|workflow|friction|task completion/i,
+      title: "Refine user flow",
+      description:
+        "Identify friction points in the current workflow and simplify task completion steps.",
+      points: 3,
+    },
+    {
+      test: /collaboration|team/i,
+      title: "Strengthen collaboration workflow",
+      description:
+        "Support better collaboration and coordination across project work.",
+      points: 2,
+    },
+    {
+      test: /backlog|story|task/i,
+      title: "Improve backlog organization",
+      description:
+        "Add or refine backlog structure so tasks can be generated, reviewed, and managed clearly.",
+      points: 2,
+    },
+    {
+      test: /visibility|dashboard|overview/i,
+      title: "Create project visibility improvements",
+      description:
+        "Add clearer project overview elements so stakeholders can quickly understand status and goals.",
+      points: 2,
+    },
+    {
+      test: /redesign|ui|ux|interface/i,
+      title: "Design updated interface",
+      description:
+        "Create updated UI components that align with the project vision and usability needs.",
+      points: 3,
+    },
+    {
+      test: /timeline|milestone|schedule|deadline/i,
+      title: "Create deadline tracking",
+      description:
+        "Add deadline or milestone support to help keep delivery dates and project phases visible.",
+      points: 2,
+    },
+    {
+      test: /repo|github|git/i,
+      title: "Add repository integration support",
+      description:
+        "Support linking and displaying the project repository inside project details.",
+      points: 1,
+    },
+    {
+      test: /dashboard/i,
+      title: "Build dashboard view",
+      description:
+        "Create a dashboard that gives users quick visibility into project status and work.",
+      points: 2,
+    },
+    {
+      test: /automation|automate/i,
+      title: "Add workflow automation support",
+      description:
+        "Introduce automation to reduce repetitive work and improve project flow.",
+      points: 2,
+    },
+  ];
+
+  const generated: GeneratedBacklogItem[] = [];
+  let nextId = Date.now();
+
+  for (const sentence of sentenceChunks) {
+    let matched = false;
+
+    for (const entry of keywordMap) {
+      if (entry.test.test(sentence)) {
+        const alreadyExists = generated.some(
+          (item) => item.title.toLowerCase() === entry.title.toLowerCase()
+        );
+
+        if (!alreadyExists) {
+          generated.push({
+            tempId: String(nextId++),
+            title: entry.title,
+            description: entry.description,
+            points: entry.points,
+          });
+        }
+
+        matched = true;
+      }
+    }
+
+    if (!matched) {
+      generated.push({
+        tempId: String(nextId++),
+        title:
+          sentence.length > 55
+            ? `${sentence.slice(0, 55).trim()}...`
+            : sentence.charAt(0).toUpperCase() + sentence.slice(1),
+        description: `Generated from microcharter: ${sentence}`,
+        points: 2,
+      });
+    }
+  }
+
+  const defaultFallbacks = [
+    {
+      title: "Define MVP scope",
+      description:
+        "Translate the microcharter into a clear first-phase scope for delivery.",
+      points: 2,
+    },
+    {
+      title: "Write user stories",
+      description:
+        "Convert project goals into user stories and actionable backlog tasks.",
+      points: 2,
+    },
+    {
+      title: "Prioritize implementation tasks",
+      description:
+        "Order generated backlog items by importance, dependency, and feasibility.",
+      points: 2,
+    },
+  ];
+
+  for (const fallback of defaultFallbacks) {
+    const existsInGenerated = generated.some(
+      (item) => item.title.toLowerCase() === fallback.title.toLowerCase()
+    );
+
+    if (!existsInGenerated) {
+      generated.push({
+        tempId: String(nextId++),
+        title: fallback.title,
+        description: fallback.description,
+        points: fallback.points,
+      });
+    }
+  }
+
+  return generated;
+}
+
 export default function ProjectDetailsPage(): JSX.Element {
   const navigate = useNavigate();
-  const { projectId, role } = useParams();
+  const { projectId } = useParams();
   const { theme } = useTheme();
   const isDark = theme === "dark";
 
-  const storageKey = `project-details-${projectId ?? "default"}-${role ?? "default"}`;
-  const backlogRoute = `/projects/${projectId}/${role}/product-backlog`;
+  const storageKey = useMemo(
+    () => `project-details-${projectId ?? "default"}`,
+    [projectId]
+  );
+
+  const backlogRoute = useMemo(
+    () => `/projects/${projectId}/product-backlog`,
+    [projectId]
+  );
 
   const [formData, setFormData] = useState<ProjectFormData>(emptyForm);
   const [submittedData, setSubmittedData] = useState<ProjectFormData | null>(null);
-  const [members, setMembers] = useState<Member[]>([]);
   const [isEditing, setIsEditing] = useState(true);
 
-  const [microInputs, setMicroInputs] = useState<MicrocharterInputs>(emptyMicroInputs);
+  const [microInputs, setMicroInputs] =
+    useState<MicrocharterInputs>(emptyMicroInputs);
 
   const [generatedItems, setGeneratedItems] = useState<GeneratedBacklogItem[]>([]);
-  const [addingGeneratedIds, setAddingGeneratedIds] = useState<string[]>([]);
-  const [addedGeneratedIds, setAddedGeneratedIds] = useState<string[]>([]);
+  const [addingGeneratedIds, setAddingGeneratedIds] = useState<Set<string>>(
+    () => new Set()
+  );
+  const [addedGeneratedIds, setAddedGeneratedIds] = useState<Set<string>>(
+    () => new Set()
+  );
 
-  const [backlogPreviewItems, setBacklogPreviewItems] = useState<BacklogPreviewItem[]>([]);
+  const [backlogPreviewItems, setBacklogPreviewItems] = useState<
+    BacklogPreviewItem[]
+  >([]);
   const [backlogPreviewLoading, setBacklogPreviewLoading] = useState(false);
 
   useEffect(() => {
     const savedData = localStorage.getItem(storageKey);
 
-    if (savedData) {
-      try {
-        const parsedData: ProjectFormData = JSON.parse(savedData);
-        setFormData(parsedData);
-        setSubmittedData(parsedData);
-        setIsEditing(false);
-      } catch (error) {
-        console.error("Failed to parse saved project details:", error);
-      }
+    if (!savedData) return;
+
+    try {
+      const parsedData: ProjectFormData = JSON.parse(savedData);
+      setFormData(parsedData);
+      setSubmittedData(parsedData);
+      setIsEditing(false);
+    } catch (error) {
+      console.error("Failed to parse saved project details:", error);
     }
   }, [storageKey]);
 
   useEffect(() => {
     if (!projectId) return;
 
-    api<Member[]>(`/projects/${projectId}/members`)
-      .then((data) => setMembers(Array.isArray(data) ? data : []))
-      .catch((error) => {
-        console.error("Failed to fetch project members:", error);
-        setMembers([]);
-      });
-  }, [projectId]);
-
-  useEffect(() => {
-    if (!projectId) return;
-
+    let isMounted = true;
     setBacklogPreviewLoading(true);
 
     api<Story[]>(`/stories/backlog?project_id=${projectId}`)
       .then((data) => {
+        if (!isMounted) return;
         const cleaned = cleanStories(Array.isArray(data) ? data : []);
         const topPriority = cleaned.filter((story) => !story.isDone).slice(0, 4);
         setBacklogPreviewItems(topPriority);
       })
       .catch((error) => {
+        if (!isMounted) return;
         console.error("Failed to fetch backlog preview:", error);
         setBacklogPreviewItems([]);
       })
       .finally(() => {
-        setBacklogPreviewLoading(false);
+        if (isMounted) {
+          setBacklogPreviewLoading(false);
+        }
       });
+
+    return () => {
+      isMounted = false;
+    };
   }, [projectId, addedGeneratedIds]);
 
-  const displayProjectName =
-    submittedData?.projectName || formData.projectName || "Project Details";
+  const displayProjectName = useMemo(
+    () => submittedData?.projectName || formData.projectName || "Project Details",
+    [submittedData, formData.projectName]
+  );
 
-  const savedRepoLink = getSafeExternalUrl(formData.repoLink);
-  const savedVercelLink = getSafeExternalUrl(formData.vercelLink);
+  const savedRepoLink = useMemo(
+    () => getSafeExternalUrl(formData.repoLink),
+    [formData.repoLink]
+  );
+
+  const savedVercelLink = useMemo(
+    () => getSafeExternalUrl(formData.vercelLink),
+    [formData.vercelLink]
+  );
 
   const githubCreateUrl = "https://github.com/new";
   const vercelCreateUrl = "https://vercel.com/new";
 
-  function saveForm(nextData: ProjectFormData): void {
-    setFormData(nextData);
-    setSubmittedData(nextData);
-    localStorage.setItem(storageKey, JSON.stringify(nextData));
-  }
+  const generatedPreviewItems = useMemo(
+    () => generatedItems.slice(0, 4),
+    [generatedItems]
+  );
 
-  const handleChange = (
-    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-  ): void => {
-    const { name, value } = e.target;
+  const generatedCountNotAdded = useMemo(() => {
+    return generatedItems.filter(
+      (item) =>
+        !addedGeneratedIds.has(item.tempId) &&
+        !addingGeneratedIds.has(item.tempId)
+    ).length;
+  }, [generatedItems, addedGeneratedIds, addingGeneratedIds]);
 
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
+  const backlogBarWidth = useMemo(() => {
+    return `${Math.min(
+      Math.max(backlogPreviewItems.length, generatedItems.length) * 18,
+      88
+    )}%`;
+  }, [backlogPreviewItems.length, generatedItems.length]);
 
-  function handleMicroInputChange(e: ChangeEvent<HTMLInputElement>): void {
-    const { name, value } = e.target;
-    setMicroInputs((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  }
+  const saveForm = useCallback(
+    (nextData: ProjectFormData): void => {
+      setFormData(nextData);
+      setSubmittedData(nextData);
+      localStorage.setItem(storageKey, JSON.stringify(nextData));
+    },
+    [storageKey]
+  );
 
-  function handleFeatureToggle(feature: string): void {
+  const handleChange = useCallback(
+    (
+      e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+    ): void => {
+      const { name, value } = e.target;
+
+      setFormData((prev) => {
+        if (prev[name as keyof ProjectFormData] === value) return prev;
+        return {
+          ...prev,
+          [name]: value,
+        };
+      });
+    },
+    []
+  );
+
+  const handleMicroInputChange = useCallback(
+    (e: ChangeEvent<HTMLInputElement>): void => {
+      const { name, value } = e.target;
+
+      setMicroInputs((prev) => {
+        if (prev[name as keyof MicrocharterInputs] === value) return prev;
+        return {
+          ...prev,
+          [name]: value,
+        };
+      });
+    },
+    []
+  );
+
+  const handleFeatureToggle = useCallback((feature: string): void => {
     setMicroInputs((prev) => {
       const exists = prev.features.includes(feature);
 
@@ -248,9 +449,9 @@ export default function ProjectDetailsPage(): JSX.Element {
           : [...prev.features, feature],
       };
     });
-  }
+  }, []);
 
-  function buildMicrocharterFromTemplate(): string {
+  const buildMicrocharterFromTemplate = useCallback((): string => {
     const { systemType, users, goal, features, outcome } = microInputs;
 
     if (!systemType.trim() || !users.trim() || !goal.trim()) {
@@ -263,9 +464,9 @@ export default function ProjectDetailsPage(): JSX.Element {
     const outcomeText = outcome.trim() || "improve overall user experience";
 
     return `Build a ${systemType.trim()} for ${users.trim()} that helps them ${goal.trim()}. The system should include ${featureText} to ${outcomeText}.`;
-  }
+  }, [microInputs]);
 
-  function handleGenerateMicrocharter(): void {
+  const handleGenerateMicrocharter = useCallback((): void => {
     const generated = buildMicrocharterFromTemplate();
 
     if (!generated) {
@@ -277,210 +478,49 @@ export default function ProjectDetailsPage(): JSX.Element {
       ...prev,
       microcharter: generated,
     }));
-  }
+  }, [buildMicrocharterFromTemplate]);
 
-  const handleSubmit = (e?: FormEvent<HTMLFormElement>): void => {
-    e?.preventDefault();
+  const handleSubmit = useCallback(
+    (e?: FormEvent<HTMLFormElement>): void => {
+      e?.preventDefault();
+      saveForm(formData);
+      setIsEditing(false);
+    },
+    [formData, saveForm]
+  );
+
+  const handleSaveMicrocharter = useCallback((): void => {
     saveForm(formData);
-    setIsEditing(false);
-  };
+  }, [formData, saveForm]);
 
-  const handleSaveMicrocharter = (): void => {
-    saveForm(formData);
-  };
-
-  const handleReset = (): void => {
+  const handleReset = useCallback((): void => {
     setFormData(emptyForm);
     setSubmittedData(null);
     setMicroInputs(emptyMicroInputs);
     setGeneratedItems([]);
-    setAddingGeneratedIds([]);
-    setAddedGeneratedIds([]);
+    setAddingGeneratedIds(new Set());
+    setAddedGeneratedIds(new Set());
     localStorage.removeItem(storageKey);
     setIsEditing(true);
-  };
+  }, [storageKey]);
 
-  const handleEdit = (): void => {
+  const handleEdit = useCallback((): void => {
     if (submittedData) {
       setFormData(submittedData);
     }
     setIsEditing(true);
-  };
+  }, [submittedData]);
 
-  const handleCancelEdit = (): void => {
+  const handleCancelEdit = useCallback((): void => {
     if (submittedData) {
       setFormData(submittedData);
       setIsEditing(false);
     } else {
       setFormData(emptyForm);
     }
-  };
+  }, [submittedData]);
 
-  const getMemberDisplayName = (memberId: string): string => {
-    const member = members.find((m) => m.user_id === memberId);
-    return member ? member.name || member.email : "—";
-  };
-
-  function generateBacklogFromMicrocharter(text: string): GeneratedBacklogItem[] {
-    const clean = text.trim();
-    if (!clean) return [];
-
-    const sentenceChunks = clean
-      .split(/[.!?]+/)
-      .map((part) => part.trim())
-      .filter(Boolean);
-
-    const keywordMap = [
-      {
-        test: /navigation|menu|find|browse/i,
-        title: "Improve navigation experience",
-        description:
-          "Create or refine navigation so users can move through the platform more easily.",
-        points: 3,
-      },
-      {
-        test: /user flow|workflow|friction|task completion/i,
-        title: "Refine user flow",
-        description:
-          "Identify friction points in the current workflow and simplify task completion steps.",
-        points: 3,
-      },
-      {
-        test: /collaboration|team|assignment|role/i,
-        title: "Build team assignment workflow",
-        description:
-          "Support clearer assignment of people, roles, and responsibilities within a project.",
-        points: 2,
-      },
-      {
-        test: /backlog|story|task/i,
-        title: "Improve backlog organization",
-        description:
-          "Add or refine backlog structure so tasks can be generated, reviewed, and managed clearly.",
-        points: 2,
-      },
-      {
-        test: /visibility|dashboard|overview/i,
-        title: "Create project visibility improvements",
-        description:
-          "Add clearer project overview elements so stakeholders can quickly understand status and goals.",
-        points: 2,
-      },
-      {
-        test: /redesign|ui|ux|interface/i,
-        title: "Design updated interface",
-        description:
-          "Create updated UI components that align with the project vision and usability needs.",
-        points: 3,
-      },
-      {
-        test: /timeline|milestone|schedule|deadline/i,
-        title: "Create deadline tracking",
-        description:
-          "Add deadline or milestone support to help keep delivery dates and project phases visible.",
-        points: 2,
-      },
-      {
-        test: /repo|github|git/i,
-        title: "Add repository integration support",
-        description:
-          "Support linking and displaying the project repository inside project details.",
-        points: 1,
-      },
-      {
-        test: /dashboard/i,
-        title: "Build dashboard view",
-        description:
-          "Create a dashboard that gives users quick visibility into project status and work.",
-        points: 2,
-      },
-      {
-        test: /automation|automate/i,
-        title: "Add workflow automation support",
-        description:
-          "Introduce automation to reduce repetitive work and improve project flow.",
-        points: 2,
-      },
-    ];
-
-    const generated: GeneratedBacklogItem[] = [];
-    let nextId = Date.now();
-
-    for (const sentence of sentenceChunks) {
-      let matched = false;
-
-      for (const entry of keywordMap) {
-        if (entry.test.test(sentence)) {
-          const alreadyExists = generated.some(
-            (item) => item.title.toLowerCase() === entry.title.toLowerCase()
-          );
-
-          if (!alreadyExists) {
-            generated.push({
-              tempId: String(nextId++),
-              title: entry.title,
-              description: entry.description,
-              points: entry.points,
-            });
-          }
-
-          matched = true;
-        }
-      }
-
-      if (!matched) {
-        generated.push({
-          tempId: String(nextId++),
-          title:
-            sentence.length > 55
-              ? `${sentence.slice(0, 55).trim()}...`
-              : sentence.charAt(0).toUpperCase() + sentence.slice(1),
-          description: `Generated from microcharter: ${sentence}`,
-          points: 2,
-        });
-      }
-    }
-
-    const defaultFallbacks = [
-      {
-        title: "Define MVP scope",
-        description:
-          "Translate the microcharter into a clear first-phase scope for delivery.",
-        points: 2,
-      },
-      {
-        title: "Write user stories",
-        description:
-          "Convert project goals into user stories and actionable backlog tasks.",
-        points: 2,
-      },
-      {
-        title: "Prioritize implementation tasks",
-        description:
-          "Order generated backlog items by importance, dependency, and feasibility.",
-        points: 2,
-      },
-    ];
-
-    for (const fallback of defaultFallbacks) {
-      const existsInGenerated = generated.some(
-        (item) => item.title.toLowerCase() === fallback.title.toLowerCase()
-      );
-
-      if (!existsInGenerated) {
-        generated.push({
-          tempId: String(nextId++),
-          title: fallback.title,
-          description: fallback.description,
-          points: fallback.points,
-        });
-      }
-    }
-
-    return generated;
-  }
-
-  function handleGenerateBacklog(): void {
+  const handleGenerateBacklog = useCallback((): void => {
     const sourceText = formData.microcharter.trim();
 
     if (!sourceText) {
@@ -491,57 +531,63 @@ export default function ProjectDetailsPage(): JSX.Element {
     saveForm(formData);
     const generated = generateBacklogFromMicrocharter(sourceText);
     setGeneratedItems(generated);
-    setAddedGeneratedIds([]);
-  }
+    setAddedGeneratedIds(new Set());
+  }, [formData, saveForm]);
 
-  function handleAddGeneratedToBacklog(item: GeneratedBacklogItem): void {
-    if (!projectId) {
-      alert("Project ID is missing.");
-      return;
-    }
+  const handleAddGeneratedToBacklog = useCallback(
+    async (item: GeneratedBacklogItem): Promise<void> => {
+      if (!projectId) {
+        alert("Project ID is missing.");
+        return;
+      }
 
-    setAddingGeneratedIds((prev) => [...prev, item.tempId]);
+      setAddingGeneratedIds((prev) => {
+        const next = new Set(prev);
+        next.add(item.tempId);
+        return next;
+      });
 
-    api(`/stories/backlog`, {
-      method: "POST",
-      body: JSON.stringify({
-        project_id: projectId,
-        title: item.title,
-        description: item.description,
-        points: item.points,
-        priority: 1,
-      }),
-    })
-      .then(() => {
-        setAddedGeneratedIds((prev) => [...prev, item.tempId]);
-      })
-      .catch((err) => {
+      try {
+        await api(`/stories/backlog`, {
+          method: "POST",
+          body: JSON.stringify({
+            project_id: projectId,
+            title: item.title,
+            description: item.description,
+            points: item.points,
+            priority: 1,
+          }),
+        });
+
+        setAddedGeneratedIds((prev) => {
+          const next = new Set(prev);
+          next.add(item.tempId);
+          return next;
+        });
+      } catch (err) {
         console.error("Error creating generated backlog item:", err);
         alert("Could not add this item to the backlog.");
-      })
-      .finally(() => {
-        setAddingGeneratedIds((prev) => prev.filter((id) => id !== item.tempId));
-      });
-  }
+      } finally {
+        setAddingGeneratedIds((prev) => {
+          const next = new Set(prev);
+          next.delete(item.tempId);
+          return next;
+        });
+      }
+    },
+    [projectId]
+  );
 
-  function handleAddAllGeneratedToBacklog(): void {
+  const handleAddAllGeneratedToBacklog = useCallback((): void => {
     generatedItems.forEach((item) => {
-      const alreadyAdded = addedGeneratedIds.includes(item.tempId);
-      const isAdding = addingGeneratedIds.includes(item.tempId);
+      const alreadyAdded = addedGeneratedIds.has(item.tempId);
+      const isAdding = addingGeneratedIds.has(item.tempId);
 
       if (!alreadyAdded && !isAdding) {
-        handleAddGeneratedToBacklog(item);
+        void handleAddGeneratedToBacklog(item);
       }
     });
-  }
-
-  const generatedCountNotAdded = useMemo(() => {
-    return generatedItems.filter(
-      (item) =>
-        !addedGeneratedIds.includes(item.tempId) &&
-        !addingGeneratedIds.includes(item.tempId)
-    ).length;
-  }, [generatedItems, addedGeneratedIds, addingGeneratedIds]);
+  }, [generatedItems, addedGeneratedIds, addingGeneratedIds, handleAddGeneratedToBacklog]);
 
   const pageStyle: CSSProperties = {
     color: isDark ? "white" : "#111827",
@@ -718,10 +764,11 @@ export default function ProjectDetailsPage(): JSX.Element {
   };
 
   const backlogBarFillStyle: CSSProperties = {
-    width: `${Math.min(Math.max(backlogPreviewItems.length, generatedItems.length) * 18, 88)}%`,
+    width: backlogBarWidth,
     height: "100%",
     borderRadius: 12,
-    background: "linear-gradient(90deg, rgba(147,197,253,0.95), rgba(96,165,250,0.95))",
+    background:
+      "linear-gradient(90deg, rgba(147,197,253,0.95), rgba(96,165,250,0.95))",
   };
 
   const previewItemStyle: CSSProperties = {
@@ -797,64 +844,16 @@ export default function ProjectDetailsPage(): JSX.Element {
                     name="projectSummary"
                     value={formData.projectSummary}
                     onChange={handleChange}
-                    style={{ ...textareaStyle, minHeight: 150, fontSize: 18, lineHeight: 1.55 }}
+                    style={{
+                      ...textareaStyle,
+                      minHeight: 150,
+                      fontSize: 18,
+                      lineHeight: 1.55,
+                    }}
                   />
                 </label>
 
                 <div style={splitGridStyle}>
-                  <label style={labelStyle}>
-                    Scrum Master
-                    <select
-                      name="scrumMaster"
-                      value={formData.scrumMaster}
-                      onChange={handleChange}
-                      style={inputStyle}
-                    >
-                      <option value="">Select scrum master</option>
-                      {members.map((member) => (
-                        <option key={member.user_id} value={member.user_id}>
-                          {member.name || member.email}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-
-                  <label style={labelStyle}>
-                    Product Owner
-                    <select
-                      name="productOwner"
-                      value={formData.productOwner}
-                      onChange={handleChange}
-                      style={inputStyle}
-                    >
-                      <option value="">Select product owner</option>
-                      {members.map((member) => (
-                        <option key={member.user_id} value={member.user_id}>
-                          {member.name || member.email}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                </div>
-
-                <div style={splitGridStyle}>
-                  <label style={labelStyle}>
-                    Developer
-                    <select
-                      name="developer"
-                      value={formData.developer}
-                      onChange={handleChange}
-                      style={inputStyle}
-                    >
-                      <option value="">Select developer</option>
-                      {members.map((member) => (
-                        <option key={member.user_id} value={member.user_id}>
-                          {member.name || member.email}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-
                   <label style={labelStyle}>
                     Project Status
                     <select
@@ -870,21 +869,25 @@ export default function ProjectDetailsPage(): JSX.Element {
                       <option value="Completed">Completed</option>
                     </select>
                   </label>
+
+                  <label style={labelStyle}>
+                    Sprint Goal
+                    <textarea
+                      name="sprintGoal"
+                      value={formData.sprintGoal}
+                      onChange={handleChange}
+                      placeholder="Describe the sprint goal"
+                      style={textareaStyle}
+                    />
+                  </label>
                 </div>
 
-                <label style={labelStyle}>
-                  Sprint Goal
-                  <textarea
-                    name="sprintGoal"
-                    value={formData.sprintGoal}
-                    onChange={handleChange}
-                    placeholder="Describe the sprint goal"
-                    style={textareaStyle}
-                  />
-                </label>
-
                 <div style={buttonRowStyle}>
-                  <button type="button" onClick={() => handleSubmit()} style={primaryButtonStyle}>
+                  <button
+                    type="button"
+                    onClick={() => handleSubmit()}
+                    style={primaryButtonStyle}
+                  >
                     Save Project Details
                   </button>
 
@@ -908,27 +911,19 @@ export default function ProjectDetailsPage(): JSX.Element {
                     {submittedData?.status || "No status"}
                   </span>
 
-                  {submittedData?.scrumMaster && (
+                  {submittedData?.sprintGoal && (
                     <span style={statsPillStyle}>
-                      Scrum Master: {getMemberDisplayName(submittedData.scrumMaster)}
-                    </span>
-                  )}
-
-                  {submittedData?.productOwner && (
-                    <span style={statsPillStyle}>
-                      Product Owner: {getMemberDisplayName(submittedData.productOwner)}
-                    </span>
-                  )}
-
-                  {submittedData?.developer && (
-                    <span style={statsPillStyle}>
-                      Developer: {getMemberDisplayName(submittedData.developer)}
+                      Sprint Goal Set
                     </span>
                   )}
                 </div>
 
                 <div style={buttonRowStyle}>
-                  <button type="button" onClick={handleEdit} style={primaryButtonStyle}>
+                  <button
+                    type="button"
+                    onClick={handleEdit}
+                    style={primaryButtonStyle}
+                  >
                     Edit Project
                   </button>
                 </div>
@@ -989,9 +984,17 @@ export default function ProjectDetailsPage(): JSX.Element {
               ) : backlogPreviewItems.length > 0 ? (
                 backlogPreviewItems.map((item) => (
                   <div key={item.id} style={previewItemStyle}>
-                    <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        gap: 12,
+                      }}
+                    >
                       <div style={{ fontWeight: 800 }}>{item.title}</div>
-                      <div style={{ opacity: 0.7, whiteSpace: "nowrap" }}>{item.points} pts</div>
+                      <div style={{ opacity: 0.7, whiteSpace: "nowrap" }}>
+                        {item.points} pts
+                      </div>
                     </div>
 
                     <div style={{ fontSize: 13, opacity: 0.8, marginTop: 4 }}>
@@ -999,16 +1002,20 @@ export default function ProjectDetailsPage(): JSX.Element {
                     </div>
 
                     {item.isDone && (
-                      <div style={{ fontSize: 12, color: "#22c55e", marginTop: 4 }}>
+                      <div
+                        style={{
+                          fontSize: 12,
+                          color: "#22c55e",
+                          marginTop: 4,
+                        }}
+                      >
                         ✓ Completed
                       </div>
                     )}
                   </div>
                 ))
               ) : (
-                <div style={previewItemStyle}>
-                  No existing backlog items yet.
-                </div>
+                <div style={previewItemStyle}>No existing backlog items yet.</div>
               )}
             </div>
 
@@ -1016,9 +1023,9 @@ export default function ProjectDetailsPage(): JSX.Element {
               <div style={{ marginTop: 18, display: "grid", gap: 12 }}>
                 <div style={eyebrowStyle}>Generated Suggestions</div>
 
-                {generatedItems.slice(0, 4).map((item) => {
-                  const isAdding = addingGeneratedIds.includes(item.tempId);
-                  const isAdded = addedGeneratedIds.includes(item.tempId);
+                {generatedPreviewItems.map((item) => {
+                  const isAdding = addingGeneratedIds.has(item.tempId);
+                  const isAdded = addedGeneratedIds.has(item.tempId);
 
                   return (
                     <div key={item.tempId} style={previewItemStyle}>
@@ -1032,10 +1039,14 @@ export default function ProjectDetailsPage(): JSX.Element {
                         }}
                       >
                         <div style={{ flex: 1 }}>
-                          <div style={{ fontWeight: 800, marginBottom: 6 }}>{item.title}</div>
+                          <div style={{ fontWeight: 800, marginBottom: 6 }}>
+                            {item.title}
+                          </div>
                           <div
                             style={{
-                              color: isDark ? "rgba(255,255,255,0.75)" : "#4b5563",
+                              color: isDark
+                                ? "rgba(255,255,255,0.75)"
+                                : "#4b5563",
                               fontSize: 14,
                             }}
                           >
@@ -1045,11 +1056,19 @@ export default function ProjectDetailsPage(): JSX.Element {
 
                         <button
                           type="button"
-                          onClick={() => handleAddGeneratedToBacklog(item)}
-                          style={isAdded || isAdding ? secondaryButtonStyle : primaryButtonStyle}
+                          onClick={() => void handleAddGeneratedToBacklog(item)}
+                          style={
+                            isAdded || isAdding
+                              ? secondaryButtonStyle
+                              : primaryButtonStyle
+                          }
                           disabled={isAdded || isAdding}
                         >
-                          {isAdding ? "Adding..." : isAdded ? "Added" : `Add (${item.points} pts)`}
+                          {isAdding
+                            ? "Adding..."
+                            : isAdded
+                            ? "Added"
+                            : `Add (${item.points} pts)`}
                         </button>
                       </div>
                     </div>
@@ -1066,7 +1085,13 @@ export default function ProjectDetailsPage(): JSX.Element {
             </p>
 
             <div style={miniCardStyle}>
-              <h3 style={{ marginTop: 0, marginBottom: 10, color: isDark ? "white" : "#111827" }}>
+              <h3
+                style={{
+                  marginTop: 0,
+                  marginBottom: 10,
+                  color: isDark ? "white" : "#111827",
+                }}
+              >
                 Microcharter Builder
               </h3>
 
@@ -1116,7 +1141,9 @@ export default function ProjectDetailsPage(): JSX.Element {
                 </label>
 
                 <div>
-                  <div style={{ ...eyebrowStyle, marginBottom: 8 }}>Key Features</div>
+                  <div style={{ ...eyebrowStyle, marginBottom: 8 }}>
+                    Key Features
+                  </div>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                     {featureOptions.map((feature) => {
                       const selected = microInputs.features.includes(feature);
@@ -1133,7 +1160,11 @@ export default function ProjectDetailsPage(): JSX.Element {
                               : isDark
                               ? "rgba(255,255,255,0.04)"
                               : "#ffffff",
-                            color: selected ? "white" : isDark ? "white" : "#111827",
+                            color: selected
+                              ? "white"
+                              : isDark
+                              ? "white"
+                              : "#111827",
                             border: selected
                               ? "none"
                               : isDark
@@ -1210,7 +1241,11 @@ export default function ProjectDetailsPage(): JSX.Element {
               />
 
               <div style={buttonRowStyle}>
-                <button type="button" onClick={() => saveForm(formData)} style={primaryButtonStyle}>
+                <button
+                  type="button"
+                  onClick={() => saveForm(formData)}
+                  style={primaryButtonStyle}
+                >
                   Save Repo Link
                 </button>
 
@@ -1248,7 +1283,12 @@ export default function ProjectDetailsPage(): JSX.Element {
               {savedRepoLink && (
                 <div style={previewItemStyle}>
                   <span style={{ marginRight: 8 }}>↳</span>
-                  <a href={savedRepoLink} target="_blank" rel="noopener noreferrer" style={linkStyle}>
+                  <a
+                    href={savedRepoLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={linkStyle}
+                  >
                     {savedRepoLink}
                   </a>
                 </div>
@@ -1274,7 +1314,11 @@ export default function ProjectDetailsPage(): JSX.Element {
               />
 
               <div style={buttonRowStyle}>
-                <button type="button" onClick={() => saveForm(formData)} style={primaryButtonStyle}>
+                <button
+                  type="button"
+                  onClick={() => saveForm(formData)}
+                  style={primaryButtonStyle}
+                >
                   Save Vercel Link
                 </button>
 
@@ -1312,7 +1356,12 @@ export default function ProjectDetailsPage(): JSX.Element {
               {savedVercelLink && (
                 <div style={previewItemStyle}>
                   <span style={{ marginRight: 8 }}>↳</span>
-                  <a href={savedVercelLink} target="_blank" rel="noopener noreferrer" style={linkStyle}>
+                  <a
+                    href={savedVercelLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={linkStyle}
+                  >
                     {savedVercelLink}
                   </a>
                 </div>

@@ -1,52 +1,108 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { JSX, CSSProperties } from "react";
-import { motion } from "framer-motion";
 import SidebarLayout from "../components/SidebarLayout";
 import {
   DndContext,
+  PointerSensor,
+  closestCorners,
   useDraggable,
   useDroppable,
+  useSensor,
+  useSensors,
   type DragEndEvent,
 } from "@dnd-kit/core";
 import { useTheme } from "./ThemeContext";
 
+type ColumnId = "impediments" | "retrospective" | "feedback";
+
 interface CommCard {
   id: string;
   title: string;
-  status: "announcements" | "available_tasks" | "blocked";
+  status: ColumnId;
+  createdAt: number;
 }
 
 interface CommBoard {
-  announcements: CommCard[];
-  available_tasks: CommCard[];
-  blocked: CommCard[];
+  impediments: CommCard[];
+  retrospective: CommCard[];
+  feedback: CommCard[];
 }
+
+interface PendingDelete {
+  cardId: string;
+  status: ColumnId;
+  title: string;
+}
+
+interface ColumnMeta {
+  id: ColumnId;
+  title: string;
+  color: string;
+  description: string;
+  emptyLabel: string;
+  placeholder: string;
+}
+
+const COLUMN_CONFIG: ColumnMeta[] = [
+  {
+    id: "impediments",
+    title: "IMPEDIMENT TRACKER",
+    color: "#fca5a5",
+    description: "Blockers, risks, or dependencies slowing the sprint down.",
+    emptyLabel: "No current impediments logged.",
+    placeholder: "Add blocker, risk, or dependency...",
+  },
+  {
+    id: "retrospective",
+    title: "RETROSPECTIVE",
+    color: "#fde68a",
+    description: "What went well, what did not, and what should improve.",
+    emptyLabel: "No retrospective notes yet.",
+    placeholder: "Add lesson learned or sprint reflection...",
+  },
+  {
+    id: "feedback",
+    title: "FEEDBACK",
+    color: "#86efac",
+    description: "Team, product, or process feedback worth tracking.",
+    emptyLabel: "No feedback added yet.",
+    placeholder: "Add team or product feedback...",
+  },
+];
 
 export default function CommunicationPage(): JSX.Element {
   const { theme } = useTheme();
   const isDark = theme === "dark";
 
   const [board, setBoard] = useState<CommBoard>({
-    announcements: [
-      { id: "1", title: "Sprint planning meeting Friday at 2 PM", status: "announcements" },
-      { id: "2", title: "Reminder: update task owners before standup", status: "announcements" },
-    ],
-    available_tasks: [
-      { id: "3", title: "Set up login page validation", status: "available_tasks" },
-      { id: "4", title: "Connect dashboard project selector to backend", status: "available_tasks" },
-    ],
-    blocked: [
-      { id: "5", title: "Waiting on API endpoint for notifications", status: "blocked" },
-    ],
+    impediments: [],
+    retrospective: [],
+    feedback: [],
   });
 
-  const [inputs, setInputs] = useState({
-    announcements: "",
-    available_tasks: "",
-    blocked: "",
+  const [inputs, setInputs] = useState<Record<ColumnId, string>>({
+    impediments: "",
+    retrospective: "",
+    feedback: "",
   });
 
-  function createCard(status: keyof CommBoard) {
+  const [cardToDelete, setCardToDelete] = useState<PendingDelete | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 6 },
+    })
+  );
+
+  const totalCards = useMemo(
+    () =>
+      board.impediments.length +
+      board.retrospective.length +
+      board.feedback.length,
+    [board]
+  );
+
+  function createCard(status: ColumnId) {
     const title = inputs[status].trim();
     if (!title) return;
 
@@ -54,11 +110,12 @@ export default function CommunicationPage(): JSX.Element {
       id: crypto.randomUUID(),
       title,
       status,
+      createdAt: Date.now(),
     };
 
     setBoard((prev) => ({
       ...prev,
-      [status]: [...prev[status], newCard],
+      [status]: [newCard, ...prev[status]],
     }));
 
     setInputs((prev) => ({
@@ -67,43 +124,82 @@ export default function CommunicationPage(): JSX.Element {
     }));
   }
 
-  function deleteCard(cardId: string, status: keyof CommBoard) {
+  function deleteCard(cardId: string, status: ColumnId) {
     setBoard((prev) => ({
       ...prev,
       [status]: prev[status].filter((card) => card.id !== cardId),
     }));
   }
 
+  function findCardLocation(cardId: string): { column: ColumnId; index: number } | null {
+    for (const column of Object.keys(board) as ColumnId[]) {
+      const index = board[column].findIndex((card) => card.id === cardId);
+      if (index !== -1) {
+        return { column, index };
+      }
+    }
+    return null;
+  }
+
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
     if (!over) return;
 
-    const cardId = String(active.id);
-    const newStatus = over.data.current?.column as keyof CommBoard;
-    if (!newStatus) return;
+    const activeId = String(active.id);
+    const overId = String(over.id);
 
-    let movedCard: CommCard | undefined;
+    const source = findCardLocation(activeId);
+    if (!source) return;
 
-    const newBoard: CommBoard = {
-      announcements: [...board.announcements],
-      available_tasks: [...board.available_tasks],
-      blocked: [...board.blocked],
-    };
+    const targetColumn: ColumnId | null = (
+      COLUMN_CONFIG.some((col) => col.id === overId)
+        ? overId
+        : findCardLocation(overId)?.column
+    ) as ColumnId | null;
 
-    for (const column of Object.keys(newBoard) as (keyof CommBoard)[]) {
-      const index = newBoard[column].findIndex((card) => card.id === cardId);
-      if (index !== -1) {
-        movedCard = newBoard[column][index];
-        newBoard[column].splice(index, 1);
-        break;
+    if (!targetColumn) return;
+
+    setBoard((prev) => {
+      const nextBoard: CommBoard = {
+        impediments: [...prev.impediments],
+        retrospective: [...prev.retrospective],
+        feedback: [...prev.feedback],
+      };
+
+      const sourceCards = [...nextBoard[source.column]];
+      const sourceIndex = sourceCards.findIndex((card) => card.id === activeId);
+      if (sourceIndex === -1) return prev;
+
+      const [movedCard] = sourceCards.splice(sourceIndex, 1);
+      const updatedCard: CommCard = { ...movedCard, status: targetColumn };
+
+      if (source.column === targetColumn) {
+        const overIndex = nextBoard[targetColumn].findIndex((card) => card.id === overId);
+
+        if (overIndex === -1) {
+          sourceCards.unshift(updatedCard);
+        } else {
+          sourceCards.splice(overIndex, 0, updatedCard);
+        }
+
+        nextBoard[source.column] = sourceCards;
+        return nextBoard;
       }
-    }
 
-    if (!movedCard) return;
+      const targetCards = [...nextBoard[targetColumn]];
+      const overIndex = targetCards.findIndex((card) => card.id === overId);
 
-    movedCard = { ...movedCard, status: newStatus };
-    newBoard[newStatus].push(movedCard);
-    setBoard(newBoard);
+      if (overIndex === -1) {
+        targetCards.unshift(updatedCard);
+      } else {
+        targetCards.splice(overIndex, 0, updatedCard);
+      }
+
+      nextBoard[source.column] = sourceCards;
+      nextBoard[targetColumn] = targetCards;
+
+      return nextBoard;
+    });
   }
 
   return (
@@ -111,137 +207,121 @@ export default function CommunicationPage(): JSX.Element {
       <div
         style={{
           ...pageStyle,
-          background: isDark
-            ? "radial-gradient(circle at top left, rgba(124,58,237,0.20), transparent 24%), radial-gradient(circle at top right, rgba(59,130,246,0.16), transparent 24%), linear-gradient(180deg, #0b0f17 0%, #111827 100%)"
-            : "#f8fafc",
+          background: isDark ? "#0f172a" : "#f8fafc",
           color: isDark ? "white" : "#111827",
         }}
       >
-        <motion.div
-          initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
-          style={{
-            ...heroCardStyle,
-            background: isDark ? heroCardStyle.background : "#ffffff",
-            border: isDark
-              ? heroCardStyle.border
-              : "1px solid rgba(17,24,39,0.08)",
-            boxShadow: isDark
-              ? heroCardStyle.boxShadow
-              : "0 14px 40px rgba(15,23,42,0.08)",
-          }}
-        >
-          <p style={eyebrowStyle}>Team Communication</p>
-          <h1
+        <div style={headerWrapStyle}>
+          <h1 style={{ ...pageTitleStyle, color: isDark ? "white" : "#111827" }}>
+            Communications
+          </h1>
+
+          <p style={{ ...pageSubStyle, color: isDark ? "#cbd5e1" : "#4b5563" }}>
+            Keep sprint communication visible in one place through impediments,
+            retrospective notes, and team feedback.
+          </p>
+
+          <p style={{ ...pageSubStyle, color: isDark ? "#cbd5e1" : "#4b5563" }}>
+            Add cards quickly, drag them across sections, and remove items once they
+            are resolved or no longer relevant.
+          </p>
+
+          <div
             style={{
-              ...headingStyle,
-              color: isDark ? "white" : "#111827",
+              ...summaryRowStyle,
+              color: isDark ? "#cbd5e1" : "#4b5563",
             }}
           >
-            Communication Hub
-          </h1>
-          <div style={introStyle}>
-            <p
-              style={{
-                ...subtitleStyle,
-                color: isDark ? "white" : "#4b5563",
-              }}
-            >
-              Information Radiator / Kanban Board
-            </p>
-            <p
-              style={{
-                ...bodyTextStyle,
-                color: isDark ? bodyTextStyle.color : "#4b5563",
-              }}
-            >
-              This is where the Information Radiator and Kanban Board will live.
-            </p>
-            <p
-              style={{
-                ...bodyTextStyle,
-                color: isDark ? bodyTextStyle.color : "#4b5563",
-              }}
-            >
-              It functions as a message board displaying available tasks sourced from
-              the Product Backlog, plus announcements and blockers the team should see.
-            </p>
+            <span style={summaryPillStyle}>Total Notes: {totalCards}</span>
+            <span style={summaryPillStyle}>
+              Impediments: {board.impediments.length}
+            </span>
+            <span style={summaryPillStyle}>
+              Retrospective: {board.retrospective.length}
+            </span>
+            <span style={summaryPillStyle}>Feedback: {board.feedback.length}</span>
           </div>
-        </motion.div>
+        </div>
 
-        <DndContext onDragEnd={handleDragEnd}>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCorners}
+          onDragEnd={handleDragEnd}
+        >
           <div style={boardStyle}>
-            <Column
-              id="announcements"
-              title="ANNOUNCEMENTS"
-              tasks={board.announcements}
-              color="#93c5fd"
-              input={inputs.announcements}
-              setInput={(value: string) =>
-                setInputs((prev) => ({ ...prev, announcements: value }))
-              }
-              createTask={() => createCard("announcements")}
-              deleteTask={deleteCard}
-            />
-
-            <Column
-              id="available_tasks"
-              title="AVAILABLE TASKS"
-              tasks={board.available_tasks}
-              color="#86efac"
-              input={inputs.available_tasks}
-              setInput={(value: string) =>
-                setInputs((prev) => ({ ...prev, available_tasks: value }))
-              }
-              createTask={() => createCard("available_tasks")}
-              deleteTask={deleteCard}
-            />
-
-            <Column
-              id="blocked"
-              title="BLOCKED / NEEDS ATTENTION"
-              tasks={board.blocked}
-              color="#fca5a5"
-              input={inputs.blocked}
-              setInput={(value: string) =>
-                setInputs((prev) => ({ ...prev, blocked: value }))
-              }
-              createTask={() => createCard("blocked")}
-              deleteTask={deleteCard}
-            />
+            {COLUMN_CONFIG.map((column) => (
+              <Column
+                key={column.id}
+                meta={column}
+                tasks={board[column.id]}
+                input={inputs[column.id]}
+                setInput={(value: string) =>
+                  setInputs((prev) => ({ ...prev, [column.id]: value }))
+                }
+                createTask={() => createCard(column.id)}
+                setCardToDelete={setCardToDelete}
+                isDark={isDark}
+              />
+            ))}
           </div>
         </DndContext>
+
+        {cardToDelete && (
+          <div style={modalOverlayStyle}>
+            <div style={modalStyle}>
+              <h3 style={modalTitleStyle}>Delete card?</h3>
+              <p style={modalTextStyle}>
+                Are you sure you want to delete "{cardToDelete.title}"?
+              </p>
+
+              <div style={modalButtonRowStyle}>
+                <button
+                  style={cancelButtonStyle}
+                  onClick={() => setCardToDelete(null)}
+                >
+                  Cancel
+                </button>
+
+                <button
+                  style={confirmDeleteButtonStyle}
+                  onClick={() => {
+                    deleteCard(cardToDelete.cardId, cardToDelete.status);
+                    setCardToDelete(null);
+                  }}
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </SidebarLayout>
   );
 }
 
-function Column({
-  id,
-  title,
-  tasks,
-  color,
-  input,
-  setInput,
-  createTask,
-  deleteTask,
-}: {
-  id: string;
-  title: string;
+interface ColumnProps {
+  meta: ColumnMeta;
   tasks: CommCard[];
-  color: string;
   input: string;
   setInput: (value: string) => void;
   createTask: () => void;
-  deleteTask: (cardId: string, status: keyof CommBoard) => void;
-}): JSX.Element {
-  const { theme } = useTheme();
-  const isDark = theme === "dark";
+  setCardToDelete: (card: PendingDelete | null) => void;
+  isDark: boolean;
+}
 
-  const { setNodeRef } = useDroppable({
-    id,
-    data: { column: id },
+function Column({
+  meta,
+  tasks,
+  input,
+  setInput,
+  createTask,
+  setCardToDelete,
+  isDark,
+}: ColumnProps): JSX.Element {
+  const { setNodeRef, isOver } = useDroppable({
+    id: meta.id,
+    data: { column: meta.id },
   });
 
   return (
@@ -249,77 +329,65 @@ function Column({
       ref={setNodeRef}
       style={{
         ...columnStyle,
-        background: isDark ? columnStyle.background : "#ffffff",
-        border: isDark
-          ? columnStyle.border
-          : "1px solid rgba(17,24,39,0.08)",
+        background: meta.color,
         boxShadow: isDark
-          ? columnStyle.boxShadow
-          : "0 10px 30px rgba(15,23,42,0.08)",
-        borderTop: `4px solid ${color}`,
+          ? "0 4px 10px rgba(0,0,0,0.25)"
+          : "0 4px 10px rgba(0,0,0,0.08)",
+        outline: isOver ? "3px solid rgba(17,24,39,0.18)" : "none",
+        transform: isOver ? "translateY(-2px)" : "translateY(0)",
+        transition: "all 0.18s ease",
       }}
     >
-      <div style={columnHeaderStyle}>
-        <h3
-          style={{
-            ...columnTitleStyle,
-            color: isDark ? "white" : "#111827",
-          }}
-        >
-          {title}
-        </h3>
-        <span
-          style={{
-            ...columnCountStyle,
-            borderColor: color,
-            color: isDark ? "white" : "#111827",
-            background: isDark ? columnCountStyle.background : "#f3f4f6",
-          }}
-        >
-          {tasks.length}
-        </span>
+      <div style={columnHeaderWrapStyle}>
+        <div>
+          <h3 style={columnTitleStyle}>{meta.title}</h3>
+          <p style={columnDescriptionStyle}>{meta.description}</p>
+        </div>
+
+        <div style={countBadgeStyle}>{tasks.length}</div>
       </div>
 
-      <div style={addCardContainer}>
+      <div style={addTaskContainer}>
         <input
-          style={{
-            ...inputStyle,
-            color: isDark ? "white" : "#111827",
-            background: isDark ? inputStyle.background : "#f3f4f6",
-            border: isDark
-              ? inputStyle.border
-              : "1px solid rgba(17,24,39,0.08)",
-          }}
+          style={inputStyle}
           value={input}
-          placeholder="Add card..."
+          placeholder={meta.placeholder}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === "Enter") createTask();
+            if (e.key === "Enter") {
+              createTask();
+            }
           }}
         />
-        <button
-          style={{
-            ...addButtonStyle,
-            background: isDark ? addButtonStyle.background : "#ffffff",
-            color: isDark ? "white" : "#111827",
-            border: isDark
-              ? addButtonStyle.border
-              : "1px solid rgba(17,24,39,0.08)",
-          }}
-          onClick={createTask}
-        >
+
+        <button style={addButtonStyle} onClick={createTask} aria-label={`Add to ${meta.title}`}>
           +
         </button>
       </div>
 
       <div style={stackContainer}>
-        {tasks.map((task) => (
-          <TaskCard
-            key={task.id}
-            task={task}
-            onDelete={() => deleteTask(task.id, id as keyof CommBoard)}
-          />
-        ))}
+        {tasks.length === 0 ? (
+          <div style={emptyStateStyle}>
+            <p style={emptyStateTitleStyle}>{meta.emptyLabel}</p>
+            <p style={emptyStateTextStyle}>
+              Use this column to keep communication visible and easy to revisit.
+            </p>
+          </div>
+        ) : (
+          tasks.map((task) => (
+            <TaskCard
+              key={task.id}
+              task={task}
+              onDelete={() =>
+                setCardToDelete({
+                  cardId: task.id,
+                  status: meta.id,
+                  title: task.title,
+                })
+              }
+            />
+          ))
+        )}
       </div>
     </div>
   );
@@ -332,43 +400,35 @@ function TaskCard({
   task: CommCard;
   onDelete: () => void;
 }): JSX.Element {
-  const { theme } = useTheme();
-  const isDark = theme === "dark";
-
-  const { attributes, listeners, setNodeRef, transform } = useDraggable({
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: task.id,
   });
 
   const style: CSSProperties = {
     ...cardStyle,
-    background: isDark ? cardStyle.background : "#ffffff",
-    color: isDark ? "white" : "#111827",
-    border: isDark
-      ? cardStyle.border
-      : "1px solid rgba(17,24,39,0.08)",
-    boxShadow: isDark
-      ? cardStyle.boxShadow
-      : "0 6px 20px rgba(15,23,42,0.06)",
+    opacity: isDragging ? 0.7 : 1,
     transform: transform
       ? `translate3d(${transform.x}px, ${transform.y}px, 0)`
       : undefined,
+    boxShadow: isDragging
+      ? "0 10px 24px rgba(0,0,0,0.22)"
+      : cardStyle.boxShadow,
   };
 
   return (
     <div ref={setNodeRef} {...listeners} {...attributes} style={style}>
-      <div style={cardTextWrapStyle}>
+      <div style={cardContentStyle}>
         <span style={cardTitleStyle}>{task.title}</span>
       </div>
+
       <button
-        style={{
-          ...deleteButtonStyle,
-          color: isDark ? deleteButtonStyle.color : "#6b7280",
-        }}
+        style={deleteButtonStyle}
         onPointerDown={(e) => e.stopPropagation()}
         onClick={(e) => {
           e.stopPropagation();
           onDelete();
         }}
+        aria-label="Delete card"
       >
         ✕
       </button>
@@ -378,136 +438,145 @@ function TaskCard({
 
 const pageStyle: CSSProperties = {
   color: "white",
-  padding: 36,
+  padding: 40,
   minHeight: "100vh",
-  textAlign: "left",
-  background:
-    "radial-gradient(circle at top left, rgba(124,58,237,0.20), transparent 24%), radial-gradient(circle at top right, rgba(59,130,246,0.16), transparent 24%), linear-gradient(180deg, #0b0f17 0%, #111827 100%)",
 };
 
-const heroCardStyle: CSSProperties = {
-  background: "rgba(255,255,255,0.05)",
-  border: "1px solid rgba(255,255,255,0.08)",
-  borderRadius: 24,
-  padding: "28px 30px",
-  marginBottom: 28,
-  backdropFilter: "blur(14px)",
-  WebkitBackdropFilter: "blur(14px)",
-  boxShadow: "0 14px 40px rgba(0,0,0,0.22)",
+const headerWrapStyle: CSSProperties = {
+  marginBottom: 30,
 };
 
-const eyebrowStyle: CSSProperties = {
-  margin: 0,
-  marginBottom: 10,
-  fontSize: 13,
-  fontWeight: 700,
-  letterSpacing: "0.08em",
-  textTransform: "uppercase",
-  color: "#c4b5fd",
-};
-
-const headingStyle: CSSProperties = {
-  margin: 0,
+const pageTitleStyle: CSSProperties = {
   marginBottom: 12,
   textAlign: "left",
-  fontSize: 36,
-  fontWeight: 800,
-  lineHeight: 1.1,
-};
-
-const introStyle: CSSProperties = {
-  textAlign: "left",
-  lineHeight: 1.6,
-};
-
-const subtitleStyle: CSSProperties = {
+  fontSize: 32,
   fontWeight: 700,
-  fontSize: 18,
-  marginBottom: 8,
-  color: "white",
 };
 
-const bodyTextStyle: CSSProperties = {
-  margin: "6px 0",
-  color: "rgba(255,255,255,0.82)",
-  maxWidth: 820,
+const pageSubStyle: CSSProperties = {
+  textAlign: "left",
+  marginTop: 0,
+  marginBottom: 8,
+  fontSize: 15,
+  maxWidth: 760,
+  lineHeight: 1.5,
+};
+
+const summaryRowStyle: CSSProperties = {
+  display: "flex",
+  flexWrap: "wrap",
+  gap: 10,
+  marginTop: 18,
+};
+
+const summaryPillStyle: CSSProperties = {
+  padding: "8px 12px",
+  borderRadius: 999,
+  background: "rgba(255,255,255,0.7)",
+  color: "#111827",
+  fontSize: 13,
+  fontWeight: 600,
 };
 
 const boardStyle: CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+  display: "flex",
   gap: 24,
-  alignItems: "start",
-  marginTop: 6,
+  marginTop: 10,
+  flexWrap: "wrap",
+  alignItems: "stretch",
 };
 
 const columnStyle: CSSProperties = {
+  flex: "1 1 320px",
   padding: 20,
-  borderRadius: 22,
-  minHeight: 520,
-  background: "rgba(255,255,255,0.10)",
-  backdropFilter: "blur(18px)",
-  WebkitBackdropFilter: "blur(18px)",
-  border: "1px solid rgba(255,255,255,0.16)",
-  boxShadow: "0 10px 30px rgba(0,0,0,0.22)",
+  borderRadius: 14,
+  minHeight: 480,
 };
 
-const columnHeaderStyle: CSSProperties = {
+const columnHeaderWrapStyle: CSSProperties = {
   display: "flex",
-  alignItems: "center",
   justifyContent: "space-between",
+  alignItems: "flex-start",
   gap: 12,
-  marginBottom: 12,
+  marginBottom: 10,
 };
 
 const columnTitleStyle: CSSProperties = {
-  color: "white",
-  margin: 0,
-  fontWeight: 800,
-  letterSpacing: "0.04em",
-  fontSize: 15,
+  color: "#111",
+  fontWeight: 700,
+  letterSpacing: "0.5px",
+  marginTop: 0,
+  marginBottom: 6,
+  fontSize: 16,
 };
 
-const columnCountStyle: CSSProperties = {
-  minWidth: 28,
-  height: 28,
+const columnDescriptionStyle: CSSProperties = {
+  margin: 0,
+  color: "#374151",
+  fontSize: 13,
+  lineHeight: 1.4,
+  maxWidth: 260,
+};
+
+const countBadgeStyle: CSSProperties = {
+  minWidth: 32,
+  height: 32,
   borderRadius: 999,
-  display: "inline-flex",
+  background: "rgba(255,255,255,0.85)",
+  color: "#111",
+  display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  fontSize: 12,
   fontWeight: 700,
-  color: "white",
-  background: "rgba(255,255,255,0.08)",
-  border: "1px solid rgba(255,255,255,0.14)",
+  fontSize: 13,
+  flexShrink: 0,
 };
 
 const stackContainer: CSSProperties = {
-  marginTop: 16,
+  marginTop: 18,
   display: "flex",
   flexDirection: "column",
   gap: 12,
 };
 
+const emptyStateStyle: CSSProperties = {
+  background: "rgba(255,255,255,0.72)",
+  borderRadius: 10,
+  padding: 16,
+  color: "#111827",
+  border: "1px dashed rgba(17,24,39,0.18)",
+};
+
+const emptyStateTitleStyle: CSSProperties = {
+  margin: 0,
+  marginBottom: 6,
+  fontWeight: 700,
+  fontSize: 14,
+};
+
+const emptyStateTextStyle: CSSProperties = {
+  margin: 0,
+  fontSize: 13,
+  color: "#4b5563",
+  lineHeight: 1.45,
+};
+
 const cardStyle: CSSProperties = {
-  background: "rgba(255,255,255,0.16)",
-  backdropFilter: "blur(14px)",
-  WebkitBackdropFilter: "blur(14px)",
+  background: "white",
   padding: 14,
-  borderRadius: 16,
-  color: "white",
+  borderRadius: 8,
+  color: "#111",
   fontWeight: 500,
-  border: "1px solid rgba(255,255,255,0.18)",
-  boxShadow: "0 6px 20px rgba(0,0,0,0.16)",
+  boxShadow: "0 4px 10px rgba(0,0,0,0.2)",
   cursor: "grab",
   touchAction: "none",
   display: "flex",
   justifyContent: "space-between",
   alignItems: "flex-start",
-  gap: 10,
+  gap: 12,
 };
 
-const cardTextWrapStyle: CSSProperties = {
+const cardContentStyle: CSSProperties = {
   flex: 1,
   minWidth: 0,
 };
@@ -516,50 +585,99 @@ const cardTitleStyle: CSSProperties = {
   display: "block",
   lineHeight: 1.45,
   wordBreak: "break-word",
-  fontSize: 14,
 };
 
-const addCardContainer: CSSProperties = {
+const addTaskContainer: CSSProperties = {
   display: "flex",
-  gap: 8,
+  gap: 6,
   marginTop: 10,
 };
 
 const inputStyle: CSSProperties = {
   flex: 1,
-  padding: "10px 12px",
-  borderRadius: 12,
-  border: "1px solid rgba(255,255,255,0.16)",
+  padding: 10,
+  borderRadius: 6,
+  border: "none",
   outline: "none",
-  color: "white",
-  background: "rgba(255,255,255,0.12)",
-  backdropFilter: "blur(10px)",
-  WebkitBackdropFilter: "blur(10px)",
+  color: "#111",
+  background: "white",
   fontSize: 14,
 };
 
 const addButtonStyle: CSSProperties = {
-  width: 42,
-  borderRadius: 12,
-  border: "1px solid rgba(255,255,255,0.16)",
+  width: 40,
+  borderRadius: 6,
+  border: "none",
   cursor: "pointer",
-  background: "rgba(255,255,255,0.14)",
+  background: "#111",
   color: "white",
-  backdropFilter: "blur(10px)",
-  WebkitBackdropFilter: "blur(10px)",
-  fontSize: 18,
+  fontSize: 20,
   fontWeight: 700,
 };
 
 const deleteButtonStyle: CSSProperties = {
   background: "transparent",
   border: "none",
-  color: "rgba(255,255,255,0.72)",
+  color: "#999",
   cursor: "pointer",
-  fontSize: 16,
-  padding: 4,
+  fontSize: "16px",
+  padding: "4px",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
   flexShrink: 0,
+};
+
+const modalOverlayStyle: CSSProperties = {
+  position: "fixed",
+  inset: 0,
+  background: "rgba(0, 0, 0, 0.45)",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  zIndex: 1000,
+};
+
+const modalStyle: CSSProperties = {
+  background: "white",
+  borderRadius: 16,
+  padding: 24,
+  width: "90%",
+  maxWidth: 400,
+  boxShadow: "0 10px 30px rgba(0,0,0,0.25)",
+};
+
+const modalTitleStyle: CSSProperties = {
+  marginTop: 0,
+  marginBottom: 10,
+  color: "#111",
+};
+
+const modalTextStyle: CSSProperties = {
+  color: "#444",
+  marginBottom: 20,
+};
+
+const modalButtonRowStyle: CSSProperties = {
+  display: "flex",
+  justifyContent: "flex-end",
+  gap: 12,
+};
+
+const cancelButtonStyle: CSSProperties = {
+  padding: "8px 16px",
+  borderRadius: 8,
+  border: "1px solid #ccc",
+  background: "white",
+  color: "#111",
+  cursor: "pointer",
+};
+
+const confirmDeleteButtonStyle: CSSProperties = {
+  padding: "8px 16px",
+  borderRadius: 8,
+  border: "none",
+  background: "#dc2626",
+  color: "white",
+  cursor: "pointer",
 };

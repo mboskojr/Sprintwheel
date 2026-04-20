@@ -352,17 +352,6 @@ export default function SettingsPage(): JSX.Element {
               Manage your appearance, update your account details, and account settings all in one place.
             </p>
             <div style={styles.topActions}>
-              <button style={styles.primaryButton}>Save Changes</button>
-              <button
-                style={styles.secondaryButton}
-                onClick={() => {
-                  if (theme !== "dark") {
-                    toggleTheme();
-                  }
-                }}
-              >
-                Reset to Default
-              </button>
             </div>
           </div>
 
