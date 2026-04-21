@@ -3,26 +3,18 @@ import { useNavigate, useParams } from "react-router-dom";
 import SidebarLayout from "../components/SidebarLayout";
 import { useTheme } from "./ThemeContext";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// TEMPLATE — update these constants when you're ready to fill in this module.
-// ─────────────────────────────────────────────────────────────────────────────
-
-const MODULE_NUMBER   = "Module 2";
-const MODULE_TITLE    = "Scrum Roles";
+const MODULE_NUMBER = "Module 2";
+const MODULE_TITLE = "Scrum Roles";
 const MODULE_SUBTITLE =
   "Watch the video, then test your knowledge with the quiz below.";
 
-// Replace "#" with your YouTube share URL when ready (e.g. "https://youtu.be/abc123").
-const VIDEO_URL      = "#";
-const VIDEO_CAPTION  = "Scrum Roles Overview";
+const VIDEO_EMBED_URL = "https://www.youtube.com/embed/3Xnl2f2Wm-M";
+const VIDEO_CAPTION = "Scrum Roles Overview";
 const VIDEO_DURATION = "0:00";
 
-// Add more rows or change destinations as content is built out.
 const ITEMS: { label: string; to: string | null }[] = [
   { label: "Quiz Questions", to: "scrum-exam" },
 ];
-
-// ─────────────────────────────────────────────────────────────────────────────
 
 const styles: Record<string, CSSProperties> = {
   page: {
@@ -69,67 +61,34 @@ const styles: Record<string, CSSProperties> = {
     lineHeight: 1.7,
     margin: 0,
   },
-  videoLink: {
-    display: "block",
-    textDecoration: "none",
-    borderRadius: 12,
+  videoFrameWrap: {
+    width: "100%",
+    borderRadius: 16,
     overflow: "hidden",
     marginBottom: 16,
-  },
-  videoBlock: {
-    width: "100%",
     background: "#000000",
-    borderRadius: 12,
-    height: 260,
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    position: "relative",
-    cursor: "pointer",
+    border: "1px solid rgba(255,255,255,0.08)",
   },
-  playIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: "50%",
-    background: "rgba(124,58,237,0.85)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: "1.4rem",
-    marginBottom: 12,
-    color: "white",
-    flexShrink: 0,
+  videoFrame: {
+    width: "100%",
+    height: 300,
+    border: "none",
+    display: "block",
   },
-  videoLabel: {
-    fontSize: "0.85rem",
-    color: "#d1d5db",
-    fontWeight: 500,
-    letterSpacing: "0.03em",
-  },
-  videoFooter: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
+  videoCardFooter: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
     padding: "10px 16px",
-    background: "rgba(0,0,0,0.55)",
-    backdropFilter: "blur(4px)",
-    borderRadius: "0 0 12px 12px",
+    background: "rgba(0,0,0,0.75)",
   },
   videoCaption: {
-    fontSize: "0.78rem",
+    fontSize: "0.8rem",
     color: "#d1d5db",
-    letterSpacing: "0.03em",
   },
   videoDuration: {
-    fontSize: "0.78rem",
+    fontSize: "0.8rem",
     color: "#9ca3af",
-    letterSpacing: "0.04em",
-    fontVariantNumeric: "tabular-nums",
   },
   itemList: {
     display: "flex",
@@ -183,14 +142,22 @@ export default function ScrumRolesPage(): JSX.Element {
   const { theme } = useTheme();
   const isDark = theme === "dark";
 
-  const pageBg     = isDark ? "linear-gradient(180deg, #0b0f17 0%, #111827 100%)" : "#f8fafc";
-  const cardBg     = isDark ? "rgba(255,255,255,0.04)" : "#ffffff";
-  const cardBorder = isDark ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(17,24,39,0.08)";
-  const textMain   = isDark ? "#f9fafb" : "#111827";
-  const textMuted  = isDark ? "#9ca3af" : "#4b5563";
-  const rowBg      = isDark ? "rgba(124,58,237,0.10)" : "rgba(124,58,237,0.06)";
-  const rowBorder  = isDark ? "rgba(124,58,237,0.25)" : "rgba(124,58,237,0.18)";
-  const badgeBg    = isDark ? "rgba(124,58,237,0.25)" : "rgba(124,58,237,0.12)";
+  const pageBg = isDark
+    ? "linear-gradient(180deg, #0b0f17 0%, #111827 100%)"
+    : "#f8fafc";
+  const cardBg = isDark ? "rgba(255,255,255,0.04)" : "#ffffff";
+  const cardBorder = isDark
+    ? "1px solid rgba(255,255,255,0.08)"
+    : "1px solid rgba(17,24,39,0.08)";
+  const textMain = isDark ? "#f9fafb" : "#111827";
+  const textMuted = isDark ? "#9ca3af" : "#4b5563";
+  const rowBg = isDark ? "rgba(124,58,237,0.10)" : "rgba(124,58,237,0.06)";
+  const rowBorder = isDark
+    ? "rgba(124,58,237,0.25)"
+    : "rgba(124,58,237,0.18)";
+  const badgeBg = isDark
+    ? "rgba(124,58,237,0.25)"
+    : "rgba(124,58,237,0.12)";
 
   function handleItemClick(to: string | null) {
     if (!to) return;
@@ -204,8 +171,9 @@ export default function ScrumRolesPage(): JSX.Element {
     <SidebarLayout>
       <div style={{ ...styles.page, background: pageBg, color: textMain }}>
         <div style={styles.container}>
-
-          <section style={{ ...styles.hero, background: cardBg, border: cardBorder }}>
+          <section
+            style={{ ...styles.hero, background: cardBg, border: cardBorder }}
+          >
             <button
               onClick={() => navigate(`/projects/${projectId}/${role}/education`)}
               style={styles.backButton}
@@ -214,25 +182,24 @@ export default function ScrumRolesPage(): JSX.Element {
             </button>
             <p style={styles.eyebrow}>{MODULE_NUMBER}</p>
             <h1 style={{ ...styles.title, color: textMain }}>{MODULE_TITLE}</h1>
-            <p style={{ ...styles.subtitle, color: textMuted }}>{MODULE_SUBTITLE}</p>
+            <p style={{ ...styles.subtitle, color: textMuted }}>
+              {MODULE_SUBTITLE}
+            </p>
           </section>
 
-          <a
-            href={VIDEO_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={styles.videoLink}
-            aria-label={`Watch: ${VIDEO_CAPTION}`}
-          >
-            <div style={styles.videoBlock}>
-              <div style={styles.playIcon}>▶</div>
-              <span style={styles.videoLabel}>Click to watch</span>
-              <div style={styles.videoFooter}>
-                <span style={styles.videoCaption}>{VIDEO_CAPTION}</span>
-                <span style={styles.videoDuration}>{VIDEO_DURATION}</span>
-              </div>
+          <div style={styles.videoFrameWrap}>
+            <iframe
+              style={styles.videoFrame}
+              src={VIDEO_EMBED_URL}
+              title={VIDEO_CAPTION}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+            <div style={styles.videoCardFooter}>
+              <span style={styles.videoCaption}>{VIDEO_CAPTION}</span>
+              <span style={styles.videoDuration}>{VIDEO_DURATION}</span>
             </div>
-          </a>
+          </div>
 
           <div style={styles.itemList}>
             {ITEMS.map(({ label, to }) => (
@@ -242,7 +209,9 @@ export default function ScrumRolesPage(): JSX.Element {
                 tabIndex={to ? 0 : undefined}
                 onClick={() => handleItemClick(to)}
                 onKeyDown={(e) => {
-                  if (to && (e.key === "Enter" || e.key === " ")) handleItemClick(to);
+                  if (to && (e.key === "Enter" || e.key === " ")) {
+                    handleItemClick(to);
+                  }
                 }}
                 style={{
                   ...(to ? styles.itemRow : styles.itemRowDisabled),
@@ -250,8 +219,16 @@ export default function ScrumRolesPage(): JSX.Element {
                   borderColor: rowBorder,
                 }}
               >
-                <span style={{ ...styles.itemLabel, color: textMain }}>{label}</span>
-                <span style={{ ...styles.itemBadge, background: badgeBg, color: "#c4b5fd" }}>
+                <span style={{ ...styles.itemLabel, color: textMain }}>
+                  {label}
+                </span>
+                <span
+                  style={{
+                    ...styles.itemBadge,
+                    background: badgeBg,
+                    color: "#c4b5fd",
+                  }}
+                >
                   {to ? "→" : "Soon"}
                 </span>
               </div>
@@ -261,7 +238,6 @@ export default function ScrumRolesPage(): JSX.Element {
           <p style={{ ...styles.footerNote, color: textMuted }}>
             {MODULE_NUMBER} of 5 &nbsp;·&nbsp; Sprintwheel Learn
           </p>
-
         </div>
       </div>
     </SidebarLayout>
