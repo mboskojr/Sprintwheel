@@ -1,10 +1,10 @@
-import type {CSSProperties, JSX } from "react";
+import type { CSSProperties, JSX } from "react";
 import SidebarLayout from "../components/SidebarLayout";
 import { useTheme } from "./ThemeContext";
-import { useNavigate, useParams } from "react-router-dom"; 
+import { useNavigate, useParams } from "react-router-dom";
 
 const styles: Record<string, CSSProperties> = {
-  page : {
+  page: {
     minHeight: "100vh",
     background: "linear-gradient(180deg, #0b0f17 0%, #111827 100%)",
     padding: "32px 20px 48px",
@@ -43,65 +43,13 @@ const styles: Record<string, CSSProperties> = {
     marginTop: 14,
     maxWidth: "760px",
   },
-  heroRow: {
-    display: "flex",
-    gap: 12,
-    flexWrap: "wrap",
-    marginTop: 22, 
-  },
-  primaryButton: {
-    backgroundColor: "#7c3aed",
-    color: "white",
-    border: "none",
-    borderRadius: 999,
-    padding: "12px 20px",
-    fontWeight: 700,
-    cursor: "pointer",
-  },
-  secondaryButton: {
-    backgroundColor: "rgba(124,58,237,0.15)",
-    color: "#c4b5fd",
-    border: "1px solid rgba(124,58,237,0.3)",
-    borderRadius: 999,
-    padding: "12px 20px",
-    fontWeight: 700,
-    cursor: "pointer",
-  },
   sectionTitle: {
     fontSize: "1.3rem",
     fontWeight: 700,
     margin: "0 0 16px 0",
   },
-  progressCard: {
-    background: "rgba(255,255,255,0.04)",
-    border: "1px solid rgba(255,255,255,0.08)",
-    borderRadius: 20,
-    padding: 24,
-    marginBottom: 28,
-  },
-  progressTop: {
-    display: "flex",
-    justifyContent: "space-between",
-    marginBottom: 14,
-  },
-  progressText: {
-    color: "#9ca3af",
-  },
-  progressBarWrap: {
-    width: "100%",
-    height: 10,
-    backgroundColor: "#1f2937",
-    borderRadius: 999,
-    overflow: "hidden",
-  },
-  progressBar: {
-    width: "35%",
-    height: "100%",
-    backgroundColor: "#7c3aed",
-    borderRadius: 999,
-  },
   grid: {
-    display: "grid", 
+    display: "grid",
     gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
     gap: 20,
   },
@@ -134,19 +82,6 @@ const styles: Record<string, CSSProperties> = {
     marginBottom: 16,
     lineHeight: 1.5,
   },
-  pillRow: {
-    display: "flex",
-    gap: 8,
-    marginBottom: 16,
-  },
-  pill: {
-    backgroundColor: "rgba(124,58,237,0.15)",
-    color: "#c4b5fd",
-    fontSize: "0.75rem",
-    padding: "6px 10px",
-    borderRadius: 999,
-    fontWeight: 600,
-  },
   cardButton: {
     backgroundColor: "#7c3aed",
     border: "none",
@@ -155,11 +90,6 @@ const styles: Record<string, CSSProperties> = {
     color: "white",
     fontWeight: 700,
     cursor: "pointer",
-  },
-  footerNote: {
-    marginTop: 28,
-    color: "#6b7280",
-    fontSize: "0.9rem",
   },
 };
 
@@ -172,39 +102,36 @@ export default function EducationPage(): JSX.Element {
   return (
     <SidebarLayout>
       <div
-        style = {{
+        style={{
           ...styles.page,
           background: isDark ? styles.page.background : "#f8fafc",
-          color: isDark? "#f9fafb" : "#111827",
+          color: isDark ? "#f9fafb" : "#111827",
         }}
       >
-        <div style = {styles.container}>
+        <div style={styles.container}>
           <section
-            style = {{
+            style={{
               ...styles.hero,
-              background: isDark 
-              ? styles.hero.background : "#ffffff",
-              border: isDark 
-              ? styles.hero.border : "1px solid rgba(17,24,29,0.08)",
+              background: isDark ? styles.hero.background : "#ffffff",
+              border: isDark
+                ? styles.hero.border
+                : "1px solid rgba(17,24,29,0.08)",
             }}
           >
-          <p style={styles.eyebrow}>Learn Scrum </p>
-          <h1 style={styles.title}>Scrum.Edu </h1>
-          <p
-            style = {{
-              ...styles.subtitle,
-              color: isDark ? "#d1d5db" : "#4b5563",
-            }}
-          >
-            Learn Scrum through structored modules, designed to be used in the real-world. 
-            Progress at your own pace & build confidence in agile workflows!
-              
-          </p>
-          <div style={styles.heroRow}>
-            <button style={styles.primaryButton}>Continue Learning</button>
-            <button style={styles.primaryButton}>Browse Topics</button>
-          </div>
+            <p style={styles.eyebrow}>Learn Scrum</p>
+            <h1 style={styles.title}>Scrum.Edu</h1>
+            <p
+              style={{
+                ...styles.subtitle,
+                color: isDark ? "#d1d5db" : "#4b5563",
+              }}
+            >
+              Learn Scrum through structored modules, designed to be used in the
+              real-world. Progress at your own pace & build confidence in agile
+              workflows!
+            </p>
           </section>
+
           <section>
             <h2 style={styles.sectionTitle}>Topics</h2>
             <div style={styles.grid}>
@@ -213,59 +140,69 @@ export default function EducationPage(): JSX.Element {
                   key={i}
                   style={{
                     ...styles.card,
-                    background: isDark ?
-                    styles.card.background : "#ffffff",
-                    border: isDark ? styles.card.border : "1px solid rgba(17,24,39,0.08)"
+                    background: isDark ? styles.card.background : "#ffffff",
+                    border: isDark
+                      ? styles.card.border
+                      : "1px solid rgba(17,24,39,0.08)",
                   }}
                 >
                   <div style={styles.iconCircle}>{icon}</div>
                   <h3 style={styles.cardTitle}>
-                    {["Scrum Guide", "Scrum Roles", "Scrum Events", "Scrum Artifacts", "Scrum Exam"][i]}
+                    {
+                      [
+                        "Scrum Guide",
+                        "Scrum Roles",
+                        "Scrum Events",
+                        "Scrum Artifacts",
+                        "Scrum Exam",
+                      ][i]
+                    }
                   </h3>
-                <p
-                  style={{
-                    ...styles.cardText,
-                    color: isDark ? "#9ca3af" : "#4b5563",
-                  }}
-                >
-                  {["Learn the core framework & principles of Scrum.",
-                    "Understand each role and its responsibilites.",
-                    "Explore key Scrum workflows.",
-                    "Learn how progress and work are tracked in Scrum.",
-                    "Test your understanding of Scrum concepts."
-                  ][i]
-                  }
-                </p>
-                <button
-                   style={styles.cardButton}
-                   onClick={() => {
-                    const routes = [
-                      "scrum-guide",
-                      "scrum-roles",
-                      "scrum-events",
-                      "scrum-artifacts",
-                      "scrum-exam",
-                    ];
-                    navigate(`/projects/${projectId}/${role}/${routes[i]}`);
-                   }}
-                >
-                  {["Start Here", "Learning Scrum", "Event Exploration","Understanding Artifacts","Test Yourself"][i]}
-                </button>
+                  <p
+                    style={{
+                      ...styles.cardText,
+                      color: isDark ? "#9ca3af" : "#4b5563",
+                    }}
+                  >
+                    {
+                      [
+                        "Learn the core framework & principles of Scrum.",
+                        "Understand each role and its responsibilites.",
+                        "Explore key Scrum workflows.",
+                        "Learn how progress and work are tracked in Scrum.",
+                        "Test your understanding of Scrum concepts.",
+                      ][i]
+                    }
+                  </p>
+                  <button
+                    style={styles.cardButton}
+                    onClick={() => {
+                      const routes = [
+                        "scrum-guide",
+                        "scrum-roles",
+                        "scrum-events",
+                        "scrum-artifacts",
+                        "scrum-exam",
+                      ];
+                      navigate(`/projects/${projectId}/${role}/${routes[i]}`);
+                    }}
+                  >
+                    {
+                      [
+                        "Start Here",
+                        "Learning Scrum",
+                        "Event Exploration",
+                        "Understanding Artifacts",
+                        "Test Yourself",
+                      ][i]
+                    }
+                  </button>
+                </div>
+              ))}
             </div>
-            ))}
-          </div>
-        </section>
-      <div 
-        style = {{
-          ...styles.footerNote,
-          color: isDark ? "#6b7280" : "#9ca3af",
-        }}
-      >
-        Content in progress - expected by Sprint #9 
+          </section>
+        </div>
       </div>
-    </div>
-  </div>
-</SidebarLayout>
+    </SidebarLayout>
   );
 }
-
