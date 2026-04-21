@@ -194,7 +194,10 @@ export default function ScrumEventsPage(): JSX.Element {
 
   function handleItemClick(to: string | null) {
     if (!to) return;
-    navigate(`/projects/${projectId}/${role}/${to}`);
+
+    navigate(`/projects/${projectId}/${role}/${to}`, {
+      state: to === "scrum-exam" ? { topic: "scrumEvents" } : undefined,
+    });
   }
 
   return (

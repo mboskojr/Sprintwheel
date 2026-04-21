@@ -235,7 +235,10 @@ export default function ScrumGuidePage(): JSX.Element {
 
   function handleItemClick(to: string | null) {
     if (!to) return;
-    navigate(`/projects/${projectId}/${role}/${to}`);
+
+    navigate(`/projects/${projectId}/${role}/${to}`, {
+      state: to === "scrum-exam" ? { topic: "scrumGuide" } : undefined,
+    });
   }
 
   return (

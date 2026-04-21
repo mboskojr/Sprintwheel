@@ -1,5 +1,12 @@
+export type ScrumTopic =
+  | "scrumGuide"
+  | "scrumRoles"
+  | "scrumEvents"
+  | "scrumArtifacts";
+
 export type ScrumQuestion = {
   id: number;
+  topic: ScrumTopic;
   prompt: string;
   options: string[];
   correctAnswer: string;
@@ -9,6 +16,7 @@ export type ScrumQuestion = {
 export const scrumQuestions: ScrumQuestion[] = [
   {
     id: 1,
+    topic: "scrumRoles",
     prompt: "Who decides which stories to prioritize?",
     options: [
       "Scrum Master",
@@ -22,6 +30,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 2,
+    topic: "scrumEvents",
     prompt: "When should the team have retrospective meetings?",
     options: [
       "Every evening via conference call",
@@ -35,6 +44,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 3,
+    topic: "scrumGuide",
     prompt: "What is the benefit of the waterfall model?",
     options: [
       "Improves ROI",
@@ -48,6 +58,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 4,
+    topic: "scrumEvents",
     prompt: "Which of the following is not a scrum ceremony?",
     options: [
       "Daily scrum meeting",
@@ -61,6 +72,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 5,
+    topic: "scrumArtifacts",
     prompt: "Which of the following help indicate what is left to do, what is in progress, and what is done?",
     options: [
       "The sprint backlog",
@@ -74,6 +86,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 6,
+    topic: "scrumArtifacts",
     prompt: "Which of the following is not a scrum artifact?",
     options: [
       "Information radiator",
@@ -87,6 +100,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 7,
+    topic: "scrumGuide",
     prompt: "Which of the following is not in the micro charter?",
     options: [
       "Mission statement",
@@ -100,6 +114,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 8,
+    topic: "scrumArtifacts",
     prompt: "What does a burn down chart predict?",
     options: [
       "A rank of most productive team members from best to worst",
@@ -113,6 +128,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 9,
+    topic: "scrumRoles",
     prompt: "What are the three scrum roles?",
     options: [
       "Product owner, scrum master, team member",
@@ -126,6 +142,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 10,
+    topic: "scrumGuide",
     prompt: "Which are bigger: tasks or stories?",
     options: [
       "You cannot tell because they are not time dependent",
@@ -139,6 +156,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 11,
+    topic: "scrumRoles",
     prompt: "What does the product owner do?",
     options: [
       "Controls the priority of backlog items",
@@ -152,6 +170,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 12,
+    topic: "scrumArtifacts",
     prompt: "What is a sprint backlog?",
     options: [
       "What features the team wants to release",
@@ -165,6 +184,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 13,
+    topic: "scrumGuide",
     prompt: "Which of the following is not a stage included in the waterfall method?",
     options: [
       "Coding",
@@ -178,6 +198,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 14,
+    topic: "scrumRoles",
     prompt: "Which is not a responsibility of the product owner?",
     options: [
       "Helps set the direction of the product",
@@ -191,6 +212,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 15,
+    topic: "scrumGuide",
     prompt: "What is not a characteristic of agile approaches?",
     options: [
       "Big design up front",
@@ -204,6 +226,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 16,
+    topic: "scrumGuide",
     prompt: "If a team's velocity is good, and they seem to be getting all work done by deadlines, what is an appropriate action?",
     options: [
       "Decrease the number of points per sprint",
@@ -217,6 +240,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 17,
+    topic: "scrumGuide",
     prompt: "Where does the name scrum come from?",
     options: [
       "It's an acronym for Software Coding and Reading Uniform Management",
@@ -230,6 +254,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 18,
+    topic: "scrumGuide",
     prompt: "Which of the following is not a feature of agile methodologies?",
     options: [
       "Perfect the requirements before you code",
@@ -243,6 +268,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 19,
+    topic: "scrumGuide",
     prompt: "Which of these are three common ways to estimate tasks for sprint planning?",
     options: [
       "Task wages, task meetings, task complexity",
@@ -256,6 +282,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 20,
+    topic: "scrumRoles",
     prompt: "Which is not a role of the scrum master?",
     options: [
       "Team coach",
@@ -269,6 +296,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 21,
+    topic: "scrumEvents",
     prompt: "Which are the three formal feedback cycles?",
     options: [
       "Paper prototyping, Q+A, story mapping",
@@ -282,6 +310,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 22,
+    topic: "scrumGuide",
     prompt: "What is the first step of the waterfall method?",
     options: [
       "Gathering a team",
@@ -295,6 +324,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 23,
+    topic: "scrumGuide",
     prompt: "BDUF stands for what?",
     options: [
       "Best Decision Unit Features",
@@ -308,6 +338,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 24,
+    topic: "scrumGuide",
     prompt: "What do all agile methods have in common?",
     options: [
       "Return methodologies",
@@ -321,6 +352,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 25,
+    topic: "scrumEvents",
     prompt: "Why do scrum meetings happen standing up?",
     options: [
       "To wake everyone up",
@@ -334,6 +366,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 26,
+    topic: "scrumGuide",
     prompt: "What is considered a good scrum team size?",
     options: [
       "7 +- 2",
@@ -347,6 +380,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 27,
+    topic: "scrumArtifacts",
     prompt: "Which is false about a story map?",
     options: [
       "It is always a replacement for a product backlog",
@@ -360,6 +394,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 28,
+    topic: "scrumGuide",
     prompt: "In TDD pair programming, what is the only move when in the red state?",
     options: [
       "Perform a refactoring",
@@ -373,6 +408,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 29,
+    topic: "scrumRoles",
     prompt: "Which of these is a role in a scrum team?",
     options: [
       "Scrum apprentice",
@@ -386,6 +422,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 30,
+    topic: "scrumRoles",
     prompt: "The scrum master roles include all the following except what?",
     options: [
       "Scrum expert and advisor",
@@ -399,6 +436,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 31,
+    topic: "scrumEvents",
     prompt: "How long should sprints be?",
     options: [
       "1-4 months",
@@ -412,6 +450,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 32,
+    topic: "scrumArtifacts",
     prompt: "The product backlog includes a list of what?",
     options: [
       "Preferred coding languages",
@@ -425,6 +464,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 33,
+    topic: "scrumEvents",
     prompt: "The daily scrum is also called what?",
     options: [
       "Stand-up meeting",
@@ -438,6 +478,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 34,
+    topic: "scrumGuide",
     prompt: "What is refactoring?",
     options: [
       "Altering the internal structure of code without changing its external behavior",
@@ -451,6 +492,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 35,
+    topic: "scrumRoles",
     prompt: "Who is responsible for the product backlog?",
     options: [
       "Scrum master",
@@ -464,6 +506,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 36,
+    topic: "scrumGuide",
     prompt: "What elements are in the iron triangle of a project?",
     options: [
       "Pace, integration, documentation",
@@ -477,6 +520,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 37,
+    topic: "scrumGuide",
     prompt: "Scrum indicates an iterative approach to getting work done through what?",
     options: [
       "Leaps",
@@ -490,6 +534,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 38,
+    topic: "scrumEvents",
     prompt: "What shouldn't the daily scrum be?",
     options: [
       "Daily",
@@ -503,6 +548,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 39,
+    topic: "scrumArtifacts",
     prompt: "The sprint backlog is what?",
     options: [
       "A review of what has been accomplished in previous sprints",
@@ -516,6 +562,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 40,
+    topic: "scrumGuide",
     prompt: "When practicing agile methodologies, you will do all of the following except what?",
     options: [
       "Document as you go",
@@ -529,6 +576,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 41,
+    topic: "scrumGuide",
     prompt: "A backlog item is often to referred to as a what?",
     options: [
       "Quest",
@@ -542,6 +590,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 42,
+    topic: "scrumGuide",
     prompt: "What is the correct order of the waterfall method?",
     options: [
       "Requirements, implementation, design, verification, maintenance",
@@ -555,6 +604,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 43,
+    topic: "scrumGuide",
     prompt: "What is the primary measure of progress in scrum?",
     options: [
       "ROI",
@@ -568,6 +618,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 44,
+    topic: "scrumRoles",
     prompt: "How many scrum roles are there in a team?",
     options: [
       "4",
@@ -581,6 +632,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 45,
+    topic: "scrumEvents",
     prompt: "What is not shared at the daily scrum?",
     options: [
       "What I plan to add for the next 3 scrums",
@@ -594,6 +646,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 46,
+    topic: "scrumGuide",
     prompt: "Which set of numbers correlate with the rate as humans easily perceive differences, and are thus useful for story point estimations?",
     options: [
       "Imaginary",
@@ -607,6 +660,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 47,
+    topic: "scrumArtifacts",
     prompt: "A task board is what type of radiator?",
     options: [
       "Importance",
@@ -620,6 +674,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 48,
+    topic: "scrumEvents",
     prompt: "Which of the following is not part of the scrum development cycle?",
     options: [
       "Sprint retrospective",
@@ -633,6 +688,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 49,
+    topic: "scrumGuide",
     prompt: "What is the point of estimating story size?",
     options: [
       "To decide which stories are worth adding to release backlog",
@@ -646,6 +702,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 50,
+    topic: "scrumGuide",
     prompt: "Which is not a way of pair programming?",
     options: [
       "Divide and conquer pairing",
@@ -659,6 +716,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
   id: 51,
+  topic: "scrumEvents",
     prompt: "On which days of the week should the ideal scrum team meet?",
     options: [
       "Monday, Wednesday, Friday",
@@ -672,6 +730,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
   id: 52,
+  topic: "scrumGuide",
     prompt: "Which of these is NOT an element of the micro-charter?",
     options: [
       "Mission statement",
@@ -685,6 +744,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 53,
+    topic: "scrumRoles",
     prompt: "Which are the two required roles in a scrum team?",
     options: [
       "Scrum master, debugger",
@@ -698,6 +758,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 54,
+    topic: "scrumRoles",
     prompt: "Which of the following is NOT a scrum master role?",
     options: [
       "Scrum expert and advisor",
@@ -711,6 +772,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 55,
+    topic: "scrumArtifacts",
     prompt: "What is the proper name for the cards that outline a project's details?",
     options: [
       "User Story",
@@ -724,6 +786,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 56,
+    topic: "scrumGuide",
     prompt: "In the Iron Triangle what does scope represent?",
     options: [
       "It involves how many stories will be included",
@@ -737,6 +800,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 57,
+    topic: "scrumRoles",
     prompt: "Rank the Scrum Roles from Most to Least Authority",
     options: [
       "Team member, product owner, scrum master",
@@ -750,6 +814,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 58,
+    topic: "scrumRoles",
     prompt: "Who is responsible for changing the priority of backlog items?",
     options: [
       "Scrum master",
@@ -763,6 +828,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 59,
+    topic: "scrumArtifacts",
     prompt: "Which is not a scrum artifact?",
     options: [
       "Burn charts",
@@ -776,6 +842,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 60,
+    topic: "scrumRoles",
     prompt: "A Scrum team consists of:",
     options: [
       "Product Developer, Scrum Master, and Team Members",
@@ -789,6 +856,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 61,
+    topic: "scrumGuide",
     prompt: "Which of the following is not a stage of the waterfall method",
     options: [
       "Requirements-gathering",
@@ -802,6 +870,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 62,
+    topic: "scrumGuide",
     prompt: "Which of the following is NOT the characteristic of agile principles?",
     options: [
       "The highest priority is to satisfy the customer through early and continuous delivery of valuable software.",
@@ -815,6 +884,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 63,
+    topic: "scrumGuide",
     prompt: "Choose the correct order for the pillars of the Waterfall Methodology.",
     options: [
       "Design, code, requirements gathering, delivery, testing",
@@ -828,6 +898,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 64,
+    topic: "scrumEvents",
     prompt: "Which is not part of a weekly schedule for a scrum team?",
     options: [
       "Planning",
@@ -841,6 +912,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 65,
+    topic: "scrumGuide",
     prompt: "What is the primary measure of progress in agile development?",
     options: [
       "Working software",
@@ -854,6 +926,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 66,
+    topic: "scrumArtifacts",
     prompt: "What is the product backlog?",
     options: [
       "A list of desired features for the product",
@@ -867,6 +940,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 67,
+    topic: "scrumGuide",
     prompt: "Which of the following is a goal of test driven development?",
     options: [
       "To make the code more efficient",
@@ -880,6 +954,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 68,
+    topic: "scrumGuide",
     prompt: "What is Ping-Pong Pairing?",
     options: [
       "Two people playing ping-pong together.",
@@ -893,6 +968,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 69,
+    topic: "scrumRoles",
     prompt: "Which of the following is NOT a role of the Product Owner?",
     options: [
       "Holds the vision for the product",
@@ -906,6 +982,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 70,
+    topic: "scrumGuide",
     prompt: "What is the one common value shared by all Agile processes?",
     options: [
       "Work as efficiently as possible",
@@ -919,6 +996,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 71,
+    topic: "scrumGuide",
     prompt: "When do you use Fibonacci numbers in Scrum?",
     options: [
       "When determining how many sprints you will do.",
@@ -932,6 +1010,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 72,
+    topic: "scrumGuide",
     prompt: "What is refactoring?",
     options: [
       "Changing user stories based on new client requirements",
@@ -945,6 +1024,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 73,
+    topic: "scrumEvents",
     prompt: "On average how long should a sprint last?",
     options: [
       "1-4 days",
@@ -958,6 +1038,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 74,
+    topic: "scrumGuide",
     prompt: "Which resource is usually varied in an agile approach?",
     options: [
       "Scope",
@@ -971,6 +1052,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 75,
+    topic: "scrumGuide",
     prompt: "What pattern is commonly used to estimate story sizes?",
     options: [
       "Powers of 2",
@@ -984,6 +1066,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 76,
+    topic: "scrumGuide",
     prompt: "Which of the following terms describes the rate at which story points are completed?",
     options: [
       "Velocity",
@@ -997,6 +1080,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 77,
+    topic: "scrumEvents",
     prompt: "What marks the beginning of a sprint?",
     options: [
       "Sprint planning",
@@ -1010,6 +1094,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 78,
+    topic: "scrumEvents",
     prompt: "What is something you don't do in during daily scrums?",
     options: [
       "Talk about what you did yesterday",
@@ -1023,6 +1108,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 79,
+    topic: "scrumArtifacts",
     prompt: "What is the 'definition of done'?",
     options: [
       "When a feature has been completely coded",
@@ -1036,6 +1122,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 80,
+    topic: "scrumGuide",
     prompt: "Which of the following does not describe paper prototyping?",
     options: [
       "It removes technological barriers",
@@ -1049,6 +1136,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 81,
+    topic: "scrumRoles",
     prompt: "What is the NOT the role of the Scrum Master?",
     options: [
       "Helps the team get the most value out of scrum",
@@ -1062,6 +1150,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 82,
+    topic: "scrumRoles",
     prompt: "Which of the following is NOT the role of a product owner?",
     options: [
       "Represents the customers.",
@@ -1075,6 +1164,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 83,
+    topic: "scrumGuide",
     prompt: "Which is not one of the Agile Principles?",
     options: [
       "The highest priority is to satisfy the customer through early and continuous delivery of valuable software",
@@ -1088,6 +1178,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 84,
+    topic: "scrumGuide",
     prompt: "What are the Agile Values?",
     options: [
       "Individuals and interactions over processes and tools",
@@ -1101,6 +1192,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 85,
+    topic: "scrumArtifacts",
     prompt: "The sprint backlog is:",
     options: [
       "A list of grievances the team performed during the sprint",
@@ -1114,6 +1206,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 86,
+    topic: "scrumGuide",
     prompt: "What is paper prototyping used for?",
     options: [
       "To-do lists",
@@ -1127,6 +1220,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 87,
+    topic: "scrumRoles",
     prompt: "What are the responsibilities of a product owner?",
     options: [
       "Engage with the customer to give feasibility and a line of communication throughout the development cycle.",
@@ -1140,6 +1234,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 88,
+    topic: "scrumArtifacts",
     prompt: "The list of tasks identified by a scrum team to be completed for a sprint is the:",
     options: [
       "Sprint backlog",
@@ -1153,6 +1248,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 89,
+    topic: "scrumArtifacts",
     prompt: "What is the definition of done?",
     options: [
       "When the programmer thinks he finished his part",
@@ -1166,6 +1262,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 90,
+    topic: "scrumRoles",
     prompt: "Which is a Scrum role?",
     options: [
       "Product Owner",
@@ -1179,6 +1276,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 91,
+    topic: "scrumRoles",
     prompt: "The optimal range for number of team members is:",
     options: [
       "5 to 9",
@@ -1192,6 +1290,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 92,
+    topic: "scrumRoles",
     prompt: "Which of the following is the role of a team member?",
     options: [
       "Responsible for completing user stories to incrementally increase the value of the product.",
@@ -1205,6 +1304,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 93,
+    topic: "scrumRoles",
     prompt: "Which is NOT a responsibility for the product owner?",
     options: [
       "Understand and deliver what the customer needs to the rest of the team",
@@ -1218,6 +1318,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 94,
+    topic: "scrumRoles",
     prompt: "What is NOT the role of the Product Owner?",
     options: [
       "Holds the vision for the product",
@@ -1231,6 +1332,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 95,
+    topic: "scrumEvents",
     prompt: "Why do Sims and Johnson (the authors) recommend that you stand during morning briefings?",
     options: [
       "Standing helps the brain increase efficiency.",
@@ -1244,6 +1346,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 96,
+    topic: "scrumArtifacts",
     prompt: "How does the product backlog differ from the sprint backlog?",
     options: [
       "They do not differ",
@@ -1257,6 +1360,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 97,
+    topic: "scrumRoles",
     prompt: "Which are the different scrum roles?",
     options: [
       "Architect, business analyst, designer, software developer, tester, documentation specialist",
@@ -1270,6 +1374,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 98,
+    topic: "scrumEvents",
     prompt: "Which of the following best describes the daily scrum?",
     options: [
       "It is called the daily stand up because it is a short break where the team is encouraged to relax",
@@ -1283,6 +1388,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 99,
+    topic: "scrumEvents",
     prompt: "Which is a characteristic of the Daily Scrum?",
     options: [
       "Daily",
@@ -1296,6 +1402,7 @@ export const scrumQuestions: ScrumQuestion[] = [
   },
   {
     id: 100,
+    topic: "scrumArtifacts",
     prompt: "What is the sprint backlog?",
     options: [
       "Cumulative list of desired tasks to do",

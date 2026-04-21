@@ -1,10 +1,10 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { CSSProperties, JSX } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import SidebarLayout from "../components/SidebarLayout";
 import { useTheme } from "./ThemeContext";
 import { scrumQuestions } from "./ScrumQuestions";
-import type { ScrumQuestion } from "./ScrumQuestions";
+import type { ScrumQuestion, ScrumTopic } from "./ScrumQuestions";
 import ScrumQuestionCard from "../components/ScrumQuestionCard";
 import ScrumExamResults from "../components/ScrumExamResults";
 
@@ -19,10 +19,19 @@ function shuffleArray<T>(array: T[]): T[] {
   return shuffled;
 }
 
-//const EXAM_LENGTH = 50;
-
 function buildExamQuestions(length: number): ScrumQuestion[] {
   return shuffleArray(scrumQuestions)
+    .slice(0, length)
+    .map((q) => ({
+      ...q,
+      options: shuffleArray(q.options),
+    }));
+}
+
+function buildTopicQuizQuestions(topic: ScrumTopic, length: number = 15): ScrumQuestion[] {
+  const filtered = scrumQuestions.filter((q) => q.topic === topic);
+
+  return shuffleArray(filtered)
     .slice(0, length)
     .map((q) => ({
       ...q,
@@ -181,23 +190,37 @@ function ScrumExamPage(): JSX.Element {
 
   const [questions, setQuestions] = useState<ScrumQuestion[]>([]);
   const [examLength, setExamLength] = useState<number | null>(null);
-  const [showLengthModal, setShowLengthModal] = useState(true);
+  const [showLengthModal, setShowLengthModal] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
 
   const navigate = useNavigate();
   const { projectId, role } = useParams();
+
+  const location = useLocation();
+  const topic = location.state?.topic as ScrumTopic | undefined;
+
   const { theme } = useTheme();
   const isDark = theme === "dark";
 
-  function startExam(length: number): void {
-    const generated = buildExamQuestions(length);
+  useEffect(() => {
+    if (topic) {
+      setShowLengthModal(false);
+      startExam(15, topic);
+    } else {
+      setShowLengthModal(true);
+    }
+  }, [topic]);
+
+  function startExam(length: number, selectedTopic?: ScrumTopic): void {
+    const generated = selectedTopic
+      ? buildTopicQuizQuestions(selectedTopic, length)
+      : buildExamQuestions(length);
 
     setQuestions(generated);
     setExamLength(length);
     setAnswers({});
     setSubmitted(false);
     setScore(0);
-
     setShowLengthModal(false);
     setHasStarted(true);
   }
@@ -234,8 +257,14 @@ function ScrumExamPage(): JSX.Element {
     setQuestions([]);
     setExamLength(null);
 
-    setShowLengthModal(true);
-    setHasStarted(false);
+    if (topic) {
+      setShowLengthModal(false);
+      setHasStarted(false);
+      startExam(15, topic);
+    } else {
+      setShowLengthModal(true);
+      setHasStarted(false);
+    }
 
     window.scrollTo({
       top: 0,
