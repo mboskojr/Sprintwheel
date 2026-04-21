@@ -983,7 +983,7 @@ const descriptionTextareaStyle: CSSProperties = {
 
 const verticalStepperStyle: CSSProperties = {
   display: "inline-flex",
-  alignItems: "stretch",
+  alignItems: "center",
   background: "#ffffff",
   border: "1px solid #d1d5db",
   borderRadius: "12px",
@@ -1006,12 +1006,13 @@ const verticalStepperValueStyle: CSSProperties = {
 const verticalStepperButtonsStyle: CSSProperties = {
   display: "flex",
   flexDirection: "column",
+  justifyContent: "center",
   borderLeft: "1px solid #d1d5db",
 };
 
 const verticalArrowButtonStyle: CSSProperties = {
   width: "34px",
-  height: "25px",
+  flex: 1,
   border: "none",
   background: "#ffffff",
   color: "#111827",
@@ -1024,6 +1025,7 @@ const verticalArrowButtonStyle: CSSProperties = {
 const stepperArrowIconStyle: CSSProperties = {
   fontSize: "11px",
   fontWeight: 800,
+  lineHeight: 1,
 };
 
 const assignCellStyle: CSSProperties = {

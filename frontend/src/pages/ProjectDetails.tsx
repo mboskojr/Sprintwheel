@@ -701,6 +701,18 @@ export default function ProjectDetailsPage(): JSX.Element {
     boxSizing: "border-box",
   };
 
+  const selectStyle: CSSProperties = {
+  ...inputStyle,
+  background: isDark ? "rgba(17,24,39,0.92)" : "#1f2937",
+  color: "white",
+  border: isDark
+    ? "1px solid rgba(255,255,255,0.18)"
+    : "1px solid rgba(17,24,39,0.08)",
+  appearance: "none",
+  WebkitAppearance: "none",
+  MozAppearance: "none",
+};
+
   const textareaStyle: CSSProperties = {
     ...inputStyle,
     minHeight: 120,
@@ -860,13 +872,42 @@ export default function ProjectDetailsPage(): JSX.Element {
                       name="status"
                       value={formData.status}
                       onChange={handleChange}
-                      style={inputStyle}
+                      style={selectStyle}
                     >
-                      <option value="">Select status</option>
-                      <option value="Not Started">Not Started</option>
-                      <option value="In Progress">In Progress</option>
-                      <option value="Blocked">Blocked</option>
-                      <option value="Completed">Completed</option>
+                      <option
+                        value=""
+                        style={{ backgroundColor: "#111827", color: "white" }}
+                      >
+                        Select status
+                      </option>
+
+                      <option
+                        value="Not Started"
+                        style={{ backgroundColor: "#111827", color: "white" }}
+                      >
+                        Not Started
+                      </option>
+
+                      <option
+                        value="In Progress"
+                        style={{ backgroundColor: "#111827", color: "white" }}
+                      >
+                        In Progress
+                      </option>
+
+                      <option
+                        value="Blocked"
+                        style={{ backgroundColor: "#111827", color: "white" }}
+                      >
+                        Blocked
+                      </option>
+
+                      <option
+                        value="Completed"
+                        style={{ backgroundColor: "#111827", color: "white" }}
+                      >
+                        Completed
+                      </option>
                     </select>
                   </label>
 

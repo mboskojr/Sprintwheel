@@ -102,6 +102,33 @@ const styles: Record<string, CSSProperties> = {
     flexShrink: 0,
     fontSize: 15,
   },
+  collapsedSidebar: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 0,
+    overflow: "hidden",
+  },
+  collapsedToggleWrap: {
+    width: "100%",
+    height: "100%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  collapseBtnCentered: {
+    borderRadius: 12,
+    width: 44,
+    height: 44,
+    cursor: "pointer",
+    flexShrink: 0,
+    fontSize: 20,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 0,
+  },
   nav: {
     display: "flex",
     flexDirection: "column",
@@ -593,14 +620,31 @@ export default function SidebarLayout({ children }: { children: ReactNode }): JS
         <aside
           style={{
             ...styles.sidebar,
-            width: collapsed ? 84 : 320,
+            ...(collapsed ? styles.collapsedSidebar : {}),
+            width: collapsed ? 72 : 320,
             background: colors.panelBg,
             borderRight: `1px solid ${colors.border}`,
           }}
         >
+          {collapsed ? (
+            <div style={styles.collapsedToggleWrap}>
+              <button
+                type="button"
+                style={{
+                  ...styles.collapseBtnCentered,
+                  background: colors.surfaceStrong,
+                  border: `1px solid ${colors.borderStrong}`,
+                  color: colors.text,
+                }}
+                onClick={() => setCollapsed(false)}
+              >
+                &gt;
+              </button>
+            </div>
+          ) : (
+            <>
           <div style={styles.sidebarTop}>
             <div style={styles.topLeft}>
-              {!collapsed && (
                 <h2
                   style={{
                     ...styles.brand,
@@ -609,9 +653,7 @@ export default function SidebarLayout({ children }: { children: ReactNode }): JS
                 >
                   SprintWheel
                 </h2>
-              )}
-
-              {!collapsed && (
+              
                 <button
                   type="button"
                   style={{
@@ -642,7 +684,6 @@ export default function SidebarLayout({ children }: { children: ReactNode }): JS
                     </p>
                   </div>
                 </button>
-              )}
             </div>
 
             <div
@@ -761,7 +802,6 @@ export default function SidebarLayout({ children }: { children: ReactNode }): JS
               ➕ New Project
             </button>
 
-            {!collapsed && (
               <div
                 style={{
                   ...styles.selectorBox,
@@ -823,7 +863,6 @@ export default function SidebarLayout({ children }: { children: ReactNode }): JS
                   <div style={{ color: "#ef4444", fontSize: 12 }}>{joinError}</div>
                 )}
               </div>
-            )}
 
             {projectId && (
               <button
@@ -910,6 +949,8 @@ export default function SidebarLayout({ children }: { children: ReactNode }): JS
               🚪 Logout
             </button>
           </div>
+              </>
+          )}
         </aside>
 
         <main

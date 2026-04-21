@@ -24,8 +24,6 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="SprintWheel API", lifespan=lifespan)
 
-from fastapi.middleware.cors import CORSMiddleware
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -33,7 +31,6 @@ app.add_middleware(
         "http://127.0.0.1:5173",
         "https://sprintwheel-frontend.vercel.app",
     ],
-    allow_origin_regex=r"https://sprintwheel-frontend-.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
