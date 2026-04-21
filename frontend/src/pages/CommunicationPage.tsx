@@ -232,14 +232,42 @@ export default function CommunicationPage(): JSX.Element {
               color: isDark ? "#cbd5e1" : "#4b5563",
             }}
           >
-            <span style={summaryPillStyle}>Total Notes: {totalCards}</span>
-            <span style={summaryPillStyle}>
+            <span
+              style={{
+                ...summaryPillStyle,
+                background: isDark ? "rgba(37,99,235,0.18)" : "#dbeafe",
+                color: isDark ? "#93c5fd" : "#2563eb",
+              }}
+            >
+              Total Notes: {totalCards}
+            </span>
+            <span
+              style={{
+                ...summaryPillStyle,
+                background: isDark ? "rgba(37,99,235,0.18)" : "#dbeafe",
+                color: isDark ? "#93c5fd" : "#2563eb",
+              }}
+            >
               Impediments: {board.impediments.length}
             </span>
-            <span style={summaryPillStyle}>
+            <span
+              style={{
+                ...summaryPillStyle,
+                background: isDark ? "rgba(37,99,235,0.18)" : "#dbeafe",
+                color: isDark ? "#93c5fd" : "#2563eb",
+              }}
+            >
               Retrospective: {board.retrospective.length}
             </span>
-            <span style={summaryPillStyle}>Feedback: {board.feedback.length}</span>
+            <span
+              style={{
+                ...summaryPillStyle,
+                background: isDark ? "rgba(37,99,235,0.18)" : "#dbeafe",
+                color: isDark ? "#93c5fd" : "#2563eb",
+              }}
+            >
+              Feedback: {board.feedback.length}
+            </span>
           </div>
         </div>
 
@@ -268,9 +296,26 @@ export default function CommunicationPage(): JSX.Element {
 
         {cardToDelete && (
           <div style={modalOverlayStyle}>
-            <div style={modalStyle}>
-              <h3 style={modalTitleStyle}>Delete card?</h3>
-              <p style={modalTextStyle}>
+            <div
+              style={{
+                ...modalStyle,
+                background: isDark ? "#111827" : "white",
+              }}
+            >
+              <h3
+                style={{
+                  ...modalTitleStyle,
+                  color: isDark ? "white" : "#111",
+                }}
+              >
+                Delete card?
+              </h3>
+              <p
+                style={{
+                  ...modalTextStyle,
+                  color: isDark ? "#d1d5db" : "#444",
+                }}
+              >
                 Are you sure you want to delete "{cardToDelete.title}"?
               </p>
 
@@ -333,6 +378,9 @@ function Column({
         boxShadow: isDark
           ? "0 4px 10px rgba(0,0,0,0.25)"
           : "0 4px 10px rgba(0,0,0,0.08)",
+        border: isDark
+          ? "1px solid rgba(255,255,255,0.16)"
+          : "1px solid rgba(17,24,39,0.08)",
         outline: isOver ? "3px solid rgba(17,24,39,0.18)" : "none",
         transform: isOver ? "translateY(-2px)" : "translateY(0)",
         transition: "all 0.18s ease",
@@ -344,12 +392,25 @@ function Column({
           <p style={columnDescriptionStyle}>{meta.description}</p>
         </div>
 
-        <div style={countBadgeStyle}>{tasks.length}</div>
+        <div
+          style={{
+            ...countBadgeStyle,
+            background: isDark ? "rgba(255,255,255,0.14)" : "rgba(255,255,255,0.85)",
+            color: isDark ? "white" : "#111",
+          }}
+        >
+          {tasks.length}
+        </div>
       </div>
 
       <div style={addTaskContainer}>
         <input
-          style={inputStyle}
+          style={{
+            ...inputStyle,
+            border: isDark ? "1px solid rgba(255,255,255,0.16)" : "none",
+            color: isDark ? "white" : "#111",
+            background: isDark ? "rgba(255,255,255,0.12)" : "white",
+          }}
           value={input}
           placeholder={meta.placeholder}
           onChange={(e) => setInput(e.target.value)}
@@ -360,16 +421,38 @@ function Column({
           }}
         />
 
-        <button style={addButtonStyle} onClick={createTask} aria-label={`Add to ${meta.title}`}>
+        <button
+          style={{
+            ...addButtonStyle,
+            background: "#2563eb",
+            color: "white",
+          }}
+          onClick={createTask}
+          aria-label={`Add to ${meta.title}`}
+        >
           +
         </button>
       </div>
 
       <div style={stackContainer}>
         {tasks.length === 0 ? (
-          <div style={emptyStateStyle}>
+          <div
+            style={{
+              ...emptyStateStyle,
+              background: isDark ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.72)",
+              color: isDark ? "white" : "#111827",
+              border: isDark
+                ? "1px solid rgba(255,255,255,0.16)"
+                : "1px dashed rgba(17,24,39,0.18)",
+            }}
+          >
             <p style={emptyStateTitleStyle}>{meta.emptyLabel}</p>
-            <p style={emptyStateTextStyle}>
+            <p
+              style={{
+                ...emptyStateTextStyle,
+                color: isDark ? "#cbd5e1" : "#4b5563",
+              }}
+            >
               Use this column to keep communication visible and easy to revisit.
             </p>
           </div>
@@ -385,6 +468,7 @@ function Column({
                   title: task.title,
                 })
               }
+              isDark={isDark}
             />
           ))
         )}
@@ -396,9 +480,11 @@ function Column({
 function TaskCard({
   task,
   onDelete,
+  isDark,
 }: {
   task: CommCard;
   onDelete: () => void;
+  isDark: boolean;
 }): JSX.Element {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: task.id,
@@ -406,13 +492,17 @@ function TaskCard({
 
   const style: CSSProperties = {
     ...cardStyle,
+    background: isDark ? "rgba(255,255,255,0.12)" : "white",
+    color: isDark ? "white" : "#111",
+    boxShadow: isDragging
+      ? "0 10px 24px rgba(0,0,0,0.22)"
+      : isDark
+      ? "0 6px 20px rgba(0,0,0,0.16)"
+      : "0 4px 10px rgba(0,0,0,0.2)",
     opacity: isDragging ? 0.7 : 1,
     transform: transform
       ? `translate3d(${transform.x}px, ${transform.y}px, 0)`
       : undefined,
-    boxShadow: isDragging
-      ? "0 10px 24px rgba(0,0,0,0.22)"
-      : cardStyle.boxShadow,
   };
 
   return (
@@ -422,7 +512,10 @@ function TaskCard({
       </div>
 
       <button
-        style={deleteButtonStyle}
+        style={{
+          ...deleteButtonStyle,
+          color: isDark ? "#cbd5e1" : "#999",
+        }}
         onPointerDown={(e) => e.stopPropagation()}
         onClick={(e) => {
           e.stopPropagation();
