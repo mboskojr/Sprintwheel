@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { JSX, CSSProperties } from "react";
 import SidebarLayout from "../components/SidebarLayout";
 import {
@@ -70,15 +70,68 @@ const COLUMN_CONFIG: ColumnMeta[] = [
   },
 ];
 
+const STORAGE_KEY = "sprintwheel-communication-board";
+
+const EMPTY_BOARD: CommBoard = {
+  impediments: [],
+  retrospective: [],
+  feedback: [],
+};
+
+function isValidColumnId(value: unknown): value is ColumnId {
+  return (
+    value === "impediments" ||
+    value === "retrospective" ||
+    value === "feedback"
+  );
+}
+
+function isValidCommCard(value: unknown): value is CommCard {
+  if (!value || typeof value !== "object") return false;
+
+  const card = value as Record<string, unknown>;
+  return (
+    typeof card.id === "string" &&
+    typeof card.title === "string" &&
+    typeof card.createdAt === "number" &&
+    isValidColumnId(card.status)
+  );
+}
+
+function loadBoardFromStorage(): CommBoard {
+  if (typeof window === "undefined") return EMPTY_BOARD;
+
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return EMPTY_BOARD;
+
+    const parsed = JSON.parse(raw) as Partial<Record<ColumnId, unknown>>;
+
+    const impediments = Array.isArray(parsed.impediments)
+      ? parsed.impediments.filter(isValidCommCard)
+      : [];
+    const retrospective = Array.isArray(parsed.retrospective)
+      ? parsed.retrospective.filter(isValidCommCard)
+      : [];
+    const feedback = Array.isArray(parsed.feedback)
+      ? parsed.feedback.filter(isValidCommCard)
+      : [];
+
+    return {
+      impediments,
+      retrospective,
+      feedback,
+    };
+  } catch {
+    return EMPTY_BOARD;
+  }
+}
+
 export default function CommunicationPage(): JSX.Element {
   const { theme } = useTheme();
   const isDark = theme === "dark";
 
-  const [board, setBoard] = useState<CommBoard>({
-    impediments: [],
-    retrospective: [],
-    feedback: [],
-  });
+  const [board, setBoard] = useState<CommBoard>(() => loadBoardFromStorage());
 
   const [inputs, setInputs] = useState<Record<ColumnId, string>>({
     impediments: "",
@@ -87,6 +140,11 @@ export default function CommunicationPage(): JSX.Element {
   });
 
   const [cardToDelete, setCardToDelete] = useState<PendingDelete | null>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(board));
+  }, [board]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -131,7 +189,9 @@ export default function CommunicationPage(): JSX.Element {
     }));
   }
 
-  function findCardLocation(cardId: string): { column: ColumnId; index: number } | null {
+  function findCardLocation(
+    cardId: string
+  ): { column: ColumnId; index: number } | null {
     for (const column of Object.keys(board) as ColumnId[]) {
       const index = board[column].findIndex((card) => card.id === cardId);
       if (index !== -1) {
@@ -174,7 +234,9 @@ export default function CommunicationPage(): JSX.Element {
       const updatedCard: CommCard = { ...movedCard, status: targetColumn };
 
       if (source.column === targetColumn) {
-        const overIndex = nextBoard[targetColumn].findIndex((card) => card.id === overId);
+        const overIndex = nextBoard[targetColumn].findIndex(
+          (card) => card.id === overId
+        );
 
         if (overIndex === -1) {
           sourceCards.unshift(updatedCard);
@@ -395,8 +457,8 @@ function Column({
         <div
           style={{
             ...countBadgeStyle,
-            background: "rgba(255,255,255,0.6)", // slightly translucent
-            color: "#111827", // always dark
+            background: "rgba(255,255,255,0.6)",
+            color: "#111827",
           }}
         >
           {tasks.length}
@@ -409,7 +471,7 @@ function Column({
           style={{
             ...inputStyle,
             border: isDark ? "1px solid rgba(255,255,255,0.16)" : "none",
-            color: "#111827", // force dark text always
+            color: "#111827",
             background: isDark ? "rgba(255,255,255,0.12)" : "white",
           }}
           value={input}
@@ -498,13 +560,16 @@ function TaskCard({
 
   const style: CSSProperties = {
     ...cardStyle,
-    background: isDark ? "rgba(255,255,255,0.12)" : "white",
-    color: isDark ? "white" : "#111",
+    background: isDark ? "#374151" : "rgba(255,255,255,0.96)",
+    color: isDark ? "#f9fafb" : "#111827",
+    border: isDark
+      ? "1px solid rgba(255,255,255,0.08)"
+      : "1px solid rgba(17,24,39,0.06)",
     boxShadow: isDragging
       ? "0 10px 24px rgba(0,0,0,0.22)"
       : isDark
-      ? "0 6px 20px rgba(0,0,0,0.16)"
-      : "0 4px 10px rgba(0,0,0,0.2)",
+      ? "0 6px 20px rgba(0,0,0,0.22)"
+      : "0 4px 10px rgba(0,0,0,0.12)",
     opacity: isDragging ? 0.7 : 1,
     transform: transform
       ? `translate3d(${transform.x}px, ${transform.y}px, 0)`
@@ -705,6 +770,7 @@ const inputStyle: CSSProperties = {
 
 const addButtonStyle: CSSProperties = {
   width: 40,
+  height: 40,
   borderRadius: 6,
   border: "none",
   cursor: "pointer",
@@ -712,6 +778,12 @@ const addButtonStyle: CSSProperties = {
   color: "white",
   fontSize: 20,
   fontWeight: 700,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  lineHeight: 1,
+  padding: 0,
+  flexShrink: 0,
 };
 
 const deleteButtonStyle: CSSProperties = {
