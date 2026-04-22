@@ -65,6 +65,10 @@ body {
   padding: 40px 20px;
 }
 
+.comm-input::placeholder {
+  color: #212730;  /* even darker gray */
+}
+
 /* top part */
 
 .hero-top {

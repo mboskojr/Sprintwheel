@@ -395,8 +395,8 @@ function Column({
         <div
           style={{
             ...countBadgeStyle,
-            background: isDark ? "rgba(255,255,255,0.14)" : "rgba(255,255,255,0.85)",
-            color: isDark ? "white" : "#111",
+            background: "rgba(255,255,255,0.6)", // slightly translucent
+            color: "#111827", // always dark
           }}
         >
           {tasks.length}
@@ -405,10 +405,11 @@ function Column({
 
       <div style={addTaskContainer}>
         <input
+          className="comm-input"
           style={{
             ...inputStyle,
             border: isDark ? "1px solid rgba(255,255,255,0.16)" : "none",
-            color: isDark ? "white" : "#111",
+            color: "#111827", // force dark text always
             background: isDark ? "rgba(255,255,255,0.12)" : "white",
           }}
           value={input}
@@ -439,18 +440,23 @@ function Column({
           <div
             style={{
               ...emptyStateStyle,
-              background: isDark ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.72)",
-              color: isDark ? "white" : "#111827",
-              border: isDark
-                ? "1px solid rgba(255,255,255,0.16)"
-                : "1px dashed rgba(17,24,39,0.18)",
+              background: "rgba(255,255,255,0.28)",
+              color: "#111827",
+              border: "1px dashed rgba(17,24,39,0.18)",
             }}
           >
-            <p style={emptyStateTitleStyle}>{meta.emptyLabel}</p>
+            <p
+              style={{
+                ...emptyStateTitleStyle,
+                color: "#111827",
+              }}
+            >
+              {meta.emptyLabel}
+            </p>
             <p
               style={{
                 ...emptyStateTextStyle,
-                color: isDark ? "#cbd5e1" : "#4b5563",
+                color: "#21252b",
               }}
             >
               Use this column to keep communication visible and easy to revisit.
