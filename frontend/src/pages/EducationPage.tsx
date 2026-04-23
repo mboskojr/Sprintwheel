@@ -59,6 +59,8 @@ const styles: Record<string, CSSProperties> = {
     borderRadius: 20,
     padding: 22,
     transition: "0.2s",
+    display: "flex",
+    flexDirection: "column",
   },
   iconCircle: {
     width: 50,
@@ -90,6 +92,7 @@ const styles: Record<string, CSSProperties> = {
     color: "white",
     fontWeight: 700,
     cursor: "pointer",
+    marginTop: "auto",
   },
 };
 
