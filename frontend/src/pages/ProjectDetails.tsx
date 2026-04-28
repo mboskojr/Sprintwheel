@@ -281,7 +281,7 @@ function generateBacklogFromMicrocharter(text: string): GeneratedBacklogItem[] {
 
 export default function ProjectDetailsPage(): JSX.Element {
   const navigate = useNavigate();
-  const { projectId } = useParams();
+  const { projectId, role } = useParams();
   const { theme } = useTheme();
   const isDark = theme === "dark";
 
@@ -290,10 +290,13 @@ export default function ProjectDetailsPage(): JSX.Element {
     [projectId]
   );
 
-  const backlogRoute = useMemo(
-    () => `/projects/${projectId}/product-backlog`,
-    [projectId]
-  );
+  const backlogRoute = useMemo(() => {
+    if (!projectId) return "/projects";
+
+    return role
+      ? `/projects/${projectId}/${role}/product-backlog`
+      : `/projects/${projectId}/product-backlog`;
+  }, [projectId, role]);
 
   const [formData, setFormData] = useState<ProjectFormData>(emptyForm);
   const [submittedData, setSubmittedData] = useState<ProjectFormData | null>(null);
